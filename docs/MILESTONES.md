@@ -11,16 +11,16 @@ This is the build plan for the first version described in the [Game Design Docum
 
 ## At a glance
 
-| # | Milestone | Phase | Effort | Ends with |
-|---|---|---|---|---|
-| M1 | Foundations | 1 · Prove it | ~5 h | — |
-| M2 | Risk tests | 1 · Prove it | ~15 h | **Gate 1: The idea works** |
-| M3 | Core simulation | 2 · Fun core | ~20 h | — |
-| M4 | Living disciples | 2 · Fun core | ~20 h | **Gate 2: Fun with placeholders** |
-| M5 | Sect growth | 3 · Full first version | ~20 h | — |
-| M6 | Rivals and history | 3 · Full first version | ~20 h | **Gate 3: Content complete** |
-| M7 | Look, sound and language | 4 · Beta | ~10 h, with art work alongside | — |
-| M8 | Safe launch | 4 · Beta | ~20 h | **Gate 4: Ready for Founding Disciples** |
+| # | Milestone | Phase | Effort | Ends with | Tracking |
+|---|---|---|---|---|---|
+| M1 | Foundations | 1 · Prove it | ~5 h | — | [#1](https://github.com/haobui14/LittleMountainSect/issues/1) |
+| M2 | Risk tests | 1 · Prove it | ~15 h | **Gate 1: The idea works** | [#2](https://github.com/haobui14/LittleMountainSect/issues/2) |
+| M3 | Core simulation | 2 · Fun core | ~20 h | — | [#3](https://github.com/haobui14/LittleMountainSect/issues/3) |
+| M4 | Living disciples | 2 · Fun core | ~20 h | **Gate 2: Fun with placeholders** | [#4](https://github.com/haobui14/LittleMountainSect/issues/4) |
+| M5 | Sect growth | 3 · Full first version | ~20 h | — | [#5](https://github.com/haobui14/LittleMountainSect/issues/5) |
+| M6 | Rivals and history | 3 · Full first version | ~20 h | **Gate 3: Content complete** | [#6](https://github.com/haobui14/LittleMountainSect/issues/6) |
+| M7 | Look, sound and language | 4 · Beta | ~10 h, with art work alongside | — | [#7](https://github.com/haobui14/LittleMountainSect/issues/7) |
+| M8 | Safe launch | 4 · Beta | ~20 h | **Gate 4: Ready for Founding Disciples** | [#8](https://github.com/haobui14/LittleMountainSect/issues/8) |
 
 Art work starts during M5 and runs alongside the other milestones until M7.
 

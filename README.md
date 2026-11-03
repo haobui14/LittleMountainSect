@@ -12,7 +12,34 @@ Claude makes the disciples feel alive: they talk freely, make choices, remember 
 
 ## Status
 
-Planning is done and Milestone 1 (Foundations) is in progress. See the [milestones](docs/MILESTONES.md).
+Planning is done and Milestone 1 (Foundations) is in progress, tracked in [#1](https://github.com/haobui14/LittleMountainSect/issues/1). See the [milestones](docs/MILESTONES.md) for the full plan.
+
+## Working on the game
+
+You need **Godot 4.7.2**, the version pinned in CI. Open `game/project.godot` in the editor, or use the command line from the repo root:
+
+```bash
+godot --headless --path game --import
+```
+
+```bash
+godot --headless --path game -s addons/gut/gut_cmdln.gd
+```
+
+The first command imports assets. The second runs the GUT unit tests.
+
+Database tests need Docker and the Supabase CLI:
+
+```bash
+cd server && npx supabase@3.0.0 db start && npx supabase@3.0.0 test db
+```
+
+CI runs all of these on every push, exports a web build, and keeps it as a downloadable artifact. To publish the build on GitHub Pages:
+
+1. Go to **Settings → Pages** and set the source to "GitHub Actions".
+2. Add the repository variable `DEPLOY_PAGES` with the value `true`.
+
+[CLAUDE.md](CLAUDE.md) lists the project rules that every change follows.
 
 ## Docs
 
