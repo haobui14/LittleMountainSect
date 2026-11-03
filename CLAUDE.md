@@ -68,6 +68,14 @@ Database tests run against the local Supabase stack. They need Docker:
 cd server && npx supabase@3.0.0 db start && npx supabase@3.0.0 test db
 ```
 
+## Hosted services
+
+**Supabase** hosts the project `little-mountain-sect`:
+- Project ref `qeciplcjdlcygcxbeddg`, in us-west-1 (Northern California), on the free plan.
+- Its migration history must match `server/supabase/migrations/`. Apply new migrations with the Supabase connector, or with `supabase db push` after running `supabase link`.
+- If the project records a different version number for a migration, rename the local file to match.
+- Free projects pause after 7 days without use and have no automatic backups.
+
 ## Layout
 
 | Path | Contents |

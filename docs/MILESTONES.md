@@ -70,27 +70,27 @@ Art work starts during M5 and runs alongside the other milestones until M7.
 
 **Goal:** an empty but real project that tests, builds and deploys.
 
-- [ ] Set up the repo skeleton, with `CLAUDE.md` holding the project rules so future Claude sessions follow them.
-- [ ] Create the Godot project on the newest stable 4.7.x:
+- [x] Set up the repo skeleton, with `CLAUDE.md` holding the project rules so future Claude sessions follow them.
+- [x] Create the Godot project on the newest stable 4.7.x:
   - The Compatibility renderer and a single-threaded "Web" export preset
   - GUT for unit tests
   - A seeded random number generator (`SimRng`), the first piece of the rules engine
   - Translation CSV and a round, cute font with every Vietnamese mark
   - A placeholder title screen with an EN/VI toggle and a text box for typing Vietnamese
-- [ ] Create the Supabase schema:
+- [x] Create the Supabase schema:
   - The GDD tables: `players`, `saves`, `memories`, `ai_usage` and `daily_budget`
   - Row-level security on every table
   - Column grants so the client can never change Spirit Energy
   - Anonymous sign-in turned on
   - pgTAP tests for the security rules
-- [ ] Set up CI in GitHub Actions: GUT tests, database tests, a web export, and an optional deploy to GitHub Pages.
-- [ ] Create the hosted Supabase project (free plan) and apply the migration.
+- [x] Set up CI in GitHub Actions: GUT tests, database tests, a web export, and an optional deploy to GitHub Pages.
+- [x] Create the hosted Supabase project (free plan) and apply the migration. This is `little-mountain-sect` in us-west-1 (Northern California), the US region closest to Vietnam.
 - [ ] Turn on GitHub Pages and set the repo variable `DEPLOY_PAGES=true`.
 
 **Exit:**
-- [ ] A push produces a web build.
-- [ ] GUT tests and database tests pass in CI.
-- [ ] The web build runs in a browser, in English and Vietnamese.
+- [x] A push produces a web build.
+- [x] GUT tests and database tests pass in CI.
+- [x] The web build runs in a browser, in English and Vietnamese.
 
 ### M2 — Risk tests · ~15 h
 
@@ -110,6 +110,7 @@ Art work starts during M5 and runs alongside the other milestones until M7.
   - Test Telex and VNI in the web build's text box on Windows (Unikey or EVKey), macOS, Android (Gboard) and iOS.
   - If typing fails, build an HTML `<input>` overlay through `JavaScriptBridge`.
 - [ ] Measure download size and load time on GitHub Pages and on itch.io.
+- [ ] Turn on anonymous sign-ins for the hosted project. In the Supabase dashboard, go to Authentication → Sign In / Providers. The repo's `config.toml` only covers local development.
 - [ ] **AI gateway v0**, as described above, with a CORS allowlist. The daily cap is live from here, so a leaked test link can cost at most $0.60 a day.
 
 #### Gate 1 — The idea works
@@ -324,7 +325,7 @@ If time runs short, cut in this order:
 
 | Decision | Needed before |
 |---|---|
-| OK to create the hosted Supabase project (free plan) | End of M1 |
+| ~~OK to create the hosted Supabase project (free plan)~~ | Done: `little-mountain-sect`, us-west-1 |
 | Turn on GitHub Pages and set the `DEPLOY_PAGES` variable | End of M1 |
 | An Anthropic API key for the game. Is server hosting paid from the $20 budget? Are there API credits from a Max or Team plan? | M2 |
 | A native Vietnamese speaker to rate the Vietnamese chats | Gate 1 |
