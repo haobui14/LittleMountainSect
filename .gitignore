@@ -1,0 +1,23 @@
+# Godot: editor cache and generated files
+.godot/
+*.translation
+export_credentials.cfg
+
+# Build output (web exports, test reports)
+/build/
+
+# Secrets: API keys live in Supabase secrets or a local .env, never in git
+.env
+.env.*
+!.env.example
+
+# Supabase CLI local state
+server/supabase/.temp/
+server/supabase/.branches/
+
+# Tooling
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
