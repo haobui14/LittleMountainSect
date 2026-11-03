@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Keep in sync with CLAUDE.md.
+  GODOT_VERSION: "4.7.2"
+  SUPABASE_CLI_VERSION: "3.0.0"
+
+jobs:
+  godot-tests:
+    name: Godot tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-godot
+        with:
+          version: ${{ env.GODOT_VERSION }}
+
+      - name: Import project
+        run: godot --headless --path game --import
+
+      # Uses game/.gutconfig.json; exits non-zero when any test fails.
+      - name: Run GUT tests
+        run: godot --headless --path game -s addons/gut/gut_cmdln.gd
+
+  db-tests:
+    name: Database tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: supabase/setup-cli@v3
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Start local database and apply migrations
+        run: supabase db start
+
+      - name: Run pgTAP tests
+        run: supabase test db
+
+  web-build:
+    name: Web build
+    needs: godot-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-godot
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          web-templates: "true"
+
+      - name: Import project
+        run: godot --headless --path game --import
+
+      - name: Export the Web build
+        run: |
+          mkdir -p build/web
+          godot --headless --path game --export-release Web ../build/web/index.html
+          test -s build/web/index.html
+          test -s build/web/index.pck
+          test -s build/web/index.wasm
+          du -sh build/web
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: web-build
+          path: build/web
+          if-no-files-found: error
+
+  # Publishes the web build. Runs only on the default branch, and only after
+  # GitHub Pages is turned on (Settings > Pages > Source: GitHub Actions) and
+  # the repository variable DEPLOY_PAGES is set to "true".
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    needs: [web-build, db-tests]
+    if: >-
+      github.event_name == 'push' &&
+      github.ref_name == github.event.repository.default_branch &&
+      vars.DEPLOY_PAGES == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: web-build
+          path: web
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: web
+
+      - id: deployment
+        uses: actions/deploy-pages@v5
