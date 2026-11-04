@@ -1,5 +1,9 @@
-// Typing test check for the M2 title screen. See docs/playtests/typing-test.md.
-// Needs Playwright with Chromium, and the web build served locally.
+// Typing test check for the M2 typing test screen (title screen > "Typing
+// test"). See docs/playtests/typing-test.md. Needs Playwright with Chromium,
+// and the web build served locally. Controls are found by name through
+// window.lmsUi (game/autoload/ui_probe.gd).
+//
+// Usage: node tools/web-check/typing_check.cjs <url> <screenshots-dir>
 const { chromium } = require("playwright");
 
 (async () => {
@@ -18,15 +22,25 @@ const { chromium } = require("playwright");
     if (m.type() === "error") errors.push(m.text());
   });
 
+  // The center of a control the game published in window.lmsUi.
+  const center = async (id) => {
+    const handle = await page.waitForFunction(
+      (name) => globalThis.lmsUi?.items?.[name],
+      id,
+      { timeout: 60000 },
+    );
+    const item = await handle.jsonValue();
+    return [item.x + item.w / 2, item.y + item.h / 2];
+  };
+
   await page.goto(url);
-  await page.waitForFunction(() => !document.getElementById("status"), null, { timeout: 60000 });
-  await page.waitForTimeout(1000);
+  await page.mouse.click(...await center("typing_test"));
+  const [boxX, boxY] = await center("typing_box");
+  const [toggleX, toggleY] = await center("browser_box");
+  await page.waitForTimeout(500);
   await page.screenshot({ path: `${shots}/typing_0_start.png` });
   const report = () => page.evaluate(() => globalThis.lmsTypingReport || "(none)");
   const field = (r, name) => (r.split("\n").find((l) => l.startsWith(name + ":")) || "").trim();
-
-  // Box positions come from the arguments' screenshot; see the coordinates below.
-  const [boxX, boxY, toggleX, toggleY] = process.argv.slice(4).map(Number);
 
   // 1. Godot's box, plain keys.
   await page.mouse.click(boxX, boxY);

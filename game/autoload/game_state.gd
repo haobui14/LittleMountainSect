@@ -53,6 +53,28 @@ func start_planning() -> void:
 	_go("plan")
 
 
+## Everything a disciple can be planned to do, in screen order.
+func choices() -> Array[String]:
+	var out: Array[String] = Balance.HOME_TASKS.duplicate()
+	for mission: String in Balance.MISSIONS:
+		out.append(mission)
+	return out
+
+
+## One tap on the day plan: a home task, or joining a mission's team.
+func choose(id: String, choice: String) -> void:
+	if choice in Balance.HOME_TASKS:
+		plan.set_task(id, choice)
+	else:
+		plan.join_mission(choice, id)
+	Events.state_changed.emit()
+
+
+func choice_of(id: String) -> String:
+	var mission := plan.mission_of(id)
+	return mission if mission != "" else plan.task_of(id)
+
+
 func set_task(id: String, task: String) -> void:
 	plan.set_task(id, task)
 	Events.state_changed.emit()

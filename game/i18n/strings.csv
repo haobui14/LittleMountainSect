@@ -5,7 +5,7 @@ UI_TAGLINE,Found a tiny sect on a leaky mountain.,Lập một tông môn nhỏ t
 UI_GLOSSARY_SAMPLE,Sect · Sect Master · Disciple · Elder · Cultivation · Spirit Stones,Tông môn · Chưởng môn · Đệ tử · Trưởng lão · Tu luyện · Linh thạch
 UI_TYPING_TEST_LABEL,Keyboard test: type some Vietnamese.,Thử bàn phím: gõ vài chữ tiếng Việt.
 UI_TYPING_TEST_PLACEHOLDER,"For example: Chưởng môn, Linh thạch","Ví dụ: Chưởng môn, Linh thạch"
-UI_BUILD_NOTE,Milestone 2 · typing test screen,Cột mốc 2 · màn hình thử gõ phím
+UI_BUILD_NOTE,"Milestone 3 · placeholder screens, no AI yet","Cột mốc 3 · màn hình tạm, chưa có AI"
 UI_TYPING_CODE_POINTS,Code points: %s,Mã ký tự: %s
 UI_TYPING_BROWSER_BOX,Use the browser's text box,Dùng ô nhập của trình duyệt
 UI_TYPING_COPY_REPORT,Copy report,Sao chép báo cáo
@@ -105,3 +105,87 @@ TALK_CLOUD_WATCHER,"{name} (whispering): ‘Master, keep your voice down. The cl
 TALK_STRAY_COLLECTOR,"{name}: ‘Master, if a small spirit beast followed me home, would that be a problem? Asking for a friend.’","{name}: ‘Sư phụ, nếu có một con linh thú nhỏ đi theo đệ tử về nhà thì có sao không ạ? Hỏi giùm bạn thôi.’"
 TALK_HONEST_TO_A_FAULT,"{name}: ‘This talk is nice, Master. Your hair is less nice today, but the talk is nice.’","{name}: ‘Nói chuyện với sư phụ vui lắm. Tóc người hôm nay hơi xấu, nhưng nói chuyện thì vui.’"
 TALK_EARLY_RISER,"{name}: ‘I've been up since before dawn, Master. The roosters are still upset about it.’",{name}: ‘Đệ tử dậy từ trước bình minh rồi sư phụ. Đám gà trống vẫn còn tức.’
+UI_NEW_GAME,New game,Trò chơi mới
+UI_CONTINUE,Continue,Tiếp tục
+UI_TYPING_TEST,Typing test,Thử gõ phím
+UI_SAVE_UNREADABLE,"The saved game couldn't be loaded. It's kept, in case a newer version of the game can read it.","Không tải được bản lưu. Bản lưu vẫn được giữ lại, phòng khi phiên bản mới hơn của trò chơi đọc được."
+UI_BACK,Back,Quay lại
+UI_MENU,Menu,Menu
+UI_DAY,Day {day},Ngày {day}
+UI_STEP_MORNING,Morning,Buổi sáng
+UI_STEP_PLAN,Day plan,Kế hoạch trong ngày
+UI_STEP_FREE_TIME,Free time,Thời gian rảnh
+UI_STEP_RESULTS,Evening,Buổi tối
+UI_NOT_SAVING,Progress isn't being saved on this device.,Tiến trình không được lưu trên thiết bị này.
+UI_TAB_TODAY,Today,Hôm nay
+UI_TAB_MOUNTAIN,Mountain,Ngọn núi
+UI_TAB_DISCIPLES,Disciples,Đệ tử
+UI_PLAN_DAY,Plan the day,Lên kế hoạch
+UI_PLAN_HINT,Choose what each disciple does today. Disciples who pick the same mission go as one team.,Chọn việc cho từng đệ tử hôm nay. Các đệ tử chọn cùng một nhiệm vụ sẽ đi chung một đội.
+UI_AWAY,"Away on {mission}, back by the evening of day {day}.","Đang đi {mission}, về vào tối ngày {day}."
+UI_INJURED,Injured: resting for {days} more days.,Bị thương: còn nghỉ {days} ngày.
+TASK_TRAIN,Train,Tu luyện
+TASK_WORK,Work,Làm việc
+TASK_REST,Rest,Nghỉ ngơi
+UI_TEAM,{mission}: {names}. Likely result: {tier}.,{mission}: {names}. Dự đoán: {tier}.
+TIER_GREAT,great success,thành công rực rỡ
+TIER_SUCCESS,success,thành công
+TIER_PARTIAL,so-so,tàm tạm
+TIER_FAILURE,poor,không tốt
+TIER_DISASTER,disaster,thảm họa
+ERR_TEAM_SIZE,A team needs 1 to 4 disciples.,Mỗi đội cần từ 1 đến 4 đệ tử.
+ERR_PLAN,This plan can't be used yet.,Kế hoạch này chưa dùng được.
+UI_DONE_PLANNING,Done planning,Xong kế hoạch
+UI_FREE_TIME_HINT,"Talk with your disciples. A chat lifts their Mood a little, once a day.","Trò chuyện với các đệ tử. Mỗi ngày một lần, trò chuyện giúp tâm trạng họ khá hơn một chút."
+UI_MOOD,Mood,Tâm trạng
+UI_TALK,Talk,Trò chuyện
+UI_TALKED,Talked today,Đã trò chuyện
+UI_MOOD_UP,+{mood} Mood,+{mood} Tâm trạng
+UI_END_DAY,End the day,Kết thúc ngày
+UI_CHANGES,Today: {changes}.,Hôm nay: {changes}.
+UI_NO_CHANGES,No change in resources today.,Hôm nay tài nguyên không đổi.
+UI_NEXT_MORNING,Next morning,Sáng hôm sau
+RANK_UNKNOWN_MOUNTAIN,Unknown Mountain,Núi Vô Danh
+RANK_RISING_SECT,Rising Sect,Tông Môn Đang Lên
+RANK_FAMOUS_SECT,Famous Sect,Tông Môn Lừng Danh
+BUILDING_MAIN_HALL,Main Hall,Chính điện
+BUILDING_DISCIPLE_HUTS,Disciple Huts,Nhà đệ tử
+BUILDING_TRAINING_YARD,Training Yard,Sân luyện võ
+BUILDING_SPIRIT_FIELD,Spirit Field,Linh điền
+BUILDING_KITCHEN,Kitchen,Nhà bếp
+BUILDING_ALCHEMY_ROOM,Alchemy Room,Đan phòng
+BUILDING_LIBRARY,Library,Tàng thư các
+BUILDING_MISSION_HALL,Mission Hall,Nhiệm vụ đường
+BUILDING_KITCHEN_DESC,Turns Food into better Mood.,Biến Lương thực thành tâm trạng tốt hơn.
+BUILDING_ALCHEMY_ROOM_DESC,Makes pills that help breakthroughs.,Luyện đan dược giúp đột phá.
+BUILDING_LIBRARY_DESC,Teaches new techniques.,Dạy công pháp mới.
+BUILDING_MISSION_HALL_DESC,Unlocks harder missions.,Mở khóa nhiệm vụ khó hơn.
+UI_LOCKED,Coming in a later update.,Sẽ có trong bản cập nhật sau.
+UI_LEVEL,Level {level},Cấp {level}
+UI_NOT_BUILT,Not built yet,Chưa xây
+UI_MAX_LEVEL,Highest level,Cấp cao nhất
+UI_UPGRADE,Upgrade · {cost} Spirit Stones,Nâng cấp · {cost} Linh thạch
+UI_BUILD,Build · {cost} Spirit Stones,Xây · {cost} Linh thạch
+EFFECT_MAIN_HALL,"The sect's rank, and room for {limit} disciples.","Cấp bậc tông môn, chứa được {limit} đệ tử."
+EFFECT_HUTS,Resting gives +{mood} Mood.,Nghỉ ngơi được +{mood} Tâm trạng.
+EFFECT_HUTS_HEAL,Injuries heal twice as fast.,Vết thương lành nhanh gấp đôi.
+EFFECT_TRAINING_YARD,Training is {percent}% faster.,Tu luyện nhanh hơn {percent}%.
+EFFECT_FIELD_NONE,"Without a field, workers forage {food} Food each.","Chưa có ruộng, mỗi người làm việc kiếm được {food} Lương thực."
+EFFECT_FIELD,Each worker grows {food} Food and {herbs} Herbs.,Mỗi người làm việc trồng được {food} Lương thực và {herbs} Thảo dược.
+ROOT_METAL,Metal root,Kim linh căn
+ROOT_WOOD,Wood root,Mộc linh căn
+ROOT_WATER,Water root,Thủy linh căn
+ROOT_FIRE,Fire root,Hỏa linh căn
+ROOT_EARTH,Earth root,Thổ linh căn
+REALM_QI_REFINING,Qi Refining,Luyện Khí
+REALM_FOUNDATION_BUILDING,Foundation Building,Trúc Cơ
+REALM_GOLDEN_CORE,Golden Core,Kim Đan
+REALM_NASCENT_SOUL,Nascent Soul,Nguyên Anh
+UI_PROGRESS,Cultivation,Tu vi
+STAT_TALENT,Talent,Thiên phú
+STAT_BODY,Body,Thể chất
+STAT_SPIRIT,Spirit,Tinh thần
+STAT_WIT,Wit,Trí tuệ
+UI_LOYALTY,Loyalty,Trung thành
+UI_QUIRKS,Quirks: {quirks},Tính cách: {quirks}
+EFFECT_TRAINING_YARD_NONE,Each level makes training {percent}% faster.,Mỗi cấp giúp tu luyện nhanh hơn {percent}%.

@@ -33,6 +33,26 @@ func add_mission(mission: String, team: Array[String]) -> void:
 	missions.append({"mission": mission, "team": team.duplicate()})
 
 
+## Puts a disciple in the team for [param mission], starting the team if
+## needed. Each mission takes one team per day.
+func join_mission(mission: String, id: String) -> void:
+	tasks.erase(id)
+	remove_from_missions(id)
+	for entry in missions:
+		if entry["mission"] == mission:
+			entry["team"].append(id)
+			return
+	missions.append({"mission": mission, "team": [id]})
+
+
+## The mission a disciple is planned for, or "".
+func mission_of(id: String) -> String:
+	for entry in missions:
+		if id in entry["team"]:
+			return String(entry["mission"])
+	return ""
+
+
 func remove_from_missions(id: String) -> void:
 	for entry in missions:
 		entry["team"].erase(id)

@@ -2,7 +2,7 @@
 
 **Question:** can players type Vietnamese into the game's chat box in a web browser, on desktop and on phones?
 
-The web build's title screen has two text boxes to compare:
+The web build's **Typing test** screen, opened from a button on the title screen, has two text boxes to compare:
 - **Godot's box** (the default): Godot's own text field, drawn on the game canvas.
 - **The browser's box:** turn on "Use the browser's text box" to lay a normal HTML text field over it. It uses the browser's own typing support, so input methods behave as they do on any website.
 
@@ -21,7 +21,7 @@ This is a strong hint that Godot's box may fail with some keyboards, but it is n
 ## Steps for each tester
 
 1. Open the test build at https://haobui14.github.io/LittleMountainSect/. Developers can also serve the `web-build` artifact from any CI run locally.
-2. Click **Tiếng Việt** if you like; the language doesn't affect typing.
+2. On the title screen, click **Typing test** (Thử gõ phím). Pick **Tiếng Việt** if you like; the language doesn't affect typing.
 3. **Godot's box:** click it and type the test sentence below with your usual Vietnamese keyboard.
 4. Press **Copy report** and paste the report into the results table, or send it to the developer.
 5. Turn on **Use the browser's text box**, type the same sentence, and copy that report too.
@@ -73,10 +73,12 @@ If 10 MB is still too slow, a custom Godot web build without unused engine modul
 
 ## For developers: the automated check
 
-`tools/web-check/typing_check.cjs` drives both boxes in headless Chromium and prints what the game's report says. It reads `window.lmsTypingReport`, which the web build publishes for this purpose. To run it, export the web build, serve `build/web` on port 8060, then:
+`tools/web-check/typing_check.cjs` drives both boxes in headless Chromium and prints what the game's report says. It reads two things the web build publishes for checks:
+- `window.lmsTypingReport`: the typing report.
+- `window.lmsUi`: each control's name and position.
+
+To run it, export the web build, serve `build/web` on port 8060, then:
 
 ```bash
-node tools/web-check/typing_check.cjs http://127.0.0.1:8060/index.html /tmp 640 465 725 522
+node tools/web-check/typing_check.cjs http://127.0.0.1:8060/index.html /tmp
 ```
-
-The last four numbers are the screen positions of Godot's box and the switch on the 1280×720 test screen.

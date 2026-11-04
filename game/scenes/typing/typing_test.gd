@@ -1,10 +1,13 @@
 extends Control
-## Placeholder title screen, and the Vietnamese typing test for M2.
+## The Vietnamese typing test for M2's device tests, opened from the title
+## screen's "Typing test" button.
 ##
 ## Shows translated text in the game font, switches between English and
 ## Vietnamese, and offers two text boxes: Godot's own, and (on the web) the
 ## browser's native input laid over it. Testers type in each and copy a
 ## report listing every code point, so we can see what their keyboard sent.
+
+signal navigate(target: String)
 
 const TYPING_FONT_PX := 22
 
@@ -14,6 +17,7 @@ const TYPING_FONT_PX := 22
 @onready var _browser_box: CheckButton = %BrowserBox
 @onready var _copy: Button = %CopyReport
 @onready var _code_points: Label = %CodePoints
+@onready var _back: Button = %Back
 
 var _typed := ""
 var _web_input: WebTextInput
@@ -32,6 +36,11 @@ func _ready() -> void:
 	_copy.pressed.connect(_copy_report)
 	_browser_box.visible = WebTextInput.available()
 	_browser_box.toggled.connect(_use_browser_box)
+	_back.pressed.connect(func() -> void: navigate.emit("title"))
+	UiKit.probe(_typing, "typing_box")
+	UiKit.probe(_browser_box, "browser_box")
+	UiKit.probe(_copy, "copy_report")
+	UiKit.probe(_back, "back")
 	_on_typed("")
 
 

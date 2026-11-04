@@ -73,7 +73,7 @@ func _exit_tree() -> void:
 func _process(_delta: float) -> void:
 	if _element == null or _target == null:
 		return
-	var rect := _target.get_screen_transform() * Rect2(Vector2.ZERO, _target.size)
+	var rect := UiKit.window_rect(_target)
 	if rect != _placed_rect:
 		_placed_rect = rect
 		_place(rect)
@@ -96,7 +96,8 @@ func _place(rect: Rect2) -> void:
 			el.style.height = (%f * sy) + 'px';
 			el.style.fontSize = Math.max(16, Math.round(%d * sy)) + 'px';
 		})();
-	""" % [ELEMENT_ID, rect.position.x, rect.position.y, rect.size.x, rect.size.y, _font_px])
+	""" % [ELEMENT_ID, rect.position.x, rect.position.y, rect.size.x, rect.size.y,
+			roundi(_font_px * UiKit.stretch_scale(_target).y)])
 
 
 func _handle_input(_args: Array) -> void:

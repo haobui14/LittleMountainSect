@@ -1,9 +1,9 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scenes/typing/typing_test.gd" id="1_main"]
 [ext_resource type="FontVariation" path="res://assets/fonts/nunito_title.tres" id="2_title_font"]
 
-[node name="Main" type="Control"]
+[node name="TypingTest" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -21,54 +21,63 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.957, 0.925, 0.847, 1)
 
-[node name="Center" type="CenterContainer" parent="."]
+[node name="Scroll" type="ScrollContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+horizontal_scroll_mode = 0
 
-[node name="Column" type="VBoxContainer" parent="Center"]
-custom_minimum_size = Vector2(560, 0)
+[node name="Center" type="CenterContainer" parent="Scroll"]
 layout_mode = 2
-theme_override_constants/separation = 14
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
-[node name="Title" type="Label" parent="Center/Column"]
+[node name="Column" type="VBoxContainer" parent="Scroll/Center"]
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Scroll/Center/Column"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.267, 0.373, 0.337, 1)
 theme_override_fonts/font = ExtResource("2_title_font")
-theme_override_font_sizes/font_size = 56
+theme_override_font_sizes/font_size = 36
 text = "UI_GAME_TITLE"
 horizontal_alignment = 1
 
-[node name="Welcome" type="Label" parent="Center/Column"]
+[node name="Welcome" type="Label" parent="Scroll/Center/Column"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3, 0.25, 0.2, 1)
 theme_override_font_sizes/font_size = 30
 text = "UI_WELCOME"
 horizontal_alignment = 1
+autowrap_mode = 3
 
-[node name="Tagline" type="Label" parent="Center/Column"]
+[node name="Tagline" type="Label" parent="Scroll/Center/Column"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.42, 0.36, 0.3, 1)
 theme_override_font_sizes/font_size = 22
 text = "UI_TAGLINE"
 horizontal_alignment = 1
+autowrap_mode = 3
 
-[node name="Glossary" type="Label" parent="Center/Column"]
+[node name="Glossary" type="Label" parent="Scroll/Center/Column"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.42, 0.36, 0.3, 1)
 theme_override_font_sizes/font_size = 18
 text = "UI_GLOSSARY_SAMPLE"
 horizontal_alignment = 1
+autowrap_mode = 3
 
-[node name="LanguageRow" type="HBoxContainer" parent="Center/Column"]
+[node name="LanguageRow" type="HBoxContainer" parent="Scroll/Center/Column"]
 layout_mode = 2
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="English" type="Button" parent="Center/Column/LanguageRow"]
+[node name="English" type="Button" parent="Scroll/Center/Column/LanguageRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(140, 44)
 layout_mode = 2
@@ -76,7 +85,7 @@ auto_translate_mode = 2
 toggle_mode = true
 text = "English"
 
-[node name="Vietnamese" type="Button" parent="Center/Column/LanguageRow"]
+[node name="Vietnamese" type="Button" parent="Scroll/Center/Column/LanguageRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(140, 44)
 layout_mode = 2
@@ -84,24 +93,25 @@ auto_translate_mode = 2
 toggle_mode = true
 text = "Tiếng Việt"
 
-[node name="TypingLabel" type="Label" parent="Center/Column"]
+[node name="TypingLabel" type="Label" parent="Scroll/Center/Column"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3, 0.25, 0.2, 1)
 theme_override_font_sizes/font_size = 18
 text = "UI_TYPING_TEST_LABEL"
+autowrap_mode = 3
 
-[node name="TypingTest" type="LineEdit" parent="Center/Column"]
+[node name="TypingTest" type="LineEdit" parent="Scroll/Center/Column"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 placeholder_text = "UI_TYPING_TEST_PLACEHOLDER"
 
-[node name="TypingTools" type="HBoxContainer" parent="Center/Column"]
+[node name="TypingTools" type="HBoxContainer" parent="Scroll/Center/Column"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="BrowserBox" type="CheckButton" parent="Center/Column/TypingTools"]
+[node name="BrowserBox" type="CheckButton" parent="Scroll/Center/Column/TypingTools"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -113,25 +123,33 @@ theme_override_colors/font_focus_color = Color(0.3, 0.25, 0.2, 1)
 theme_override_font_sizes/font_size = 16
 text = "UI_TYPING_BROWSER_BOX"
 
-[node name="CopyReport" type="Button" parent="Center/Column/TypingTools"]
+[node name="CopyReport" type="Button" parent="Scroll/Center/Column/TypingTools"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(160, 36)
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "UI_TYPING_COPY_REPORT"
 
-[node name="CodePoints" type="Label" parent="Center/Column"]
+[node name="CodePoints" type="Label" parent="Scroll/Center/Column"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(560, 0)
+custom_minimum_size = Vector2(440, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.42, 0.36, 0.3, 1)
 theme_override_font_sizes/font_size = 13
 text = "UI_TYPING_CODE_POINTS"
 autowrap_mode = 3
 
-[node name="BuildNote" type="Label" parent="Center/Column"]
+[node name="BuildNote" type="Label" parent="Scroll/Center/Column"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.5, 0.45, 1)
 theme_override_font_sizes/font_size = 14
 text = "UI_BUILD_NOTE"
 horizontal_alignment = 1
+
+autowrap_mode = 3
+
+[node name="Back" type="Button" parent="Scroll/Center/Column"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "UI_BACK"

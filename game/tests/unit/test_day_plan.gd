@@ -80,3 +80,19 @@ func test_defaults_repeat_yesterday_and_rest_the_injured() -> void:
 	sect.disciple("b").injure(1)
 	var plan := DayPlan.defaults(sect)
 	assert_eq(plan.tasks, {"a": "train", "b": "rest", "c": "rest"})
+
+
+func test_joining_a_mission_builds_one_team_per_mission() -> void:
+	var sect := SimFixtures.sect()
+	var plan := SimFixtures.plan_all(sect, "train")
+	plan.join_mission("hunt_monster", "a")
+	plan.join_mission("hunt_monster", "b")
+	plan.join_mission("gather_herbs", "c")
+	assert_eq(plan.missions, [
+		{"mission": "hunt_monster", "team": ["a", "b"]},
+		{"mission": "gather_herbs", "team": ["c"]},
+	])
+	assert_eq([plan.mission_of("b"), plan.mission_of("c")], ["hunt_monster", "gather_herbs"])
+	plan.join_mission("gather_herbs", "b")
+	assert_eq(plan.missions[0]["team"], ["a"])
+	assert_eq(plan.validate(sect), [] as Array[String])
