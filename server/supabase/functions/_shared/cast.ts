@@ -44,16 +44,6 @@ export const ACTIONS = [
   "hide",
 ] as const;
 export type Action = typeof ACTIONS[number];
-export const ACTION_DESCRIPTIONS: Record<Action, string> = {
-  train: "practice hard at the Training Yard",
-  rest: "rest in the Disciple Huts",
-  meditate: "meditate to cultivate their spirit",
-  cook: "help in the Kitchen",
-  tend_field: "work in the Spirit Field",
-  study: "read in the Library",
-  explore: "wander the mountain looking for adventure",
-  hide: "hide somewhere until things calm down",
-};
 
 /** Funny traits. A disciple card names one to three of these by id. */
 export const QUIRKS = {
