@@ -39,7 +39,7 @@ func _ready() -> void:
 
 
 func _continue() -> void:
-	if GameState.load_game():
+	if await GameState.load_game():
 		navigate.emit("game")
 		return
 	# Keep the save on disk: a newer version of the game may still read it.

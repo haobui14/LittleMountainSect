@@ -243,7 +243,11 @@ func _call(method: int, path: String, body: Variant, timeout: float, gateway: bo
 			retried = true
 			continue
 		if code == 0:
-			_go_offline()
+			# No answer at all means the server is unreachable; a timeout only
+			# means it was slow, so later calls (like fetching a stored story)
+			# still try.
+			if String(response["error"]) != "timeout":
+				_go_offline()
 			return {"ok": false, "code": 0, "data": null, "error": String(response["error"])}
 		var data: Variant = _parse(response["body"])
 		# The gateway answers 503 with a written line when something broke on

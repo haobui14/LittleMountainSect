@@ -23,11 +23,12 @@ static func migrate(data: Variant) -> Dictionary:
 
 
 ## Version 2 (M4) adds relationships, the disciples' own decisions, chat
-## counters and the save revision.
+## counters, the save revision and the last evening story.
 static func _v1_to_v2(save: Dictionary) -> Dictionary:
 	save["relationships"] = {}
 	save["decisions"] = {}
 	save["revision"] = 0
+	save["evening"] = {}
 	for d: Dictionary in save["disciples"]:
 		d["chat_mood_today"] = 0
 		d["wants"] = ""

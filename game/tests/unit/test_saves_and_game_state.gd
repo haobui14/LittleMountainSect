@@ -5,16 +5,26 @@ extends GutTest
 const PATH := "user://test_save.json"
 
 var _saved_path: String
+var _saved_backend: BackendService
 
 
 func before_each() -> void:
 	SaveStore.delete(PATH)
 	_saved_path = GameState.save_path
 	GameState.save_path = PATH
+	# A server that never answers: everything must still work offline.
+	_saved_backend = GameState.backend
+	var offline := BackendService.new()
+	offline.transport = FakeTransport.new()
+	offline.session_path = "user://test_offline_session.cfg"
+	offline.configure("https://example.test", "pk_test")
+	add_child_autofree(offline)
+	GameState.backend = offline
 
 
 func after_each() -> void:
 	GameState.save_path = _saved_path
+	GameState.backend = _saved_backend
 	SaveStore.delete(PATH)
 
 
@@ -69,10 +79,16 @@ func test_ten_days_play_from_start_to_finish_without_ai() -> void:
 		assert_true(GameState.finish_planning())
 		var someone := GameState.sect.available_disciples()
 		if not someone.is_empty():
-			assert_eq(GameState.talk(someone[0].id), Balance.TALK_MOOD)
+			var line: Dictionary = await GameState.send_chat(someone[0].id, "Hello!")
+			assert_eq(line["source"], "offline", "a written line with no server")
+			assert_eq(line["mood"], Balance.TALK_MOOD)
+		var elder: Dictionary = await GameState.send_chat(GameState.ELDER, "Any advice?")
+		assert_string_starts_with(elder["text"], "Elder Mo Wen")
 		var report := GameState.end_day()
 		assert_not_null(report)
 		assert_eq(GameState.step, "results")
+		assert_eq(GameState.evening_state, "done")
+		assert_eq(GameState.sect.evening["source"], "written")
 		assert_false(ReportText.evening(report, GameState.sect, "en").is_empty())
 		GameState.next_morning()
 	assert_eq(GameState.sect.day, 11)
@@ -81,7 +97,7 @@ func test_ten_days_play_from_start_to_finish_without_ai() -> void:
 	# The save on disk is the game in play, and loads back into it.
 	var expected := GameState.sect.to_dict()
 	GameState.sect = null
-	assert_true(GameState.load_game())
+	assert_true(await GameState.load_game())
 	assert_eq(GameState.sect.to_dict(), expected)
 
 

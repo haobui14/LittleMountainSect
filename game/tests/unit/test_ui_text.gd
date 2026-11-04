@@ -36,6 +36,13 @@ func _key_families() -> Array[String]:
 			keys.append(prefix + quirk.to_upper())
 	for day in range(1, 6):
 		keys.append("ELDER_TIP_%d" % day)
+	for expression in ReportText.CHAT_EXPRESSIONS:
+		for n in [1, 2]:
+			keys.append("CHAT_%s_%d" % [expression.to_upper(), n])
+	for n in [1, 2, 3]:
+		keys.append("ELDER_OFFLINE_%d" % n)
+	for action in Balance.ACTIONS:
+		keys.append("ACTION_" + action.to_upper())
 	return keys
 
 

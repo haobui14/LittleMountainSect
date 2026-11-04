@@ -206,8 +206,8 @@ func _card_grid() -> GridContainer:
 
 
 func _talk(d: Disciple) -> void:
-	var gained := GameState.talk(d.id)
-	_talk_lines[d.id] = "%s  (%s)" % [ReportText.talk_line(d, GameState.sect.day, _locale()), tr("UI_MOOD_UP").format({"mood": gained})]
+	var line: Dictionary = await GameState.send_chat(d.id, "…")
+	_talk_lines[d.id] = "%s  (%s)" % [line.get("text", ""), tr("UI_MOOD_UP").format({"mood": line.get("mood", 0)})]
 
 
 func _end_day() -> void:

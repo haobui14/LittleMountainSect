@@ -26,6 +26,10 @@ var relationships: Dictionary = {}
 var decisions: Dictionary = {}
 ## Goes up on every save; the server keeps the save with the highest one.
 var revision: int = 0
+## The last evening story (AI or written), so a reload can show it and the
+## next morning can use its report: {day, source, story, morning_report,
+## decisions, relationships}, or {}.
+var evening: Dictionary = {}
 
 
 func _init() -> void:
@@ -101,6 +105,7 @@ func to_dict() -> Dictionary:
 		"relationships": relationships.duplicate(),
 		"decisions": decisions.duplicate(true),
 		"revision": revision,
+		"evening": evening.duplicate(true),
 	}
 
 
@@ -136,4 +141,5 @@ static func from_dict(data: Dictionary) -> Sect:
 			"overruled": bool(decision["overruled"]),
 		}
 	s.revision = int(data["revision"])
+	s.evening = DayReport._whole_numbers(data["evening"])
 	return s

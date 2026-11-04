@@ -124,7 +124,49 @@ static func morning(sect: Sect, locale: String) -> Array[String]:
 			lines.append(t("MORNING_READY").format({"name": d.display_name(locale)}))
 	if int(sect.resources["food"]) == 0:
 		lines.append(t("MORNING_NO_FOOD"))
+	# Last night's AI story leaves a morning report and the disciples' decisions.
+	var evening := sect.evening
+	if evening.get("source") == "ai" and int(evening.get("day", 0)) == sect.day - 1:
+		var report_text := String(evening.get("morning_report", ""))
+		if report_text != "":
+			lines.append(report_text)
+		for decision: Dictionary in evening.get("decisions", []):
+			lines.append(decision_line(sect, decision, locale))
 	return lines
+
+
+## "Lin decided to rest today: ‘My arms are noodles.’"
+static func decision_line(sect: Sect, decision: Dictionary, locale: String) -> String:
+	return t("MORNING_DECISION").format({
+		"name": name_of(sect, String(decision["disciple"]), locale),
+		"action": t("ACTION_" + String(decision["action"]).to_upper()),
+		"reason": String(decision.get("reason", "")),
+	})
+
+
+## "Lin and Bao got along better: ‘Shared rice.’"
+static func relationship_line(sect: Sect, change: Dictionary, locale: String) -> String:
+	var key := "EVENING_RELATIONSHIP_UP" if int(change["change"]) > 0 else "EVENING_RELATIONSHIP_DOWN"
+	return t(key).format({
+		"a": name_of(sect, String(change["a"]), locale),
+		"b": name_of(sect, String(change["b"]), locale),
+		"reason": String(change.get("reason", "")),
+	})
+
+
+const CHAT_EXPRESSIONS: Array[String] = ["happy", "sad", "angry", "nervous", "proud", "thinking"]
+
+
+## A written chat line for when the server can't answer: a disciple's quirk
+## line or a line for their mood, or one of the Elder's lines.
+static func offline_chat(d: Disciple, turn: int, locale: String) -> Dictionary:
+	if d == null:
+		return {"text": t("ELDER_OFFLINE_%d" % (turn % 3 + 1)), "expression": "thinking"}
+	var expression: String = "happy" if d.mood >= 3 else ("sad" if d.mood <= -3 else ["nervous", "thinking", "proud"][turn % 3])
+	if turn % 4 == 1:
+		return {"text": talk_line(d, turn, locale), "expression": expression}
+	var key := "CHAT_%s_%d" % [expression.to_upper(), turn % 2 + 1]
+	return {"text": t(key).format({"name": d.display_name(locale)}), "expression": expression}
 
 
 ## A written free-time line from a disciple, chosen by their quirks.

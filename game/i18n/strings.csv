@@ -189,3 +189,29 @@ STAT_WIT,Wit,Trí tuệ
 UI_LOYALTY,Loyalty,Trung thành
 UI_QUIRKS,Quirks: {quirks},Tính cách: {quirks}
 EFFECT_TRAINING_YARD_NONE,Each level makes training {percent}% faster.,Mỗi cấp giúp tu luyện nhanh hơn {percent}%.
+CHAT_HAPPY_1,"{name}: ‘Master! Today feels like a good day. I can't explain it, it just does.’","{name}: ‘Sư phụ! Hôm nay đệ tử thấy vui lắm. Không biết vì sao, chỉ thấy vui thôi.’"
+CHAT_HAPPY_2,"{name}: ‘I'm in such a good mood, I might even sweep the stairs. Might.’",{name}: ‘Đệ tử đang vui đến mức có khi còn đi quét cầu thang. Có khi thôi nha.’
+CHAT_SAD_1,"{name}: ‘Sorry, Master. My heart is a little heavy today. Talking helps, though.’",{name}: ‘Xin lỗi sư phụ. Hôm nay lòng đệ tử hơi nặng. Nhưng nói chuyện cũng đỡ hơn.’
+CHAT_SAD_2,"{name}: ‘Even the rice tasted sad today, Master.’","{name}: ‘Sư phụ ơi, hôm nay đến cơm cũng thấy buồn.’"
+CHAT_ANGRY_1,"{name}: ‘Hmph! Not angry at you, Master. Mostly at the roosters.’",{name}: ‘Hừ! Đệ tử không giận sư phụ đâu. Chủ yếu là giận đám gà trống.’
+CHAT_ANGRY_2,{name}: ‘Someone ate my last bun. I will find them.’,{name}: ‘Ai đó ăn mất cái bánh bao cuối cùng của đệ tử. Đệ tử sẽ tìm ra kẻ đó.’
+CHAT_NERVOUS_1,{name}: ‘M-Master! I wasn't doing anything. Why do you ask?’,{name}: ‘S-sư phụ! Đệ tử không làm gì hết. Sao người hỏi vậy ạ?’
+CHAT_NERVOUS_2,{name}: ‘Is it bad news? It feels like bad news. Is it about the chickens?’,{name}: ‘Có tin xấu hả sư phụ? Nghe như tin xấu. Có phải về đám gà không?’
+CHAT_PROUD_1,"{name}: ‘Master, I trained so hard my sleeves are still sweating.’","{name}: ‘Sư phụ, đệ tử luyện chăm đến mức tay áo vẫn còn ướt mồ hôi.’"
+CHAT_PROUD_2,"{name}: ‘One day they'll write songs about this sect. Short songs, but still.’","{name}: ‘Một ngày nào đó người ta sẽ viết bài hát về tông môn mình. Bài ngắn thôi, nhưng vẫn là bài hát.’"
+CHAT_THINKING_1,"{name}: ‘Master, if a cloud falls asleep, does it rain? I've been wondering.’","{name}: ‘Sư phụ, nếu mây ngủ gật thì có mưa không? Đệ tử thắc mắc mãi.’"
+CHAT_THINKING_2,{name}: ‘I'm thinking very hard about cultivation. And lunch. Mostly cultivation.’,{name}: ‘Đệ tử đang suy nghĩ rất nghiêm túc về tu luyện. Và bữa trưa. Chủ yếu là tu luyện.’
+ELDER_OFFLINE_1,"Elder Mo Wen: ‘Patience the turtle is napping, and so is my wisdom. Ask me again later.’","Mạc Vấn trưởng lão: ‘Rùa Nhẫn Nại đang ngủ trưa, trí tuệ của lão phu cũng vậy. Lát nữa hỏi lại nhé.’"
+ELDER_OFFLINE_2,"Elder Mo Wen: ‘Keep the disciples fed and rested. That is most of what I know, and all of what I remember.’","Mạc Vấn trưởng lão: ‘Cho đệ tử ăn no, ngủ kỹ. Đó là gần hết những gì lão phu biết, và là tất cả những gì lão phu còn nhớ.’"
+ELDER_OFFLINE_3,Elder Mo Wen: ‘Hm? The mists are thick today. Even an Elder can't hear the heavens through them.’,Mạc Vấn trưởng lão: ‘Hửm? Hôm nay sương mù dày quá. Đến Trưởng lão cũng chẳng nghe được thiên ý.’
+MORNING_DECISION,{name} decided to {action} today: ‘{reason}’,{name} quyết định hôm nay sẽ {action}: ‘{reason}’
+EVENING_RELATIONSHIP_UP,{a} and {b} got along better: {reason},{a} và {b} thân nhau hơn: {reason}
+EVENING_RELATIONSHIP_DOWN,{a} and {b} got on each other's nerves: {reason},{a} và {b} hơi bực nhau: {reason}
+ACTION_TRAIN,train,tu luyện
+ACTION_REST,rest,nghỉ ngơi
+ACTION_MEDITATE,meditate,thiền định
+ACTION_COOK,cook,nấu ăn
+ACTION_TEND_FIELD,tend the Spirit Field,chăm Linh điền
+ACTION_STUDY,study,học bài
+ACTION_EXPLORE,explore,đi thám hiểm
+ACTION_HIDE,hide,trốn đi

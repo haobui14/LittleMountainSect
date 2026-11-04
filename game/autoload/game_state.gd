@@ -1,11 +1,22 @@
 extends Node
-## The game in play: the sect, the step of the day, and the plan being made.
-## Screens read from here and call these methods; the rules live in game/sim.
+## The game in play: the sect, the step of the day, the plan being made, the
+## day's chats and the evening story. Screens read from here and call these
+## methods; the rules live in game/sim.
 ##
 ## A day goes: morning (report) -> plan (tasks, missions, upgrades) ->
-## free_time (talk) -> results (what happened, the evening) -> next morning.
+## free_time (chat) -> results (what happened, the evening story) -> morning.
+##
+## AI is never required: when the server can't help (no Spirit Energy, the
+## daily cap, a refusal, or no connection), chats and the evening use written
+## text and the day goes on (CLAUDE.md rule 3).
+
+signal chat_finished(target: String)
+signal evening_finished
+## The save on the server was newer (another tab or device) and was loaded.
+signal loaded_newer_save
 
 const STEPS: Array[String] = ["morning", "plan", "free_time", "results"]
+const ELDER := "elder"
 
 var sect: Sect = null
 var step: String = "morning"
@@ -14,8 +25,25 @@ var plan: DayPlan = null
 var report: DayReport = null
 ## False after a save failed (for example in a private browser window).
 var saving_works: bool = true
-## Tests point this somewhere else so they never touch a player's save.
+## Tests point these somewhere else so they never touch a player's save or
+## the real server.
 var save_path: String = SaveStore.DEFAULT_PATH
+var backend: BackendService = null
+## Today's chats: target ("elder" or a disciple id) -> [{from, text,
+## expression, source, safety}]. Not saved: only memories outlive the day.
+var chats: Dictionary = {}
+## Targets waiting for a reply ("thinking").
+var waiting: Dictionary = {}
+## "idle", "waiting" (the evening story is being written) or "done".
+var evening_state: String = "idle"
+
+var _syncing := false
+var _sync_again := false
+
+
+func _ready() -> void:
+	if backend == null:
+		backend = get_node_or_null("/root/Backend")
 
 
 func has_game() -> bool:
@@ -30,21 +58,28 @@ func has_save() -> bool:
 func new_game(seed_value: int = -1) -> void:
 	if seed_value < 0:
 		seed_value = randi()
+	var previous := _known_revision()
 	sect = NewGame.create(seed_value)
+	# Saves must only move forward, so a new game outranks any older one.
+	sect.revision = previous
 	report = null
+	chats = {}
+	evening_state = "idle"
 	_go("morning")
 	_save()
 
 
-## Loads the saved sect and opens its morning. Returns false (and keeps the
-## current game) when there is no usable save.
+## Loads the newest save, local or on the server, and opens its morning.
+## Returns false (and keeps the current game) when there is no usable save.
 func load_game() -> bool:
-	var result := SaveStore.read(save_path)
-	if not result["ok"]:
+	var local := SaveStore.read(save_path)
+	var best: Sect = local["sect"] if local["ok"] else null
+	var server := await _server_save()
+	if server and (best == null or server.revision > best.revision):
+		best = server
+	if best == null:
 		return false
-	sect = result["sect"]
-	report = sect.last_report
-	_go("morning")
+	_open(best)
 	return true
 
 
@@ -61,12 +96,16 @@ func choices() -> Array[String]:
 	return out
 
 
-## One tap on the day plan: a home task, or joining a mission's team.
+## One tap on the day plan: a home task, or joining a mission's team. Going
+## against a disciple's own decision costs them Mood, once a day.
 func choose(id: String, choice: String) -> void:
 	if choice in Balance.HOME_TASKS:
 		plan.set_task(id, choice)
 	else:
 		plan.join_mission(choice, id)
+	var decided := Decisions.task_for_today(sect, id)
+	if decided != "" and decided != plan.task_of(id):
+		Decisions.overrule(sect, id)
 	Events.state_changed.emit()
 
 
@@ -82,13 +121,6 @@ func set_task(id: String, task: String) -> void:
 
 func add_mission(mission: String, team: Array[String]) -> void:
 	plan.add_mission(mission, team)
-	Events.state_changed.emit()
-
-
-func cancel_mission(mission_index: int) -> void:
-	var entry: Dictionary = plan.missions[mission_index]
-	for id: String in entry["team"].duplicate():
-		plan.set_task(id, "rest")
 	Events.state_changed.emit()
 
 
@@ -113,28 +145,169 @@ func finish_planning() -> bool:
 	return true
 
 
-## Talks with a disciple in free time. Returns the Mood gained (0 if they
-## already talked today).
-func talk(id: String) -> int:
-	var gained := FreeTime.talk(sect.disciple(id))
+# Chat -----------------------------------------------------------------------------
+
+## Sends a chat line to a disciple (by id) or the Elder ("elder"). Returns the
+## reply: {text, expression, source ("ai", "fallback" or "offline"), safety,
+## mood}. Without the server, the reply is a written line.
+func send_chat(target: String, message: String) -> Dictionary:
+	var text := message.strip_edges().left(ChatRules.MAX_MESSAGE_CHARS)
+	if text == "" or waiting.has(target):
+		return {}
+	var d := sect.disciple(target) if target != ELDER else null
+	var history: Array = chats.get_or_add(target, [])
+	var recent := history.map(func(line: Dictionary) -> Dictionary:
+		return {"from": line["from"], "text": String(line["text"]).left(600)})
+	history.append({"from": "player", "text": text})
+	waiting[target] = true
 	Events.state_changed.emit()
-	return gained
+
+	var result := {}
+	if backend:
+		result = await backend.chat(ChatRules.request(d, recent, text, Settings.locale))
+	var data: Variant = result.get("data")
+	var line: Dictionary
+	if result.get("ok", false) and data is Dictionary and data.get("reply") is String:
+		line = {
+			"text": String(data["reply"]),
+			"expression": ChatRules.text_of(data.get("expression"), "thinking"),
+			"source": ChatRules.text_of(data.get("source"), "fallback"),
+			"safety": ChatRules.text_of(data.get("safety"), "ok"),
+		}
+	else:
+		var written := ReportText.offline_chat(d, history.size(), Settings.locale)
+		line = {"text": written["text"], "expression": written["expression"], "source": "offline", "safety": "ok"}
+
+	var mood := {"bonus": 0, "mood": 0}
+	if d:
+		var applied: Dictionary = data if line["source"] == "ai" else {}
+		mood = ChatRules.apply(sect, d, {
+			"safety": line["safety"],
+			"mood_change": applied.get("mood_change", 0),
+			"wants_action": applied.get("wants_action"),
+		})
+	line["from"] = "character"
+	line["mood"] = int(mood["bonus"]) + int(mood["mood"])
+	history.append(line)
+	waiting.erase(target)
+	_save()
+	Events.state_changed.emit()
+	chat_finished.emit(target)
+	return line
 
 
-## Runs the day's rules, saves, and opens the results.
+# The day's end -------------------------------------------------------------------
+
+## Runs the day's rules, saves, opens the results, and starts the evening
+## story. The written evening shows at once; the AI story replaces it when
+## it arrives.
 func end_day() -> DayReport:
 	var result := DayResolver.resolve(sect, plan)
 	if result == null:
 		return null
 	report = result
 	plan = null
+	chats = {}
+	sect.evening = {"day": result.day, "source": "written"}
 	_save()
 	_go("results")
 	Events.day_resolved.emit(result)
+	_fetch_evening(result)
 	return result
 
 
+func _fetch_evening(day_report: DayReport) -> void:
+	evening_state = "waiting"
+	Events.state_changed.emit()
+	var reply := {}
+	if backend:
+		var result: Dictionary = await backend.evening(EveningRules.request(sect, day_report, Settings.locale))
+		var data: Variant = result.get("data")
+		if result.get("ok", false) and data is Dictionary and data.get("source") == "ai":
+			reply = data
+		elif result.get("error", "") in ["timeout", "http_504"]:
+			# The story may have finished on the server after we stopped waiting.
+			var stored: Dictionary = await backend.stored_evening(day_report.day)
+			if stored.get("ok", false) and stored["data"] is Dictionary:
+				reply = stored["data"]
+	if sect.evening.get("day") == day_report.day and reply.get("story") is String:
+		var applied := EveningRules.apply(sect, reply)
+		sect.evening = {
+			"day": day_report.day,
+			"source": "ai",
+			"story": String(reply["story"]),
+			"morning_report": ChatRules.text_of(reply.get("morning_report")),
+			"decisions": applied["decisions"],
+			"relationships": applied["relationships"],
+		}
+		_save()
+	evening_state = "done"
+	Events.state_changed.emit()
+	evening_finished.emit()
+
+
 func next_morning() -> void:
+	if backend:
+		backend.refresh_energy()
+	_go("morning")
+
+
+# Saves -----------------------------------------------------------------------------
+
+## Writes the local save, then the server's copy in the background.
+func _save() -> void:
+	sect.revision += 1
+	saving_works = SaveStore.write(sect, save_path)
+	_sync_server()
+
+
+func _sync_server() -> void:
+	if backend == null:
+		return
+	if _syncing:
+		_sync_again = true
+		return
+	_syncing = true
+	var result: Dictionary = await backend.write_save(sect.to_dict(), sect.revision)
+	if result.get("error", "") == "conflict":
+		var newer := await _server_save()
+		if newer and newer.revision > sect.revision:
+			_open(newer)
+			loaded_newer_save.emit()
+		else:
+			_sync_again = true
+	_syncing = false
+	if _sync_again:
+		_sync_again = false
+		_sync_server()
+
+
+func _server_save() -> Sect:
+	if backend == null:
+		return null
+	var result: Dictionary = await backend.load_save()
+	if not result.get("ok", false) or not result["data"] is Dictionary:
+		return null
+	var migrated := SaveMigration.migrate(result["data"]["data"])
+	return Sect.from_dict(migrated["data"]) if migrated["ok"] else null
+
+
+func _known_revision() -> int:
+	var known := sect.revision if sect else 0
+	var local := SaveStore.read(save_path)
+	if local["ok"]:
+		known = maxi(known, local["sect"].revision)
+	if backend:
+		known = maxi(known, backend.server_revision)
+	return known
+
+
+func _open(loaded: Sect) -> void:
+	sect = loaded
+	report = sect.last_report
+	plan = null
+	chats = {}
+	evening_state = "done" if not sect.evening.is_empty() else "idle"
 	_go("morning")
 
 
@@ -142,7 +315,3 @@ func _go(next_step: String) -> void:
 	assert(next_step in STEPS)
 	step = next_step
 	Events.state_changed.emit()
-
-
-func _save() -> void:
-	saving_works = SaveStore.write(sect, save_path)
