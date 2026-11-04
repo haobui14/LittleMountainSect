@@ -209,6 +209,23 @@ begin
 end;
 $$;
 
+-- A disciple's newest key memories, returned oldest first for the prompt.
+create function public.recent_memories(p_player uuid, p_subject text, p_limit integer)
+returns text[]
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(array_agg(content order by id), '{}')
+  from (
+    select id, content from public.memories
+    where player_id = p_player and subject = p_subject and kind = 'key'
+    order by id desc
+    limit p_limit
+  ) as newest;
+$$;
+
 -- Only the server (service role) may call these functions.
 revoke execute on function public.spend_spirit_energy(uuid, text) from public, anon, authenticated;
 revoke execute on function public.refund_spirit_energy(uuid, text) from public, anon, authenticated;
@@ -217,6 +234,8 @@ revoke execute on function public.record_ai_usage(
 ) from public, anon, authenticated;
 revoke execute on function public.add_memory(uuid, text, text, integer)
   from public, anon, authenticated;
+revoke execute on function public.recent_memories(uuid, text, integer)
+  from public, anon, authenticated;
 
 grant execute on function public.spend_spirit_energy(uuid, text) to service_role;
 grant execute on function public.refund_spirit_energy(uuid, text) to service_role;
@@ -224,3 +243,4 @@ grant execute on function public.record_ai_usage(
   uuid, text, text, integer, integer, integer, integer, numeric, integer, text
 ) to service_role;
 grant execute on function public.add_memory(uuid, text, text, integer) to service_role;
+grant execute on function public.recent_memories(uuid, text, integer) to service_role;

@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(21);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.test'),
@@ -125,6 +125,18 @@ select is(
    where player_id = '00000000-0000-0000-0000-00000000000a' and subject = 'lin'),
   array[3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
   'only the newest 10 memories per disciple are kept'
+);
+
+select is(
+  public.recent_memories('00000000-0000-0000-0000-00000000000a', 'lin', 3),
+  array['memory 10', 'memory 11', 'memory 12'],
+  'recent_memories returns the newest ones, oldest first'
+);
+
+select is(
+  public.recent_memories('00000000-0000-0000-0000-00000000000a', 'nobody', 10),
+  '{}'::text[],
+  'a disciple without memories gets an empty list'
 );
 
 -- Who may call these functions ---------------------------------------------
