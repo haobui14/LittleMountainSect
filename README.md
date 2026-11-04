@@ -12,7 +12,9 @@ Claude makes the disciples feel alive: they talk freely, make choices, remember 
 
 ## Status
 
-Milestone 1 (Foundations) is done except for turning on GitHub Pages ([#1](https://github.com/haobui14/LittleMountainSect/issues/1)). Milestone 2 (Risk tests) is in progress ([#2](https://github.com/haobui14/LittleMountainSect/issues/2)):
+Milestone 1 (Foundations) is done ([#1](https://github.com/haobui14/LittleMountainSect/issues/1)). The test build is live at **https://haobui14.github.io/LittleMountainSect/**.
+
+Milestone 2 (Risk tests) is in progress ([#2](https://github.com/haobui14/LittleMountainSect/issues/2)):
 - The AI gateway is live on Supabase.
 - The AI eval tool and the typing test kit are built.
 - The live AI tests and the device tests come next.
@@ -41,10 +43,7 @@ Database tests need Docker and the Supabase CLI:
 cd server && npx supabase@3.0.0 db start && npx supabase@3.0.0 test db
 ```
 
-CI runs all of these on every push, exports a web build, and keeps it as a downloadable artifact. To publish the build on GitHub Pages:
-
-1. Go to **Settings → Pages** and set the source to "GitHub Actions".
-2. Add the repository variable `DEPLOY_PAGES` with the value `true`.
+CI runs all of these on every push and exports a web build, kept as a downloadable artifact. On the default branch, once every test passes, CI also publishes the build to GitHub Pages at https://haobui14.github.io/LittleMountainSect/ and checks that the live site serves it. Publishing needs Pages' source set to "GitHub Actions" (Settings → Pages) and the repository variable `DEPLOY_PAGES` set to `true`; both are done.
 
 [CLAUDE.md](CLAUDE.md) lists the project rules that every change follows.
 

@@ -160,3 +160,38 @@ jobs:
 
       - id: deployment
         uses: actions/deploy-pages@v5
+
+      # Confirms the live site serves this build, then records what a player
+      # actually downloads. Pages can take a minute to update, so it retries.
+      - name: Check the published site
+        env:
+          SITE: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          want=$(sha256sum web/index.pck | cut -d' ' -f1)
+          got=""
+          for _ in $(seq 1 20); do
+            got=$(curl -fsS --max-time 60 "${SITE}index.pck" | sha256sum | cut -d' ' -f1) || true
+            [ "$got" = "$want" ] && break
+            sleep 15
+          done
+          if [ "$got" != "$want" ]; then
+            echo "::error::${SITE} does not serve this build's index.pck"
+            exit 1
+          fi
+          {
+            echo "### Published at ${SITE}"
+            echo ""
+            echo "| File | Type | Compression | Bytes sent |"
+            echo "|---|---|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for f in index.html index.js index.wasm index.pck; do
+            curl -fsS --max-time 120 -o /dev/null -D "$f.headers" -H 'Accept-Encoding: gzip' \
+              -w '%{content_type}\n%{size_download}\n' "${SITE}$f" > "$f.info"
+            type=$(sed -n 1p "$f.info"); sent=$(sed -n 2p "$f.info")
+            enc=$(tr -d '\r' < "$f.headers" | awk -F': ' 'tolower($1)=="content-encoding" {print $2}')
+            echo "| $f | $type | ${enc:-none} | $(numfmt --to=iec --suffix=B "$sent") |" >> "$GITHUB_STEP_SUMMARY"
+          done
+          if [ "$(sed -n 1p index.wasm.info)" != "application/wasm" ]; then
+            echo "::error::index.wasm must be served as application/wasm"
+            exit 1
+          fi

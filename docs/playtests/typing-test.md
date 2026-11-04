@@ -20,7 +20,7 @@ This is a strong hint that Godot's box may fail with some keyboards, but it is n
 
 ## Steps for each tester
 
-1. Open the test build: GitHub Pages once it's on, or the `web-build` artifact from any CI run, served locally.
+1. Open the test build at https://haobui14.github.io/LittleMountainSect/. Developers can also serve the `web-build` artifact from any CI run locally.
 2. Click **Tiếng Việt** if you like; the language doesn't affect typing.
 3. **Godot's box:** click it and type the test sentence below with your usual Vietnamese keyboard.
 4. Press **Copy report** and paste the report into the results table, or send it to the developer.

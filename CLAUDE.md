@@ -105,6 +105,11 @@ Live evals and the gateway smoke test run in the manual **AI live tests** workfl
 - Free projects pause after 7 days without use and have no automatic backups.
 - The `ai-gateway` Edge Function is deployed with the Supabase connector. Upload every file under `server/supabase/functions/` that it imports, named relative to that folder (`ai-gateway/index.ts`, `_shared/deps.ts` and so on), with entrypoint `ai-gateway/index.ts` and `verify_jwt` on.
 
+**GitHub Pages** serves the web build at https://haobui14.github.io/LittleMountainSect/:
+- CI's `deploy-pages` job publishes it on pushes and manual runs on the default branch, after every test job passes, while the repository variable `DEPLOY_PAGES` is `true`.
+- The job then checks that the live site serves the new build and writes the download sizes to the job summary.
+- Cloud sessions may not reach `*.github.io`; read the job summary instead.
+
 ## Layout
 
 | Path | Contents |

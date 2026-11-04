@@ -85,7 +85,7 @@ Art work starts during M5 and runs alongside the other milestones until M7.
   - pgTAP tests for the security rules
 - [x] Set up CI in GitHub Actions: GUT tests, database tests, a web export, and an optional deploy to GitHub Pages.
 - [x] Create the hosted Supabase project (free plan) and apply the migration. This is `little-mountain-sect` in us-west-1 (Northern California), the US region closest to Vietnam.
-- [ ] Turn on GitHub Pages and set the repo variable `DEPLOY_PAGES=true`.
+- [x] Turn on GitHub Pages and set the repo variable `DEPLOY_PAGES=true`. The build is live at https://haobui14.github.io/LittleMountainSect/.
 
 **Exit:**
 - [x] A push produces a web build.
@@ -329,7 +329,7 @@ If time runs short, cut in this order:
 | Decision | Needed before |
 |---|---|
 | ~~OK to create the hosted Supabase project (free plan)~~ | Done: `little-mountain-sect`, us-west-1 |
-| Turn on GitHub Pages and set the `DEPLOY_PAGES` variable | End of M1 |
+| ~~Turn on GitHub Pages and set the `DEPLOY_PAGES` variable~~ | Done |
 | An Anthropic API key for the game. Is server hosting paid from the $20 budget? Are there API credits from a Max or Team plan? | M2 |
 | A native Vietnamese speaker to rate the Vietnamese chats | Gate 1 |
 | Who makes the art, and the art budget | Gate 2, so the style test can start early in M5 |
