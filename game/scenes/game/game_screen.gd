@@ -134,6 +134,8 @@ func _today(body: VBoxContainer) -> void:
 func _plan(body: VBoxContainer) -> void:
 	var sect := GameState.sect
 	body.add_child(UiKit.label(tr("UI_PLAN_HINT"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+	var cards := _card_grid()
+	body.add_child(cards)
 	for d in sect.disciples:
 		var card := UiKit.card()
 		var box := UiKit.vbox(6)
@@ -151,7 +153,7 @@ func _plan(body: VBoxContainer) -> void:
 				var text := tr("TASK_" + choice.to_upper()) if choice in Balance.HOME_TASKS else ReportText.mission_name(choice)
 				row.add_child(UiKit.choice(text, "choose_%s_%s" % [d.id, choice], current == choice, GameState.choose.bind(d.id, choice)))
 			box.add_child(row)
-		body.add_child(card)
+		cards.add_child(card)
 
 	for entry in GameState.plan.missions:
 		var team: Array = entry["team"]
@@ -173,6 +175,8 @@ func _plan(body: VBoxContainer) -> void:
 func _free_time(body: VBoxContainer) -> void:
 	var sect := GameState.sect
 	body.add_child(UiKit.label(tr("UI_FREE_TIME_HINT"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+	var cards := _card_grid()
+	body.add_child(cards)
 	for d in sect.disciples:
 		if sect.is_away(d.id):
 			continue
@@ -187,8 +191,18 @@ func _free_time(body: VBoxContainer) -> void:
 		box.add_child(row)
 		if _talk_lines.has(d.id):
 			box.add_child(UiKit.label(_talk_lines[d.id], UiKit.SMALL_SIZE))
-		body.add_child(card)
+		cards.add_child(card)
 	body.add_child(UiKit.button(tr("UI_END_DAY"), "end_day", _end_day, true))
+
+
+## Disciple cards side by side when the screen is wide enough.
+func _card_grid() -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = UiKit.columns(self, 380.0, 3)
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return grid
 
 
 func _talk(d: Disciple) -> void:
