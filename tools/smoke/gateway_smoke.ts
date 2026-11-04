@@ -1,6 +1,7 @@
 // End-to-end smoke test of the deployed AI gateway. Signs in anonymously,
-// then checks sign-in, validation, a chat line and an Elder question.
-// Each run creates one anonymous player and spends 2 Spirit Energy.
+// then checks sign-in, validation, a chat line, an Elder question and an
+// evening story, asked twice: the second answer is the stored story, free.
+// Each run creates one anonymous player and spends 5 Spirit Energy.
 //
 //   deno run --allow-read=game/config --allow-net=<project host> tools/smoke/gateway_smoke.ts
 
@@ -123,6 +124,109 @@ check(
   `left ${line.json.spirit_energy_left}`,
 );
 console.log(`     Lin: ${line.json.reply}`);
+check(
+  "the English reply uses no Vietnamese forms of address",
+  !/sư phụ|lão phu|đệ tử|chưởng môn/i.test(String(line.json.reply)),
+);
+
+// Evening story (3 Spirit Energy) ------------------------------------------------
+
+const allowed: Record<string, string[]> = {
+  "smoke-lin": ["train", "rest", "meditate", "cook"],
+  "smoke-bao": ["rest", "hide"],
+};
+const evening = {
+  kind: "evening",
+  locale: "en",
+  game_day: 1,
+  sect: { rank: "unknown_mountain", resources: { stones: 30, food: 18, herbs: 1, reputation: 0 } },
+  disciples: [
+    { card: chat.disciple, allowed_actions: allowed["smoke-lin"] },
+    {
+      card: {
+        ...chat.disciple,
+        id: "smoke-bao",
+        name: "Bao Tian",
+        pronouns: "he",
+        quirks: ["dramatic"],
+      },
+      allowed_actions: allowed["smoke-bao"],
+    },
+  ],
+  relationships: [{ a: "smoke-lin", b: "smoke-bao", score: 3 }],
+  facts: [
+    { type: "trained", disciple: "smoke-lin", gain: 12, ready: false },
+    { type: "worked", disciples: ["smoke-bao"], food: 3, herbs: 1 },
+    { type: "ate", food: 2 },
+  ],
+};
+
+interface Decision {
+  disciple_id: string;
+  action: string;
+}
+interface Change {
+  change: number;
+}
+
+const story = await callGateway(evening, token);
+check("the evening story arrives", story.status === 200, `status ${story.status}, ${story.ms} ms`);
+check(
+  "the story comes from Claude and is new",
+  story.json.source === "ai" && story.json.stored === false,
+  `source ${story.json.source}, stored ${story.json.stored}`,
+);
+check(
+  "it has a story and a morning report",
+  typeof story.json.story === "string" && story.json.story.length > 0 &&
+    typeof story.json.morning_report === "string" && story.json.morning_report.length > 0,
+);
+const decisions = (story.json.decisions ?? []) as Decision[];
+check(
+  "at most 2 decisions, each an allowed action",
+  decisions.length <= 2 && decisions.every((d) => allowed[d.disciple_id]?.includes(d.action)),
+  JSON.stringify(decisions.map((d) => `${d.disciple_id}:${d.action}`)),
+);
+const changes = (story.json.relationship_changes ?? []) as Change[];
+check(
+  "relationship changes are within -2..2",
+  changes.every((c) => c.change !== 0 && Math.abs(c.change) <= 2),
+  JSON.stringify(changes.map((c) => c.change)),
+);
+check(
+  "the evening costs 3 Spirit Energy",
+  story.json.spirit_energy_left === 45,
+  `left ${story.json.spirit_energy_left}`,
+);
+console.log(`     Story: ${String(story.json.story).slice(0, 160)}…`);
+
+const again = await callGateway(evening, token);
+check(
+  "asking again returns the stored story",
+  again.status === 200 && again.json.stored === true && again.json.story === story.json.story,
+  `status ${again.status}, stored ${again.json.stored}`,
+);
+
+const energy = await fetch(`${backend.supabase_url}/rest/v1/rpc/spirit_energy_status`, {
+  method: "POST",
+  headers: {
+    apikey: backend.publishable_key,
+    authorization: `Bearer ${token}`,
+    "content-type": "application/json",
+  },
+  body: "{}",
+});
+const status = await energy.json();
+check(
+  "the stored story was free",
+  energy.ok && status.left === 45,
+  `status ${energy.status}, left ${status.left}`,
+);
+check(
+  "Spirit Energy shows the evening's price",
+  status.costs?.evening === 3,
+  `costs ${JSON.stringify(status.costs)}`,
+);
 
 if (failures.length > 0) {
   console.error(`\n${failures.length} check(s) failed.`);

@@ -65,6 +65,24 @@ function fallbackBody(
   };
 }
 
+/**
+ * JSON with every object's keys sorted. Postgres jsonb reorders keys, so a
+ * stored copy only compares equal to the original this way.
+ */
+export function canonical(value: unknown): string {
+  return JSON.stringify(
+    value,
+    (_key, v) =>
+      v !== null && typeof v === "object" && !Array.isArray(v)
+        ? Object.fromEntries(
+          Object.entries(v as Record<string, unknown>).sort(([a], [b]) =>
+            a < b ? -1 : a > b ? 1 : 0
+          ),
+        )
+        : v,
+  );
+}
+
 /** One structured log line per request: metadata only, never chat text. */
 function log(fields: Record<string, unknown>) {
   console.log(JSON.stringify({ fn: "ai-gateway", ...fields }));
@@ -288,7 +306,7 @@ async function handleEvening(
     }
     const kept = await deps.db.storeEveningStory(playerId, request.game_day, reply);
     let left = spend.spirit_energy_left;
-    if (JSON.stringify(kept) !== JSON.stringify(reply)) {
+    if (canonical(kept) !== canonical(reply)) {
       // Another request for the same day finished first and was stored; it
       // was already paid for, so this one is refunded.
       left = await deps.db.refund(playerId, "evening");

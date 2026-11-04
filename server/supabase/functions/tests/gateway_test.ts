@@ -1,8 +1,8 @@
-import { assert, assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
+import { assert, assertEquals, assertNotEquals, assertStringIncludes } from "jsr:@std/assert@1";
 import { Anthropic } from "../_shared/deps.ts";
 import type { MessagesClient } from "../_shared/claude.ts";
 import type { GatewayDb, SpendResult, UsageEntry } from "../ai-gateway/db.ts";
-import { type GatewayDeps, handleGateway } from "../ai-gateway/handler.ts";
+import { canonical, type GatewayDeps, handleGateway } from "../ai-gateway/handler.ts";
 
 const PLAYER = "00000000-0000-0000-0000-00000000000a";
 
@@ -72,6 +72,16 @@ function fakeClaude(result: Anthropic.Message | Error) {
   return { client, bodies };
 }
 
+/** A copy with keys in the order Postgres jsonb keeps them: shorter keys
+ * first, then by bytes. */
+function jsonb(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(jsonb);
+  if (value === null || typeof value !== "object") return value;
+  const entries = Object.entries(value as Record<string, unknown>);
+  entries.sort(([a], [b]) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0));
+  return Object.fromEntries(entries.map(([k, v]) => [k, jsonb(v)]));
+}
+
 function fakeDb(spend: SpendResult = { ok: true, reason: "ok", spirit_energy_left: 49 }) {
   const calls = {
     usage: [] as UsageEntry[],
@@ -102,7 +112,7 @@ function fakeDb(spend: SpendResult = { ok: true, reason: "ok", spirit_energy_lef
     },
     getEveningStory: (_player, gameDay) => Promise.resolve(calls.stories.get(gameDay) ?? null),
     storeEveningStory: (_player, gameDay, story) => {
-      if (!calls.stories.has(gameDay)) calls.stories.set(gameDay, story);
+      if (!calls.stories.has(gameDay)) calls.stories.set(gameDay, jsonb(story));
       return Promise.resolve(calls.stories.get(gameDay));
     },
   };
@@ -356,6 +366,28 @@ Deno.test("an evening story is checked, stored, remembered and paid for once", a
   assertEquals(again.story, first.story);
   assertEquals(bodies.length, 1, "Claude was called once");
   assertEquals(calls.usage.length, 1, "and paid for once");
+});
+
+Deno.test("when another request stored the day's story first, this one is refunded", async () => {
+  const { db, calls } = fakeDb();
+  const earlier = jsonb(JSON.parse(story({ story: "The first tab's story." })));
+  calls.stories.set(3, earlier);
+  // This request started before the other one was stored.
+  db.getEveningStory = () => Promise.resolve(null);
+  const body = await (await handleGateway(
+    post(eveningBody),
+    PLAYER,
+    deps(db, fakeClaude(claudeMessage(story())).client),
+  ))
+    .json();
+  assertEquals([body.source, body.story], ["ai", "The first tab's story."]);
+  assertEquals(calls.refunds, 1, "the second story was not kept, so it is not paid for");
+  assertEquals(body.spirit_energy_left, 50);
+});
+
+Deno.test("canonical JSON ignores key order", () => {
+  assertEquals(canonical({ b: 1, a: [{ d: 2, c: 3 }] }), canonical({ a: [{ c: 3, d: 2 }], b: 1 }));
+  assertNotEquals(canonical({ a: [1, 2] }), canonical({ a: [2, 1] }));
 });
 
 Deno.test("a refused or broken evening story is refunded and falls back", async () => {
