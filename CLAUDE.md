@@ -107,8 +107,8 @@ Live evals and the gateway smoke test run in the manual **AI live tests** workfl
 
 **GitHub Pages** serves the web build at https://haobui14.github.io/LittleMountainSect/:
 - CI's `deploy-pages` job publishes it on pushes and manual runs on the default branch, after every test job passes, while the repository variable `DEPLOY_PAGES` is `true`.
-- The job then checks that the live site serves the new build and writes the download sizes to the job summary.
-- Cloud sessions may not reach `*.github.io`; read the job summary instead.
+- The job then checks that the live site serves the new build, and prints the download sizes to its log and job summary.
+- Cloud sessions may not reach `*.github.io`. Read the deploy job's log instead; the API doesn't expose job summaries.
 
 ## Layout
 
