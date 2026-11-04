@@ -10,3 +10,98 @@ UI_TYPING_CODE_POINTS,Code points: %s,Mã ký tự: %s
 UI_TYPING_BROWSER_BOX,Use the browser's text box,Dùng ô nhập của trình duyệt
 UI_TYPING_COPY_REPORT,Copy report,Sao chép báo cáo
 UI_TYPING_COPIED,Copied!,Đã sao chép!
+UI_AND, and , và 
+RES_STONES,Spirit Stones,Linh thạch
+RES_FOOD,Food,Lương thực
+RES_HERBS,Herbs,Thảo dược
+RES_REPUTATION,Reputation,Danh vọng
+MISSION_GATHER_HERBS,Gather Herbs,Hái thảo dược
+MISSION_HUNT_MONSTER,Hunt a Monster,Săn yêu thú
+FACT_TRAINED,{name} trained: +{gain} cultivation progress.,{name} tu luyện: +{gain} tiến độ tu vi.
+FACT_TRAINED_READY,{name} trained and is ready to break through!,{name} tu luyện và đã sẵn sàng đột phá!
+FACT_WORKED_FIELD,"{names} worked the Spirit Field: +{food} Food, +{herbs} Herbs.","{names} làm việc ở Linh điền: +{food} Lương thực, +{herbs} Thảo dược."
+FACT_WORKED_FORAGE,{names} foraged on the slopes: +{food} Food.,{names} đi kiếm ăn trên sườn núi: +{food} Lương thực.
+FACT_RESTED,{names} rested.,{names} nghỉ ngơi.
+FACT_HEALED,{name} is healed and back on their feet.,{name} đã lành vết thương.
+FACT_MISSION_DEPARTED,{names} set out on a mission: {mission}. Back by the evening of day {day}.,{names} lên đường làm nhiệm vụ: {mission}. Về vào tối ngày {day}.
+FACT_MISSION_GREAT,{names} came back from {mission}: a great success!,{names} trở về từ nhiệm vụ {mission}: thành công rực rỡ!
+FACT_MISSION_SUCCESS,{names} came back from {mission}: a success.,{names} trở về từ nhiệm vụ {mission}: thành công.
+FACT_MISSION_PARTIAL,{names} came back from {mission}: it went so-so.,{names} trở về từ nhiệm vụ {mission}: kết quả tàm tạm.
+FACT_MISSION_FAILURE,{names} came back from {mission}: it didn't go well.,{names} trở về từ nhiệm vụ {mission}: không suôn sẻ lắm.
+FACT_MISSION_DISASTER,"{names} came back from {mission}: a disaster, but everyone is home.","{names} trở về từ nhiệm vụ {mission}: một thảm họa, nhưng ai cũng về nhà an toàn."
+FACT_REWARDS,Gained {rewards}.,Thu được {rewards}.
+FACT_INJURED,{name} was injured and must rest for {days} days.,"{name} bị thương, phải nghỉ {days} ngày."
+FACT_LOST_CULTIVATION,{name} lost {amount} cultivation progress.,{name} mất {amount} tiến độ tu vi.
+FACT_ATE,The sect ate {food} Food.,Tông môn ăn hết {food} Lương thực.
+FACT_HUNGRY,Not enough Food! {names} went to bed hungry.,Không đủ Lương thực! {names} phải đi ngủ với cái bụng đói.
+MORNING_DAY,Day {day} on the mountain.,Ngày thứ {day} trên núi.
+MORNING_FIRST,"A leaky hut, three hopeful disciples, a small bag of Spirit Stones and one strange Elder. Your sect begins today.","Một túp lều dột, ba đệ tử đầy hy vọng, một túi Linh thạch nhỏ và một vị Trưởng lão kỳ quặc. Tông môn của người bắt đầu từ hôm nay."
+ELDER_TIP_1,Elder Mo Wen: ‘Build the Spirit Field first. A hungry disciple trains like a sleepy turtle.’,Mạc Vấn trưởng lão: ‘Xây Linh điền trước đi. Đệ tử đói thì tu luyện chậm như rùa ngủ gật.’
+ELDER_TIP_2,"Elder Mo Wen: ‘Send two disciples to Gather Herbs together. Alone, even the herbs win.’",Mạc Vấn trưởng lão: ‘Cử hai đệ tử cùng đi Hái thảo dược. Đi một mình thì đến cỏ cũng thắng.’
+ELDER_TIP_3,"Elder Mo Wen: ‘Hunt a Monster pays in Spirit Stones. Send your strongest, well fed and well rested.’","Mạc Vấn trưởng lão: ‘Săn yêu thú được trả bằng Linh thạch. Hãy cử người mạnh nhất, ăn no ngủ kỹ.’"
+ELDER_TIP_4,"Elder Mo Wen: ‘An unhappy disciple needs rest, not a lecture. Better Huts make rest better.’","Mạc Vấn trưởng lão: ‘Đệ tử buồn cần nghỉ ngơi, không cần nghe giảng. Nhà đệ tử tốt thì nghỉ ngơi cũng tốt hơn.’"
+ELDER_TIP_5,"Elder Mo Wen: ‘Talk with each disciple in free time. Once a day, it lifts their mood. Patience the turtle agrees.’","Mạc Vấn trưởng lão: ‘Lúc rảnh hãy trò chuyện với từng đệ tử. Mỗi ngày một lần, tâm trạng họ sẽ khá hơn. Rùa Nhẫn Nại cũng đồng ý.’"
+MORNING_AWAY,On a mission ({mission}): {names}. Back by the evening of day {day}.,Đang làm nhiệm vụ ({mission}): {names}. Về vào tối ngày {day}.
+MORNING_INJURED,{name} is resting an injury: {days} more days.,{name} đang dưỡng thương: còn {days} ngày.
+MORNING_READY,{name} is ready to break through. (Breakthroughs arrive in a later update.),{name} đã sẵn sàng đột phá. (Đột phá sẽ có trong bản cập nhật sau.)
+MORNING_NO_FOOD,"The storehouse is empty. Put someone to work, or the disciples go hungry tonight.","Kho đã trống. Hãy cho ai đó đi làm việc, không thì tối nay các đệ tử sẽ đói."
+QUIRK_AFRAID_OF_CHICKENS,afraid of chickens,sợ gà
+QUIRK_CHOSEN_ONE,certain they are the chosen one,tin chắc mình là người được chọn
+QUIRK_ALWAYS_HUNGRY,"always hungry, especially while meditating","lúc nào cũng đói, nhất là khi đang thiền"
+QUIRK_TALKS_TO_SWORD,"talks to their sword, which has never answered","hay nói chuyện với thanh kiếm, dù nó chưa từng đáp lời"
+QUIRK_OVERLY_POLITE,apologizes to doors after bumping into them,va vào cửa xong còn xin lỗi cái cửa
+QUIRK_SECRET_POET,writes terrible poems in secret,lén làm thơ dở tệ
+QUIRK_LAZY_GENIUS,"brilliant, but naps through every lesson",thiên tài nhưng ngủ gật trong mọi buổi học
+QUIRK_GOSSIP,knows every rumor on the mountain,biết hết mọi tin đồn trên núi
+QUIRK_COMPETITIVE,turns everything into a competition,chuyện gì cũng biến thành cuộc thi
+QUIRK_CLUMSY_ALCHEMIST,every pill they make explodes a little,luyện viên đan nào cũng nổ một chút
+QUIRK_HERB_WHISPERER,believes herbs have feelings,tin rằng thảo dược cũng có cảm xúc
+QUIRK_HUMBLE_BRAGGER,brags by pretending to be humble,khoe khoang bằng cách giả vờ khiêm tốn
+QUIRK_STONE_COUNTER,counts Spirit Stones to fall asleep,phải đếm Linh thạch mới ngủ được
+QUIRK_DRAMATIC,describes every scratch as a mortal wound,trầy xước nhẹ cũng kể như trọng thương
+QUIRK_GRUDGE_KEEPER,keeps a list of everyone who ever insulted them,có cuốn sổ ghi tên tất cả những ai từng chê mình
+QUIRK_SUPERSTITIOUS,reads omens in their breakfast,đọc điềm báo trong bữa sáng
+QUIRK_CLOUD_WATCHER,is convinced the clouds are spying on the sect,tin chắc mây đang theo dõi tông môn
+QUIRK_STRAY_COLLECTOR,keeps adopting stray spirit beasts,hay nhặt linh thú hoang về nuôi
+QUIRK_HONEST_TO_A_FAULT,"cannot tell a lie, not even a kind one","không biết nói dối, kể cả lời nói dối thiện ý"
+QUIRK_EARLY_RISER,wakes before the roosters and resents them for it,dậy sớm hơn cả gà trống và rất bực vì điều đó
+EVENING_AFRAID_OF_CHICKENS,{name} checked that the chicken coop was locked. Twice. Then three more times.,{name} kiểm tra chuồng gà đã khóa chưa. Hai lần. Rồi thêm ba lần nữa.
+EVENING_CHOSEN_ONE,{name} told the stars about their destiny. The stars did not reply.,{name} kể cho các vì sao nghe về thiên mệnh của mình. Các vì sao không trả lời.
+EVENING_ALWAYS_HUNGRY,{name} was found meditating very close to the kitchen.,Người ta bắt gặp {name} ngồi thiền rất gần nhà bếp.
+EVENING_TALKS_TO_SWORD,"{name} wished their sword good night. The sword stayed quiet, as usual.",{name} chúc thanh kiếm ngủ ngon. Thanh kiếm vẫn im lặng như mọi khi.
+EVENING_OVERLY_POLITE,"{name} apologized to a door, a broom and, briefly, the moon.","{name} xin lỗi một cánh cửa, một cây chổi và, thoáng qua, cả mặt trăng."
+EVENING_SECRET_POET,{name} wrote a poem about rice. It did not rhyme. It was very sincere.,{name} viết một bài thơ về cơm. Không vần. Nhưng rất chân thành.
+EVENING_LAZY_GENIUS,"{name} solved a hard technique in their sleep, then forgot it on waking.","{name} nghĩ ra một chiêu khó trong lúc ngủ, rồi quên sạch khi tỉnh dậy."
+EVENING_GOSSIP,{name} heard three new rumors before dinner. Two were about the Elder's turtle.,{name} nghe được ba tin đồn mới trước bữa tối. Hai tin là về con rùa của Trưởng lão.
+EVENING_COMPETITIVE,{name} challenged the evening breeze to a race and declared victory.,{name} thách cơn gió chiều chạy đua và tự tuyên bố thắng cuộc.
+EVENING_CLUMSY_ALCHEMIST,{name} made tea. It exploded a little. Nobody was surprised.,{name} pha trà. Ấm trà nổ một chút. Không ai ngạc nhiên.
+EVENING_HERB_WHISPERER,{name} said good night to every herb by name.,"{name} chúc từng cây thảo dược ngủ ngon, gọi đúng tên từng cây."
+EVENING_HUMBLE_BRAGGER,{name} sighed that being this talented is very tiring.,{name} thở dài rằng tài giỏi như mình thật là mệt.
+EVENING_STONE_COUNTER,"{name} counted the Spirit Stones before bed. Same as yesterday, which somehow felt worse.","{name} đếm Linh thạch trước khi ngủ. Vẫn bằng hôm qua, mà sao thấy buồn hơn."
+EVENING_DRAMATIC,{name} described a splinter as ‘the wound that changed everything’.,{name} kể về một cái dằm như ‘vết thương thay đổi tất cả’.
+EVENING_GRUDGE_KEEPER,{name} added a cloud to their list of enemies.,{name} ghi thêm một đám mây vào sổ kẻ thù.
+EVENING_SUPERSTITIOUS,{name} saw a bad omen in the soup and refused to eat the carrots.,{name} thấy điềm xấu trong bát canh nên không chịu ăn cà rốt.
+EVENING_CLOUD_WATCHER,{name} reported that one cloud has been following the sect all day.,{name} báo cáo rằng có một đám mây theo dõi tông môn suốt cả ngày.
+EVENING_STRAY_COLLECTOR,{name} came back with a small spirit beast and promised it was ‘just visiting’.,{name} mang về một con linh thú nhỏ và hứa là nó ‘chỉ ghé chơi thôi’.
+EVENING_HONEST_TO_A_FAULT,"{name} told the cook that dinner was ‘fine, but only fine’.","{name} nói với người nấu rằng bữa tối ‘được, nhưng chỉ được thôi’."
+EVENING_EARLY_RISER,"{name} went to bed early, to beat the roosters again tomorrow.",{name} đi ngủ sớm để mai lại dậy sớm hơn đám gà trống.
+TALK_AFRAID_OF_CHICKENS,"{name}: ‘Master, is it safe? Did you see any chickens on your way here?’","{name}: ‘Sư phụ, ở đây an toàn chứ? Trên đường tới người có thấy con gà nào không?’"
+TALK_CHOSEN_ONE,"{name}: ‘Master, I had the dream again. I was very important in it.’","{name}: ‘Sư phụ, đệ tử lại mơ nữa rồi. Trong mơ đệ tử quan trọng lắm.’"
+TALK_ALWAYS_HUNGRY,"{name}: ‘Talking makes me hungry, Master. Everything makes me hungry.’","{name}: ‘Nói chuyện làm đệ tử đói, sư phụ ạ. Cái gì cũng làm đệ tử đói.’"
+TALK_TALKS_TO_SWORD,"{name}: ‘My sword says hello, Master. Well, it would, if it talked.’","{name}: ‘Thanh kiếm của đệ tử gửi lời chào sư phụ. À, nếu nó biết nói thì sẽ chào.’"
+TALK_OVERLY_POLITE,"{name}: ‘Thank you for talking with me, Master. And sorry. And thank you.’",{name}: ‘Cảm ơn sư phụ đã trò chuyện. Xin lỗi ạ. Và cảm ơn ạ.’
+TALK_SECRET_POET,"{name}: ‘No, Master, I wasn't writing anything. This paper was already covered in ink.’","{name}: ‘Không, sư phụ, đệ tử không viết gì đâu. Tờ giấy này tự dính mực đấy ạ.’"
+TALK_LAZY_GENIUS,"{name} (yawning): ‘I heard every word, Master. Probably.’",{name} (ngáp): ‘Đệ tử nghe hết từng chữ đó sư phụ. Chắc vậy.’
+TALK_GOSSIP,"{name}: ‘Master, have you heard? No? Then sit down, this takes a while.’","{name}: ‘Sư phụ nghe tin gì chưa? Chưa à? Vậy người ngồi xuống đi, chuyện dài lắm.’"
+TALK_COMPETITIVE,"{name}: ‘Master, who do you talk with more, me or the others? Be honest.’","{name}: ‘Sư phụ, người nói chuyện với ai nhiều hơn, đệ tử hay mấy người kia? Nói thật đi ạ.’"
+TALK_CLUMSY_ALCHEMIST,"{name}: ‘The smoke is gone now, Master. Mostly. Please don't open that cupboard.’",{name}: ‘Khói tan rồi sư phụ. Gần hết rồi. Người đừng mở cái tủ đó nhé.’
+TALK_HERB_WHISPERER,"{name}: ‘The herbs are happy today, Master. They told me.’",{name}: ‘Hôm nay thảo dược vui lắm sư phụ. Chúng nói với đệ tử đó.’
+TALK_HUMBLE_BRAGGER,"{name}: ‘I only trained twice as hard as everyone, Master. It's nothing.’","{name}: ‘Đệ tử chỉ luyện chăm gấp đôi mọi người thôi, sư phụ. Có gì đâu ạ.’"
+TALK_STONE_COUNTER,"{name}: ‘Master, I counted our Spirit Stones again. Would you like to hear the number? Slowly?’","{name}: ‘Sư phụ, đệ tử vừa đếm lại Linh thạch. Người muốn nghe con số không? Đọc chậm nhé?’"
+TALK_DRAMATIC,"{name}: ‘Master, I stubbed my toe this morning. I may never walk the same again.’","{name}: ‘Sư phụ, sáng nay đệ tử vấp ngón chân. Có lẽ cả đời này không đi lại bình thường được nữa.’"
+TALK_GRUDGE_KEEPER,"{name}: ‘Don't worry, Master, you're not on my list. Yet.’","{name}: ‘Sư phụ yên tâm, người chưa có tên trong sổ của đệ tử. Chưa thôi.’"
+TALK_SUPERSTITIOUS,"{name}: ‘My porridge made a face at me this morning, Master. A worried face.’","{name}: ‘Sáng nay bát cháo nhìn đệ tử với vẻ mặt lo lắng, sư phụ ạ.’"
+TALK_CLOUD_WATCHER,"{name} (whispering): ‘Master, keep your voice down. The clouds are listening.’",{name} (thì thầm): ‘Sư phụ nói nhỏ thôi. Mây đang nghe lén đấy.’
+TALK_STRAY_COLLECTOR,"{name}: ‘Master, if a small spirit beast followed me home, would that be a problem? Asking for a friend.’","{name}: ‘Sư phụ, nếu có một con linh thú nhỏ đi theo đệ tử về nhà thì có sao không ạ? Hỏi giùm bạn thôi.’"
+TALK_HONEST_TO_A_FAULT,"{name}: ‘This talk is nice, Master. Your hair is less nice today, but the talk is nice.’","{name}: ‘Nói chuyện với sư phụ vui lắm. Tóc người hôm nay hơi xấu, nhưng nói chuyện thì vui.’"
+TALK_EARLY_RISER,"{name}: ‘I've been up since before dawn, Master. The roosters are still upset about it.’",{name}: ‘Đệ tử dậy từ trước bình minh rồi sư phụ. Đám gà trống vẫn còn tức.’
