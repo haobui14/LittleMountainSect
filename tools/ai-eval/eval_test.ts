@@ -46,7 +46,7 @@ function fakeClaude(chatReply: (prompt: string) => Record<string, unknown>): Mes
           return Promise.resolve(message(JSON.stringify({
             story: "A day.",
             morning_report: "Tomorrow.",
-            decisions: [{ disciple_id: "lin", action: "rest", reason: "Tired." }],
+            decisions: [],
             memories: [],
             relationship_changes: [{ from: "lin", to: "bao", change: 1, reason: "Shared rice." }],
           })));

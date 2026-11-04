@@ -32,6 +32,126 @@ export type Turn = z.infer<typeof TurnSchema>;
 const RecentSchema = z.array(TurnSchema).max(LIMITS.recentTurns).default([]);
 const MessageSchema = z.string().trim().min(1).max(LIMITS.messageChars);
 
+// Evening story (M4) --------------------------------------------------------
+//
+// The game sends the day as typed facts with ids and numbers, never sentences:
+// the server writes the facts up itself (facts.ts), so the only free text a
+// player controls stays in chat messages.
+
+const DiscipleIdSchema = z.string().regex(/^[a-z0-9-]{1,32}$/);
+const DiscipleIdsSchema = z.array(DiscipleIdSchema).min(1).max(12);
+export const MISSIONS = [
+  "gather_herbs",
+  "hunt_monster",
+  "escort_merchant",
+  "explore_secret_realm",
+] as const;
+export const TIERS = ["great", "success", "partial", "failure", "disaster"] as const;
+export const RESOURCES = ["stones", "food", "herbs", "reputation"] as const;
+export const RANKS = ["unknown_mountain", "rising_sect", "famous_sect"] as const;
+const Amount = z.int().min(0).max(1_000_000);
+
+export const FactSchema = z.discriminatedUnion("type", [
+  z.strictObject({
+    type: z.literal("trained"),
+    disciple: DiscipleIdSchema,
+    gain: z.int().min(0).max(100),
+    ready: z.boolean(),
+  }),
+  z.strictObject({
+    type: z.literal("worked"),
+    disciples: DiscipleIdsSchema,
+    food: Amount,
+    herbs: Amount,
+  }),
+  z.strictObject({
+    type: z.literal("rested"),
+    disciple: DiscipleIdSchema,
+    mood: z.int().min(-20).max(20),
+  }),
+  z.strictObject({ type: z.literal("healed"), disciple: DiscipleIdSchema }),
+  z.strictObject({
+    type: z.literal("mission_departed"),
+    mission: z.enum(MISSIONS),
+    team: DiscipleIdsSchema,
+    return_day: z.int().min(1),
+  }),
+  z.strictObject({
+    type: z.literal("mission_returned"),
+    mission: z.enum(MISSIONS),
+    tier: z.enum(TIERS),
+    team: DiscipleIdsSchema,
+    rewards: z.partialRecord(z.enum(RESOURCES), Amount),
+  }),
+  z.strictObject({
+    type: z.literal("injured"),
+    disciple: DiscipleIdSchema,
+    days: z.int().min(1).max(60),
+    mission: z.enum(MISSIONS),
+  }),
+  z.strictObject({
+    type: z.literal("lost_cultivation"),
+    disciple: DiscipleIdSchema,
+    amount: z.int().min(0).max(100),
+    mission: z.enum(MISSIONS),
+  }),
+  z.strictObject({ type: z.literal("ate"), food: Amount }),
+  z.strictObject({ type: z.literal("hungry"), disciples: DiscipleIdsSchema }),
+]);
+export type Fact = z.infer<typeof FactSchema>;
+
+export const EveningRequestSchema = z.strictObject({
+  kind: z.literal("evening"),
+  locale: LocaleSchema,
+  game_day: z.int().min(1).max(1_000_000),
+  sect: z.strictObject({
+    rank: z.enum(RANKS),
+    resources: z.strictObject({ stones: Amount, food: Amount, herbs: Amount, reputation: Amount }),
+  }),
+  /** Every disciple, with the actions the rules allow tomorrow (none when away). */
+  disciples: z.array(z.strictObject({
+    card: DiscipleCardSchema,
+    allowed_actions: z.array(z.enum(ACTIONS)).max(ACTIONS.length),
+  })).min(1).max(12),
+  relationships: z.array(z.strictObject({
+    a: DiscipleIdSchema,
+    b: DiscipleIdSchema,
+    score: z.int().min(-20).max(20),
+  })).max(66).default([]),
+  facts: z.array(FactSchema).max(40),
+}).superRefine((request, ctx) => {
+  // Every id a fact or relationship names must be one of the given disciples.
+  const ids = new Set(request.disciples.map((d) => d.card.id));
+  if (ids.size !== request.disciples.length) {
+    ctx.addIssue({ code: "custom", message: "duplicate disciple id", path: ["disciples"] });
+  }
+  const named = (fact: Fact): string[] =>
+    "disciple" in fact
+      ? [fact.disciple]
+      : "disciples" in fact
+      ? fact.disciples
+      : "team" in fact
+      ? fact.team
+      : [];
+  request.facts.forEach((fact, i) => {
+    for (const id of named(fact)) {
+      if (!ids.has(id)) {
+        ctx.addIssue({ code: "custom", message: `unknown disciple ${id}`, path: ["facts", i] });
+      }
+    }
+  });
+  request.relationships.forEach((r, i) => {
+    if (!ids.has(r.a) || !ids.has(r.b) || r.a === r.b) {
+      ctx.addIssue({
+        code: "custom",
+        message: "bad relationship pair",
+        path: ["relationships", i],
+      });
+    }
+  });
+});
+export type EveningRequest = z.infer<typeof EveningRequestSchema>;
+
 /** What the game sends to the AI gateway. */
 export const GatewayRequestSchema = z.discriminatedUnion("kind", [
   z.strictObject({
@@ -47,8 +167,11 @@ export const GatewayRequestSchema = z.discriminatedUnion("kind", [
     recent: RecentSchema,
     message: MessageSchema,
   }),
+  EveningRequestSchema,
 ]);
 export type GatewayRequest = z.infer<typeof GatewayRequestSchema>;
+/** A chat line with a disciple or the Elder. */
+export type ChatRequest = Extract<GatewayRequest, { kind: "chat" | "elder" }>;
 
 // What Claude returns. These schemas avoid numeric and length limits because
 // the API cannot enforce them; validate.ts clamps values instead. `safety`
@@ -92,22 +215,6 @@ export const EventReplySchema = z.object({
   choices: z.array(z.object({ id: z.string(), text: z.string() })),
 });
 export type EventReply = z.infer<typeof EventReplySchema>;
-
-export const EveningInputSchema = z.strictObject({
-  locale: LocaleSchema,
-  day: z.int().min(1),
-  sect: z.strictObject({
-    rank: z.string().min(1).max(40),
-    resources: z.string().min(1).max(200),
-  }),
-  disciples: z.array(z.strictObject({
-    card: DiscipleCardSchema,
-    today: z.string().min(1).max(240),
-    allowed_actions: z.array(z.enum(ACTIONS)).min(1),
-  })).min(1).max(12),
-  facts: z.array(z.string().min(1).max(200)).max(12),
-});
-export type EveningInput = z.infer<typeof EveningInputSchema>;
 
 export const EveningReplySchema = z.object({
   story: z.string(),

@@ -41,7 +41,11 @@ export interface GatewayDb {
   refund(player: string, kind: RequestKind): Promise<number>;
   recordUsage(entry: UsageEntry): Promise<void>;
   recentMemories(player: string, subject: string, limit: number): Promise<string[]>;
-  addMemory(player: string, subject: string, content: string): Promise<void>;
+  addMemory(player: string, subject: string, content: string, gameDay?: number): Promise<void>;
+  /** The checked evening story already stored for that day, or null. */
+  getEveningStory(player: string, gameDay: number): Promise<unknown | null>;
+  /** Stores a day's story unless one exists; returns the one that is stored. */
+  storeEveningStory(player: string, gameDay: number, reply: unknown): Promise<unknown>;
 }
 
 /** The one supabase-js method we use. */
@@ -83,12 +87,20 @@ export function supabaseDb(client: RpcClient): GatewayDb {
         p_subject: subject,
         p_limit: limit,
       }),
-    addMemory: (player, subject, content) =>
+    addMemory: (player, subject, content, gameDay) =>
       call<void>(client, "add_memory", {
         p_player: player,
         p_subject: subject,
         p_content: content,
-        p_game_day: null,
+        p_game_day: gameDay ?? null,
+      }),
+    getEveningStory: (player, gameDay) =>
+      call<unknown | null>(client, "get_evening_story", { p_player: player, p_game_day: gameDay }),
+    storeEveningStory: (player, gameDay, reply) =>
+      call<unknown>(client, "store_evening_story", {
+        p_player: player,
+        p_game_day: gameDay,
+        p_reply: reply,
       }),
   };
 }

@@ -33,6 +33,13 @@ export const MAX_TOKENS: Record<RequestKind, number> = {
 };
 
 export const REQUEST_TIMEOUT_MS = 15_000;
+/** Evening stories are long replies: in the evals 95% took under 7 s. */
+export const TIMEOUT_MS: Record<RequestKind, number> = {
+  chat: REQUEST_TIMEOUT_MS,
+  elder: REQUEST_TIMEOUT_MS,
+  event: 30_000,
+  evening: 40_000,
+};
 
 /** Size limits for everything a client sends or Claude returns. */
 export const LIMITS = {
@@ -41,6 +48,13 @@ export const LIMITS = {
   recentTurns: 6,
   memories: 10,
   memoryChars: 120,
+  /** Memories per disciple shown in the evening prompt. */
+  eveningMemories: 3,
+  storyChars: 1600,
+  morningChars: 500,
+  reasonChars: 160,
+  decisions: 2,
+  relationshipChanges: 3,
 } as const;
 
 /**

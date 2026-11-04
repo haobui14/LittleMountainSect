@@ -26,16 +26,15 @@ import {
   buildEvent,
 } from "../../server/supabase/functions/_shared/prompts.ts";
 import {
-  type EveningInput,
-  EveningInputSchema,
+  type ChatRequest,
+  EveningRequestSchema,
   type EventInput,
   EventInputSchema,
-  type GatewayRequest,
   GatewayRequestSchema,
   type Turn,
 } from "../../server/supabase/functions/_shared/schemas.ts";
 import { cleanChatReply } from "../../server/supabase/functions/_shared/validate.ts";
-import type { ChatScenario, SafetyExpectation, Tag } from "./scenarios.ts";
+import type { ChatScenario, EveningScenario, SafetyExpectation, Tag } from "./scenarios.ts";
 
 /** Letters only Vietnamese uses, so they should never appear in English text. */
 const VIETNAMESE_WORD =
@@ -149,7 +148,7 @@ export function chatRequest(
   scenario: ChatScenario,
   recent: Turn[],
   message: string,
-): GatewayRequest {
+): ChatRequest {
   const base = {
     locale: scenario.locale,
     recent: recent.slice(-LIMITS.recentTurns),
@@ -159,7 +158,7 @@ export function chatRequest(
     scenario.character === "elder"
       ? { kind: "elder", ...base }
       : { kind: "chat", disciple: scenario.character, ...base },
-  );
+  ) as ChatRequest;
 }
 
 export async function runChatScenario(
@@ -297,13 +296,14 @@ export async function runEvent(
 
 export async function runEvening(
   client: MessagesClient,
-  input: EveningInput,
+  scenario: EveningScenario,
   config: EvalConfig,
   options: RunOptions,
 ): Promise<CallRecord> {
+  const input = scenario.request;
   const result = await callStructured(
     client,
-    buildEvening(input, { cacheTtl: options.cacheTtl }),
+    buildEvening(input, scenario.memories, { cacheTtl: options.cacheTtl }),
     settings(config, "evening", options),
   );
   const checks: Check[] = [{
@@ -331,7 +331,7 @@ export async function runEvening(
   return {
     config: config.name,
     kind: "evening",
-    scenario: `evening_day${input.day}_${input.locale}`,
+    scenario: `evening_day${input.game_day}_${input.locale}`,
     locale: input.locale,
     tag: "evening",
     turn: 0,
@@ -364,7 +364,7 @@ export async function pool<T>(limit: number, tasks: Array<() => Promise<T>>): Pr
 export interface Selection {
   chats: ChatScenario[];
   events: EventInput[];
-  evenings: EveningInput[];
+  evenings: EveningScenario[];
 }
 
 export async function runConfig(
@@ -405,10 +405,11 @@ export function dryRun(selection: Selection, cacheTtl: CacheTtl): string[] {
     if (!parsed.success) problems.push(`event ${input.place}: ${parsed.error.message}`);
     else buildEvent(parsed.data, { cacheTtl });
   }
-  for (const input of selection.evenings) {
-    const parsed = EveningInputSchema.safeParse(input);
-    if (!parsed.success) problems.push(`evening day ${input.day}: ${parsed.error.message}`);
-    else buildEvening(parsed.data, { cacheTtl });
+  for (const scenario of selection.evenings) {
+    const parsed = EveningRequestSchema.safeParse(scenario.request);
+    if (!parsed.success) {
+      problems.push(`evening day ${scenario.request.game_day}: ${parsed.error.message}`);
+    } else buildEvening(parsed.data, scenario.memories, { cacheTtl });
   }
   return problems;
 }

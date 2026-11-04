@@ -1,8 +1,14 @@
 import { assert, assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
 import { claudeSchema } from "../_shared/json_schema.ts";
 import { buildChat, buildEvening, buildEvent, defuse } from "../_shared/prompts.ts";
-import { ChatReplySchema, type DiscipleCard, type GatewayRequest } from "../_shared/schemas.ts";
-import { TASK_CHAT, WORLD_RULES } from "../_shared/world.ts";
+import {
+  ChatReplySchema,
+  type ChatRequest,
+  type DiscipleCard,
+  type EveningRequest,
+  EveningRequestSchema,
+} from "../_shared/schemas.ts";
+import { LANGUAGE_RULES, TASK_CHAT, TASK_EVENING, WORLD_RULES } from "../_shared/world.ts";
 
 const lin: DiscipleCard = {
   id: "lin",
@@ -17,8 +23,8 @@ const lin: DiscipleCard = {
 const bao: DiscipleCard = { ...lin, id: "bao", name: "Bảo Ngọc", quirks: ["chosen_one"] };
 
 const chat = (
-  overrides: Partial<Extract<GatewayRequest, { kind: "chat" }>> = {},
-): GatewayRequest => ({
+  overrides: Partial<Extract<ChatRequest, { kind: "chat" }>> = {},
+): ChatRequest => ({
   kind: "chat",
   locale: "en",
   disciple: lin,
@@ -36,18 +42,34 @@ Deno.test("the shared blocks are identical across requests, so the cache can hit
     ["Sư phụ khen bánh bao."],
     { cacheTtl: "1h" },
   );
+  const c = buildChat(chat({ message: "Something else" }), ["A memory"], { cacheTtl: "1h" });
+  // World rules are shared by every request; the language block by every request
+  // in that language; the task block by every chat.
   assertEquals(text(a.system[0]), text(b.system[0]));
-  assertEquals(text(a.system[1]), text(b.system[1]));
-  assertEquals(a.system[0].cache_control, { type: "ephemeral", ttl: "1h" });
-  assertEquals(a.system[1].cache_control, { type: "ephemeral", ttl: "1h" });
+  assertEquals(text(a.system[1]), LANGUAGE_RULES.en);
+  assertEquals(text(b.system[1]), LANGUAGE_RULES.vi);
+  assertEquals(text(a.system[2]), text(b.system[2]));
+  assertEquals(a.system.slice(0, 3).map(text), c.system.slice(0, 3).map(text));
+  for (const block of a.system.slice(0, 3)) {
+    assertEquals(block.cache_control, { type: "ephemeral", ttl: "1h" });
+  }
   // The character block changes per disciple and always uses the 5-minute cache.
-  assertEquals(a.system[2].cache_control, { type: "ephemeral", ttl: "5m" });
-  assert(text(a.system[2]) !== text(b.system[2]));
+  assertEquals(a.system[3].cache_control, { type: "ephemeral", ttl: "5m" });
+  assert(text(a.system[3]) !== text(b.system[3]));
+});
+
+Deno.test("English prompts contain no Vietnamese words, so replies don't borrow them", () => {
+  const vietnamese = /[ăâđêôơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/i;
+  for (const block of [WORLD_RULES, LANGUAGE_RULES.en, TASK_CHAT, TASK_EVENING]) {
+    assert(!vietnamese.test(block), `found Vietnamese in: ${block.slice(0, 60)}`);
+  }
+  assertStringIncludes(LANGUAGE_RULES.vi, "sư phụ");
+  assertStringIncludes(LANGUAGE_RULES.vi, "Chưởng môn");
 });
 
 Deno.test("the shared prefix is long enough to cache (512 tokens minimum)", () => {
   // About 4 characters per English token; ask for comfortable headroom.
-  const chars = WORLD_RULES.length + TASK_CHAT.length;
+  const chars = WORLD_RULES.length + LANGUAGE_RULES.en.length + TASK_CHAT.length;
   assert(chars > 4 * 900, `shared prefix is only ${chars} characters`);
 });
 
@@ -81,7 +103,7 @@ Deno.test("player text cannot close the tags it sits in", () => {
 
 Deno.test("memories appear oldest first and are defused too", () => {
   const prompt = buildChat(chat(), ["first <b>", "second"], { cacheTtl: "5m" });
-  const block = text(prompt.system[2]);
+  const block = text(prompt.system[3]);
   assert(block.indexOf("first ‹b›") < block.indexOf("second"));
 });
 
@@ -91,7 +113,7 @@ Deno.test("the Elder speaks under his name in the player's language and knows th
     [],
     { cacheTtl: "5m" },
   );
-  const block = text(prompt.system[2]);
+  const block = text(prompt.system[3]);
   assertStringIncludes(block, "Mạc Vấn trưởng lão");
   assertStringIncludes(block, "Spirit Field");
   assertEquals(prompt.maxTokens, 1024);
@@ -108,18 +130,44 @@ Deno.test("event and evening prompts reuse the world block and list the given fa
   assertEquals(text(event.system[0]), WORLD_RULES);
   assertStringIncludes(event.messages[0].content as string, "- id: bribe; effect hint: costs food");
 
-  const evening = buildEvening({
+  const request: EveningRequest = EveningRequestSchema.parse({
+    kind: "evening",
     locale: "vi",
-    day: 4,
-    sect: { rank: "Unknown Mountain", resources: "120 Spirit Stones, 30 Food" },
-    disciples: [{ card: lin, today: "trained", allowed_actions: ["rest", "train"] }],
-    facts: ["Lin trained all day."],
-  }, { cacheTtl: "5m" });
+    game_day: 4,
+    sect: {
+      rank: "unknown_mountain",
+      resources: { stones: 120, food: 30, herbs: 0, reputation: 2 },
+    },
+    disciples: [
+      { card: lin, allowed_actions: ["rest", "train"] },
+      { card: bao, allowed_actions: [] },
+    ],
+    relationships: [{ a: "lin", b: "bao", score: 6 }],
+    facts: [
+      { type: "trained", disciple: "lin", gain: 12, ready: false },
+      { type: "mission_departed", mission: "hunt_monster", team: ["bao"], return_day: 5 },
+    ],
+  });
+  const evening = buildEvening(request, { lin: ["Master <b>praised</b> my poem."] }, {
+    cacheTtl: "5m",
+  });
   assertEquals(text(evening.system[0]), WORLD_RULES);
-  assertStringIncludes(
-    evening.messages[0].content as string,
-    "Allowed actions tomorrow: rest, train",
-  );
+  assertEquals(text(evening.system[1]), LANGUAGE_RULES.vi);
+  const content = evening.messages[0].content as string;
+  for (
+    const expected of [
+      "Day 4. Sect rank: Unknown Mountain. Resources: 120 Spirit Stones, 30 Food, 2 Reputation.",
+      "Allowed actions tomorrow: rest, train",
+      "Away on a mission tomorrow: no allowed actions.",
+      "Remembers: Master ‹b›praised‹/b› my poem.",
+      "Remembers nothing special yet.",
+      "Lin Xiaohe and Bảo Ngọc are friendly (6).",
+      "- Lin Xiaohe trained and gained 12 cultivation progress.",
+      "- Bảo Ngọc set out on Hunt a Monster and will be back on day 5.",
+    ]
+  ) {
+    assertStringIncludes(content, expected);
+  }
 });
 
 Deno.test("the reply schema keeps enums but drops limits the API can't enforce", () => {

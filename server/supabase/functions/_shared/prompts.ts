@@ -1,19 +1,20 @@
 import type { Anthropic, z } from "./deps.ts";
 import { ELDER, type Locale, QUIRKS, REALM_NAMES, SPIRIT_ROOT_NAMES } from "./cast.ts";
 import { type CacheTtl, MAX_TOKENS, type RequestKind } from "./config.ts";
+import { factSentences, rankName, relationshipWords, resourceList } from "./facts.ts";
 import {
   type ChatReply,
   ChatReplySchema,
+  type ChatRequest,
   type DiscipleCard,
-  type EveningInput,
   type EveningReply,
   EveningReplySchema,
+  type EveningRequest,
   type EventInput,
   type EventReply,
   EventReplySchema,
-  type GatewayRequest,
 } from "./schemas.ts";
-import { TASK_CHAT, TASK_EVENING, TASK_EVENT, WORLD_RULES } from "./world.ts";
+import { LANGUAGE_RULES, TASK_CHAT, TASK_EVENING, TASK_EVENT, WORLD_RULES } from "./world.ts";
 
 /** Everything needed for one Messages API call, minus the model settings. */
 export interface BuiltPrompt<T> {
@@ -43,10 +44,20 @@ export function defuse(text: string): string {
   return text.replaceAll("<", "‹").replaceAll(">", "›");
 }
 
-function sharedBlocks(task: string, options: PromptOptions): Anthropic.TextBlockParam[] {
+/**
+ * The cached start of every prompt: the world rules, the language block for
+ * the request's language, then the task. Each is a cache breakpoint, so all
+ * requests share the world rules and requests in one language share more.
+ */
+function sharedBlocks(
+  task: string,
+  locale: Locale,
+  options: PromptOptions,
+): Anthropic.TextBlockParam[] {
   const cache = { type: "ephemeral" as const, ttl: options.cacheTtl };
   return [
     { type: "text", text: WORLD_RULES, cache_control: cache },
+    { type: "text", text: LANGUAGE_RULES[locale], cache_control: cache },
     { type: "text", text: task, cache_control: cache },
   ];
 }
@@ -79,7 +90,7 @@ function memoriesSection(name: string, memories: string[]): string {
 }
 
 function conversation(
-  request: GatewayRequest,
+  request: ChatRequest,
   speaker: string,
 ): Anthropic.MessageParam[] {
   const lines = request.recent.map((turn) =>
@@ -97,7 +108,7 @@ function conversation(
 
 /** A chat line from a disciple or the Elder. `memories` are oldest first. */
 export function buildChat(
-  request: GatewayRequest,
+  request: ChatRequest,
   memories: string[],
   options: PromptOptions,
 ): BuiltPrompt<ChatReply> {
@@ -113,7 +124,7 @@ export function buildChat(
   }
   return {
     kind: request.kind,
-    system: [...sharedBlocks(TASK_CHAT, options), characterBlock(character)],
+    system: [...sharedBlocks(TASK_CHAT, request.locale, options), characterBlock(character)],
     messages: conversation(request, speaker),
     maxTokens: MAX_TOKENS[request.kind],
     schema: ChatReplySchema,
@@ -126,7 +137,7 @@ export function buildEvent(input: EventInput, options: PromptOptions): BuiltProm
     .join("\n");
   return {
     kind: "event",
-    system: sharedBlocks(TASK_EVENT, options),
+    system: sharedBlocks(TASK_EVENT, input.locale, options),
     messages: [{
       role: "user",
       content: `${localeLine(input.locale)}\n# The event\nPlace: ${input.place}\n` +
@@ -138,23 +149,43 @@ export function buildEvent(input: EventInput, options: PromptOptions): BuiltProm
   };
 }
 
+/**
+ * The evening story. [memories] maps a disciple id to their newest memories,
+ * oldest first; the facts are written up by the server (facts.ts).
+ */
 export function buildEvening(
-  input: EveningInput,
+  request: EveningRequest,
+  memories: Record<string, string[]>,
   options: PromptOptions,
 ): BuiltPrompt<EveningReply> {
-  const disciples = input.disciples.map((d) =>
-    `${describeDisciple(d.card, input.locale)}\nToday: ${d.today}\n` +
-    `Allowed actions tomorrow: ${d.allowed_actions.join(", ")}`
-  ).join("\n\n");
-  const facts = input.facts.map((f) => `- ${f}`).join("\n");
+  const disciples = request.disciples.map(({ card, allowed_actions }) => {
+    const remembered = memories[card.id] ?? [];
+    return [
+      describeDisciple(card, request.locale),
+      remembered.length > 0
+        ? `Remembers: ${remembered.map(defuse).join(" / ")}`
+        : "Remembers nothing special yet.",
+      allowed_actions.length > 0
+        ? `Allowed actions tomorrow: ${allowed_actions.join(", ")}`
+        : "Away on a mission tomorrow: no allowed actions.",
+    ].join("\n");
+  }).join("\n\n");
+  const names = new Map(request.disciples.map((d) => [d.card.id, d.card.name]));
+  const bonds = request.relationships.map((r) =>
+    `- ${names.get(r.a)} and ${names.get(r.b)} are ${relationshipWords(r.score)} (${r.score}).`
+  );
+  const facts = factSentences(request).map((f) => `- ${f}`);
   return {
     kind: "evening",
-    system: sharedBlocks(TASK_EVENING, options),
+    system: sharedBlocks(TASK_EVENING, request.locale, options),
     messages: [{
       role: "user",
-      content: `${localeLine(input.locale)}\nDay ${input.day}. Sect rank: ${input.sect.rank}. ` +
-        `Resources: ${input.sect.resources}\n\n# The disciples\n${disciples}\n\n` +
-        `# What happened today\n${facts}`,
+      content: `${localeLine(request.locale)}\nDay ${request.game_day}. ` +
+        `Sect rank: ${rankName(request.sect.rank)}. ` +
+        `Resources: ${resourceList(request.sect.resources) || "nothing at all"}.\n\n` +
+        `# The disciples\n${disciples}\n\n` +
+        (bonds.length > 0 ? `# Between the disciples\n${bonds.join("\n")}\n\n` : "") +
+        `# What happened today\n${facts.length > 0 ? facts.join("\n") : "- A quiet day."}`,
     }],
     maxTokens: MAX_TOKENS.evening,
     schema: EveningReplySchema,

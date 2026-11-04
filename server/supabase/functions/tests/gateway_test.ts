@@ -78,6 +78,8 @@ function fakeDb(spend: SpendResult = { ok: true, reason: "ok", spirit_energy_lef
     refunds: 0,
     memories: [] as string[],
     memoryReads: 0,
+    memoryDays: [] as Array<number | undefined>,
+    stories: new Map<number, unknown>(),
   };
   const db: GatewayDb = {
     spend: () => Promise.resolve(spend),
@@ -93,9 +95,15 @@ function fakeDb(spend: SpendResult = { ok: true, reason: "ok", spirit_energy_lef
       calls.memoryReads++;
       return Promise.resolve(["Master praised my dumplings."]);
     },
-    addMemory: (_player, _subject, content) => {
+    addMemory: (_player, _subject, content, gameDay) => {
       calls.memories.push(content);
+      calls.memoryDays.push(gameDay);
       return Promise.resolve();
+    },
+    getEveningStory: (_player, gameDay) => Promise.resolve(calls.stories.get(gameDay) ?? null),
+    storeEveningStory: (_player, gameDay, story) => {
+      if (!calls.stories.has(gameDay)) calls.stories.set(gameDay, story);
+      return Promise.resolve(calls.stories.get(gameDay));
     },
   };
   return { db, calls };
@@ -290,4 +298,101 @@ Deno.test("bad requests are rejected before anything is spent", async () => {
     413,
   );
   assertEquals(calls.usage.length, 0);
+});
+
+// Evening stories -----------------------------------------------------------------
+
+const eveningBody = {
+  kind: "evening",
+  locale: "en",
+  game_day: 3,
+  sect: { rank: "unknown_mountain", resources: { stones: 40, food: 12, herbs: 3, reputation: 0 } },
+  disciples: [
+    { card: chatBody.disciple, allowed_actions: ["train", "rest"] },
+    { card: { ...chatBody.disciple, id: "bao", name: "Bao Tian" }, allowed_actions: [] },
+  ],
+  relationships: [{ a: "lin", b: "bao", score: 2 }],
+  facts: [
+    { type: "trained", disciple: "lin", gain: 11, ready: false },
+    { type: "mission_departed", mission: "gather_herbs", team: ["bao"], return_day: 4 },
+    { type: "ate", food: 2 },
+  ],
+};
+
+function story(overrides: Record<string, unknown> = {}): string {
+  return JSON.stringify({
+    story: "Lin trained until her arms shook, then hid from a chicken.",
+    morning_report: "The chicken is plotting something.",
+    decisions: [
+      { disciple_id: "lin", action: "rest", reason: "My arms are noodles." },
+      { disciple_id: "bao", action: "train", reason: "Away, so this must be dropped." },
+    ],
+    memories: [{ disciple_id: "lin", text: "Trained hard; a chicken watched." }],
+    relationship_changes: [{ from: "lin", to: "bao", change: 5, reason: "Shared rice." }],
+    ...overrides,
+  });
+}
+
+Deno.test("an evening story is checked, stored, remembered and paid for once", async () => {
+  const { db, calls } = fakeDb();
+  const { client, bodies } = fakeClaude(claudeMessage(story()));
+  const first = await (await handleGateway(post(eveningBody), PLAYER, deps(db, client))).json();
+  assertEquals([first.source, first.stored, first.spirit_energy_left], ["ai", false, 49]);
+  assertEquals(first.decisions, [{
+    disciple_id: "lin",
+    action: "rest",
+    reason: "My arms are noodles.",
+  }]);
+  assertEquals(first.relationship_changes[0].change, 2, "clamped from 5");
+  assertEquals(calls.memories, ["Trained hard; a chicken watched."]);
+  assertEquals(calls.memoryDays, [3]);
+  assertEquals(calls.usage.map((u) => [u.kind, u.outcome]), [["evening", "ok"]]);
+  // The server wrote the facts; the game sent only ids and numbers.
+  assertStringIncludes(String(bodies[0].messages[0].content), "Lin Xiaohe trained and gained 11");
+
+  // Asking again for the same day returns the stored story without paying.
+  const again = await (await handleGateway(post(eveningBody), PLAYER, deps(db, client))).json();
+  assertEquals([again.source, again.stored], ["ai", true]);
+  assertEquals(again.story, first.story);
+  assertEquals(bodies.length, 1, "Claude was called once");
+  assertEquals(calls.usage.length, 1, "and paid for once");
+});
+
+Deno.test("a refused or broken evening story is refunded and falls back", async () => {
+  for (
+    const [message, reason] of [
+      [claudeMessage("", "refusal"), "refusal"],
+      [claudeMessage(story({ story: "   " })), "error"],
+      [claudeMessage("not json"), "error"],
+    ] as const
+  ) {
+    const { db, calls } = fakeDb();
+    const body =
+      await (await handleGateway(post(eveningBody), PLAYER, deps(db, fakeClaude(message).client)))
+        .json();
+    assertEquals([body.source, body.reason], ["fallback", reason]);
+    assertEquals(calls.refunds, 1);
+    assertEquals(calls.stories.size, 0, "nothing stored");
+    assertEquals(calls.memories, []);
+  }
+});
+
+Deno.test("with no Spirit Energy the evening falls back without calling Claude", async () => {
+  const { db, calls } = fakeDb({ ok: false, reason: "no_energy", spirit_energy_left: 2 });
+  const { client, bodies } = fakeClaude(claudeMessage(story()));
+  const body = await (await handleGateway(post(eveningBody), PLAYER, deps(db, client))).json();
+  assertEquals(body, { source: "fallback", reason: "no_energy", spirit_energy_left: 2 });
+  assertEquals(bodies.length, 0);
+  assertEquals(calls.usage.map((u) => u.outcome), ["no_energy"]);
+});
+
+Deno.test("an evening request naming a disciple it didn't send is rejected", async () => {
+  const { db } = fakeDb();
+  const bad = { ...eveningBody, facts: [{ type: "healed", disciple: "ghost" }] };
+  const res = await handleGateway(
+    post(bad),
+    PLAYER,
+    deps(db, fakeClaude(claudeMessage(story())).client),
+  );
+  assertEquals(res.status, 400);
 });

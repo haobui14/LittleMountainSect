@@ -5,7 +5,7 @@
 import type { Locale } from "../../server/supabase/functions/_shared/cast.ts";
 import type {
   DiscipleCard,
-  EveningInput,
+  EveningRequest,
   EventInput,
   Safety,
 } from "../../server/supabase/functions/_shared/schemas.ts";
@@ -316,8 +316,9 @@ export const CHAT_SCENARIOS: ChatScenario[] = [
 ];
 
 // Surprise events and evening stories: one call each, to measure real tokens.
-// The rules engine (M3+) will produce these facts in English for both
-// languages; Claude writes the story in the player's language.
+// Evening stories use the same typed facts the game sends (M4): the server
+// writes them up in English, and Claude writes the story in the player's
+// language.
 
 function events(locale: Locale): EventInput[] {
   const d = DISCIPLES[locale];
@@ -357,84 +358,101 @@ function events(locale: Locale): EventInput[] {
   ];
 }
 
-function evenings(locale: Locale): EveningInput[] {
+/** An evening request, plus the memories the server would add from the database. */
+export interface EveningScenario {
+  request: EveningRequest;
+  memories: Record<string, string[]>;
+}
+
+function evenings(locale: Locale): EveningScenario[] {
   const d = DISCIPLES[locale];
-  const sect = { rank: "Unknown Mountain", resources: "140 Spirit Stones, 36 Food, 12 Herbs" };
+  const resources = { stones: 140, food: 36, herbs: 12, reputation: 3 };
+  const request = (r: Omit<EveningRequest, "kind" | "locale">): EveningRequest => ({
+    kind: "evening",
+    locale,
+    ...r,
+  });
   return [
     {
-      locale,
-      day: 3,
-      sect,
-      disciples: [
-        {
-          card: d.lin,
-          today: "trained at the Training Yard",
-          allowed_actions: ["train", "rest", "study"],
-        },
-        {
-          card: d.bao,
-          today: "went to Gather Herbs",
-          allowed_actions: ["train", "rest", "explore"],
-        },
-        { card: d.mei, today: "went to Gather Herbs", allowed_actions: ["cook", "rest", "study"] },
-      ],
-      facts: [
-        "Lin trained all day and made a little cultivation progress.",
-        "Bao and Mei gathered 12 Herbs; Bao ate two of them.",
-        "The Kitchen burned the rice, so everyone's Mood dropped a little.",
-      ],
+      request: request({
+        game_day: 3,
+        sect: { rank: "unknown_mountain", resources },
+        disciples: [
+          { card: d.lin, allowed_actions: ["train", "rest", "meditate", "study"] },
+          { card: d.bao, allowed_actions: ["train", "rest", "cook"] },
+          { card: d.mei, allowed_actions: ["cook", "rest", "study"] },
+        ],
+        relationships: [{ a: "lin", b: "bao", score: 4 }],
+        facts: [
+          { type: "trained", disciple: "lin", gain: 12, ready: false },
+          {
+            type: "mission_returned",
+            mission: "gather_herbs",
+            tier: "success",
+            team: ["bao", "mei"],
+            rewards: { herbs: 9, food: 4 },
+          },
+          { type: "ate", food: 3 },
+        ],
+      }),
+      memories: { bao: ["Master said I might be the chosen one. Probably."] },
     },
     {
-      locale,
-      day: 9,
-      sect,
-      disciples: [
-        {
-          card: d.bao,
-          today: "tried to break through to Foundation Building",
-          allowed_actions: ["rest", "meditate"],
-        },
-        {
-          card: d.lin,
-          today: "worked in the Spirit Field",
-          allowed_actions: ["tend_field", "rest", "train"],
-        },
-      ],
-      facts: [
-        "Bao's breakthrough failed. His hair is green for ten days.",
-        "Lin was chased by a chicken in the Spirit Field but finished her work.",
-        "A letter arrived from the Perfect Hair Pavilion asking about Bao's hair.",
-      ],
+      request: request({
+        game_day: 9,
+        sect: { rank: "unknown_mountain", resources: { ...resources, stones: 95 } },
+        disciples: [
+          { card: d.bao, allowed_actions: ["rest", "hide"] },
+          { card: d.lin, allowed_actions: ["train", "rest", "tend_field", "cook"] },
+          { card: d.mei, allowed_actions: ["cook", "study", "rest"] },
+        ],
+        relationships: [{ a: "lin", b: "mei", score: -5 }],
+        facts: [
+          {
+            type: "mission_returned",
+            mission: "hunt_monster",
+            tier: "failure",
+            team: ["bao"],
+            rewards: { stones: 0, reputation: 0 },
+          },
+          { type: "injured", disciple: "bao", days: 3, mission: "hunt_monster" },
+          { type: "worked", disciples: ["lin", "mei"], food: 8, herbs: 2 },
+          { type: "ate", food: 3 },
+        ],
+      }),
+      memories: {
+        lin: ["A chicken chased me around the Spirit Field.", "Mei laughed at my poem."],
+      },
     },
     {
-      locale,
-      day: 15,
-      sect: { rank: "Unknown Mountain", resources: "310 Spirit Stones, 20 Food, 30 Herbs" },
-      disciples: [
-        {
-          card: d.mei,
-          today: "made pills in the Alchemy Room",
-          allowed_actions: ["cook", "study", "rest"],
+      request: request({
+        game_day: 15,
+        sect: {
+          rank: "rising_sect",
+          resources: { stones: 310, food: 0, herbs: 30, reputation: 9 },
         },
-        {
-          card: d.lin,
-          today: "studied in the Library",
-          allowed_actions: ["study", "train", "rest"],
-        },
-        {
-          card: d.bao,
-          today: "rested in the Disciple Huts",
-          allowed_actions: ["train", "explore", "rest"],
-        },
-      ],
-      facts: [
-        "Mei made 3 pills; one exploded and blew the Alchemy Room door off.",
-        "Lin wrote a poem about the door. Nobody has read it yet.",
-        "Bao insists the explosion was a sign that he is chosen.",
-      ],
+        disciples: [
+          { card: d.mei, allowed_actions: ["train", "rest", "meditate", "study"] },
+          { card: d.lin, allowed_actions: [] },
+          { card: d.bao, allowed_actions: [] },
+        ],
+        relationships: [{ a: "lin", b: "bao", score: 11 }, { a: "bao", b: "mei", score: 2 }],
+        facts: [
+          { type: "trained", disciple: "mei", gain: 9, ready: true },
+          {
+            type: "mission_departed",
+            mission: "hunt_monster",
+            team: ["lin", "bao"],
+            return_day: 16,
+          },
+          { type: "ate", food: 1 },
+          { type: "hungry", disciples: ["mei"] },
+        ],
+      }),
+      memories: { mei: ["My pill exploded and took the Alchemy Room door with it."] },
     },
   ];
 }
 
 export const EVENT_INPUTS: EventInput[] = [...events("en"), ...events("vi")];
-export const EVENING_INPUTS: EveningInput[] = [...evenings("en"), ...evenings("vi")];
+export const EVENING_INPUTS: EveningScenario[] = [...evenings("en"), ...evenings("vi")];

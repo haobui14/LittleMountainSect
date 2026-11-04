@@ -74,7 +74,9 @@ const selection: Selection = {
     ? CHAT_SCENARIOS.filter((s) => locales.includes(s.locale) && (only === null || only.has(s.id)))
     : [],
   events: kinds.has("event") ? EVENT_INPUTS.filter((e) => locales.includes(e.locale)) : [],
-  evenings: kinds.has("evening") ? EVENING_INPUTS.filter((e) => locales.includes(e.locale)) : [],
+  evenings: kinds.has("evening")
+    ? EVENING_INPUTS.filter((e) => locales.includes(e.request.locale))
+    : [],
 };
 if (only !== null) {
   const known = new Set(CHAT_SCENARIOS.map((s) => s.id));

@@ -1,6 +1,6 @@
 import { assert, assertEquals } from "jsr:@std/assert@1";
-import { cleanChatReply, shorten } from "../_shared/validate.ts";
-import type { ChatReply } from "../_shared/schemas.ts";
+import { cleanChatReply, cleanEveningReply, shorten } from "../_shared/validate.ts";
+import { type ChatReply, type EveningReply, EveningRequestSchema } from "../_shared/schemas.ts";
 
 const base: ChatReply = {
   safety: "ok",
@@ -87,4 +87,100 @@ Deno.test("shorten counts Vietnamese letters as single characters", () => {
   const cut = shorten(text, 20);
   assert(Array.from(cut).length <= 20);
   assert(cut.endsWith("…"));
+});
+
+// Evening stories ------------------------------------------------------------------
+
+const eveningRequest = EveningRequestSchema.parse({
+  kind: "evening",
+  locale: "en",
+  game_day: 2,
+  sect: { rank: "unknown_mountain", resources: { stones: 1, food: 1, herbs: 0, reputation: 0 } },
+  disciples: ["a", "b", "c"].map((id, i) => ({
+    card: {
+      id,
+      name: `Name ${id}`,
+      pronouns: "they",
+      quirks: ["gossip"],
+      spirit_root: "fire",
+      realm: "qi_refining",
+      mood: 0,
+      loyalty: 50,
+    },
+    allowed_actions: i === 2 ? [] : ["train", "rest"],
+  })),
+  facts: [],
+});
+
+const evening = (overrides: Partial<EveningReply> = {}): EveningReply => ({
+  story: "A day.",
+  morning_report: "Tomorrow!",
+  decisions: [],
+  memories: [],
+  relationship_changes: [],
+  ...overrides,
+});
+
+Deno.test("evening decisions keep only allowed actions, one per disciple, at most two", () => {
+  const result = cleanEveningReply(
+    evening({
+      decisions: [
+        { disciple_id: "a", action: "cook", reason: "not allowed" },
+        { disciple_id: "a", action: "rest", reason: "tired" },
+        { disciple_id: "a", action: "train", reason: "second for a" },
+        { disciple_id: "c", action: "rest", reason: "away" },
+        { disciple_id: "ghost", action: "rest", reason: "not in the sect" },
+        { disciple_id: "b", action: "train", reason: "keen" },
+      ],
+    }),
+    eveningRequest,
+  );
+  assert(result.ok);
+  assertEquals(result.value.decisions.map((d) => [d.disciple_id, d.action]), [["a", "rest"], [
+    "b",
+    "train",
+  ]]);
+});
+
+Deno.test("relationship changes are clamped, deduplicated and limited", () => {
+  const result = cleanEveningReply(
+    evening({
+      relationship_changes: [
+        { from: "a", to: "b", change: 7, reason: "big" },
+        { from: "b", to: "a", change: -1, reason: "same pair again" },
+        { from: "a", to: "a", change: 1, reason: "self" },
+        { from: "a", to: "ghost", change: 1, reason: "unknown" },
+        { from: "b", to: "c", change: 0, reason: "no change" },
+        { from: "a", to: "c", change: -3, reason: "spat" },
+      ],
+    }),
+    eveningRequest,
+  );
+  assert(result.ok);
+  assertEquals(result.value.relationship_changes.map((r) => [r.from, r.to, r.change]), [
+    ["a", "b", 2],
+    ["a", "c", -2],
+  ]);
+});
+
+Deno.test("evening memories: one per known disciple, shortened", () => {
+  const result = cleanEveningReply(
+    evening({
+      memories: [
+        { disciple_id: "a", text: "x".repeat(300) },
+        { disciple_id: "a", text: "second" },
+        { disciple_id: "ghost", text: "unknown" },
+        { disciple_id: "b", text: "  " },
+      ],
+    }),
+    eveningRequest,
+  );
+  assert(result.ok);
+  assertEquals(result.value.memories.length, 1);
+  assert(Array.from(result.value.memories[0].text).length <= 120);
+});
+
+Deno.test("an empty story or morning report is rejected", () => {
+  assertEquals(cleanEveningReply(evening({ story: " " }), eveningRequest).ok, false);
+  assertEquals(cleanEveningReply(evening({ morning_report: "" }), eveningRequest).ok, false);
 });
