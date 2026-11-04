@@ -71,11 +71,15 @@ jobs:
         run: deno lint
 
       - name: Type-check
-        run: deno check server/supabase/functions/
+        run: deno check server/supabase/functions/ tools/
 
       # No network and no secrets: Claude and the database are faked.
       - name: Run tests
-        run: deno test --allow-read=. server/supabase/functions/tests/
+        run: deno test --allow-read=.
+
+      # Validates every eval scenario and builds every prompt, without a key.
+      - name: Eval dry run
+        run: deno run --allow-read --allow-env tools/ai-eval/main.ts --dry-run
 
   web-build:
     name: Web build

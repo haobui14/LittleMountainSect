@@ -1,0 +1,138 @@
+name: AI live tests
+
+# Manual runs that call Claude for real. Each full eval costs about $0.10-0.25.
+#   eval:  replays tools/ai-eval scenarios and commits the report to docs/evals/
+#   smoke: checks the deployed ai-gateway end to end
+# Needs the repository secret LMS_ANTHROPIC_API_KEY (eval) and, for smoke,
+# ANTHROPIC_API_KEY set on the function and anonymous sign-ins turned on.
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Which test to run
+        type: choice
+        options: [eval, smoke, both]
+        default: eval
+      configs:
+        description: "Eval configs (low, medium, low-nothink)"
+        type: string
+        default: low,medium,low-nothink
+      locales:
+        description: Eval languages
+        type: string
+        default: en,vi
+      scenarios:
+        description: "Chat scenario ids, or all"
+        type: string
+        default: all
+      kinds:
+        description: "Request kinds (chat, event, evening)"
+        type: string
+        default: chat,event,evening
+      cache_ttl:
+        description: Cache TTL for the shared prompt blocks
+        type: choice
+        options: ["5m", "1h"]
+        default: "5m"
+      label:
+        description: Names the report folder
+        type: string
+        default: run
+      dry_run:
+        description: Check scenarios and prompts without calling Claude
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-live
+  cancel-in-progress: false
+
+env:
+  DENO_VERSION: "2.9.6"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  eval:
+    name: AI eval
+    if: inputs.job == 'eval' || inputs.job == 'both'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+
+      - name: Run the eval
+        id: run
+        env:
+          LMS_ANTHROPIC_API_KEY: ${{ secrets.LMS_ANTHROPIC_API_KEY }}
+          CONFIGS: ${{ inputs.configs }}
+          LOCALES: ${{ inputs.locales }}
+          SCENARIOS: ${{ inputs.scenarios }}
+          KINDS: ${{ inputs.kinds }}
+          CACHE_TTL: ${{ inputs.cache_ttl }}
+          LABEL: ${{ inputs.label }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          args=(--configs "$CONFIGS" --locales "$LOCALES" --only "$SCENARIOS" \
+                --kinds "$KINDS" --ttl "$CACHE_TTL" --label "$LABEL")
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          deno run --allow-read --allow-env --allow-net=api.anthropic.com \
+            --allow-write=docs/evals tools/ai-eval/main.ts "${args[@]}" | tee "$RUNNER_TEMP/eval.log"
+          dir=$(grep '^REPORT_DIR=' "$RUNNER_TEMP/eval.log" | cut -d= -f2- || true)
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+
+      - name: Write the summary
+        if: steps.run.outputs.dir != ''
+        env:
+          DIR: ${{ steps.run.outputs.dir }}
+        run: sed '/^## Transcripts/,$d' "$DIR/report.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        if: steps.run.outputs.dir != ''
+        with:
+          name: ai-eval-report
+          path: ${{ steps.run.outputs.dir }}
+
+      - name: Commit the report
+        if: steps.run.outputs.dir != ''
+        env:
+          DIR: ${{ steps.run.outputs.dir }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$DIR"
+          git commit -m "Add AI eval report $(basename "$DIR")"
+          for attempt in 1 2 3; do
+            git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME" && exit 0
+            sleep $((attempt * 5))
+          done
+          echo "Could not push the report; it is still in the artifact." && exit 1
+
+  smoke:
+    name: Gateway smoke test
+    if: inputs.job == 'smoke' || inputs.job == 'both'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+
+      - name: Smoke-test the deployed gateway
+        run: |
+          host=$(jq -r .supabase_url game/config/backend.json | sed 's#^https://##')
+          deno run --allow-read=game/config --allow-net="$host" tools/smoke/gateway_smoke.ts

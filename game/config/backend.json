@@ -1,0 +1,6 @@
+{
+  "_comment": "Public values only. The publishable key is meant to ship in the game; row-level security protects the data. Never put a secret key or the Claude API key here.",
+  "supabase_url": "https://qeciplcjdlcygcxbeddg.supabase.co",
+  "publishable_key": "sb_publishable_Z_h9csO2dPB-fiE_-vZssw_cmnFmJEN",
+  "functions_region": "us-west-1"
+}
