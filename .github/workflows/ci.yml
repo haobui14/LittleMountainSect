@@ -33,6 +33,14 @@ jobs:
       - name: Run GUT tests
         run: godot --headless --path game -s addons/gut/gut_cmdln.gd
 
+      # Plays 100 seeds for 60 days with two automatic players; fails on a
+      # softlock, a negative resource or a value out of range.
+      - name: Run the balance sim
+        run: |
+          godot --headless --path game -s res://tools/balance_sim.gd -- --seeds 100 --days 60 \
+            --out "$RUNNER_TEMP/balance.md"
+          cat "$RUNNER_TEMP/balance.md" >> "$GITHUB_STEP_SUMMARY"
+
   db-tests:
     name: Database tests
     runs-on: ubuntu-latest
