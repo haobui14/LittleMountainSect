@@ -54,8 +54,15 @@ export type GatewayRequest = z.infer<typeof GatewayRequestSchema>;
 // the API cannot enforce them; validate.ts clamps values instead. `safety`
 // comes first so the model decides it before writing the reply.
 
+/**
+ * "boundary": the player pushed against the safety rules (such as flirting)
+ * and the reply declines. "distress": the player seems to be in real trouble.
+ */
+export const SAFETY = ["ok", "boundary", "distress"] as const;
+export type Safety = typeof SAFETY[number];
+
 export const ChatReplySchema = z.object({
-  safety: z.enum(["ok", "distress"]),
+  safety: z.enum(SAFETY),
   reply: z.string(),
   expression: z.enum(EXPRESSIONS),
   mood_change: z.int(),

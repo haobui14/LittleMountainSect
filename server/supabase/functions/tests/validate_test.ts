@@ -66,6 +66,21 @@ Deno.test("a distress reply never changes mood or stores a memory", () => {
   assertEquals(result.value.wants_action, null);
 });
 
+Deno.test("a boundary reply keeps its line but never changes mood or stores a memory", () => {
+  const result = cleanChatReply({
+    ...base,
+    safety: "boundary",
+    mood_change: 1,
+    memory: "Master asked me on a date",
+    wants_action: "hide",
+  });
+  assert(result.ok);
+  assertEquals(result.value.safety, "boundary");
+  assertEquals(result.value.mood_change, 0);
+  assertEquals(result.value.memory, null);
+  assertEquals(result.value.wants_action, "hide");
+});
+
 Deno.test("shorten counts Vietnamese letters as single characters", () => {
   const text = "Sư phụ khen bánh bao của đệ tử ngon nhất núi";
   assertEquals(shorten(text, 100), text);

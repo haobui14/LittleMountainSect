@@ -1,10 +1,10 @@
 import { type Action, ACTIONS, type Expression } from "./cast.ts";
 import { LIMITS } from "./config.ts";
-import type { ChatReply } from "./schemas.ts";
+import type { ChatReply, Safety } from "./schemas.ts";
 
 /** A chat reply after the server's checks: every value is safe for the rules to use. */
 export interface CleanChatReply {
-  safety: "ok" | "distress";
+  safety: Safety;
   reply: string;
   expression: Expression;
   mood_change: -2 | -1 | 0 | 1 | 2;
@@ -31,8 +31,9 @@ export function shorten(text: string, maxChars: number): string {
 
 /**
  * Checks and clamps a chat reply. Code decides results, so Claude's numbers
- * are only suggestions: mood changes are clamped, unknown actions dropped, and
- * a distress reply never changes mood or stores a memory.
+ * are only suggestions: mood changes are clamped and unknown actions dropped.
+ * A distress or boundary reply never changes mood or stores a memory, so a
+ * crisis or a flirting attempt is never brought up again.
  */
 export function cleanChatReply(raw: ChatReply): CleanResult {
   const reply = raw.reply.trim();
@@ -55,17 +56,20 @@ export function cleanChatReply(raw: ChatReply): CleanResult {
     };
   }
 
-  const memoryText = raw.memory?.trim() ?? "";
+  const boundary = raw.safety === "boundary";
+  const memoryText = boundary ? "" : raw.memory?.trim() ?? "";
   const action = (ACTIONS as readonly string[]).includes(raw.wants_action ?? "")
     ? raw.wants_action
     : null;
   return {
     ok: true,
     value: {
-      safety: "ok",
+      safety: boundary ? "boundary" : "ok",
       reply,
       expression: raw.expression,
-      mood_change: clamp(Math.round(raw.mood_change), -2, 2) as CleanChatReply["mood_change"],
+      mood_change: boundary
+        ? 0
+        : clamp(Math.round(raw.mood_change), -2, 2) as CleanChatReply["mood_change"],
       memory: memoryText.length > 0 ? shorten(memoryText, LIMITS.memoryChars) : null,
       wants_action: action,
     },

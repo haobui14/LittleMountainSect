@@ -225,6 +225,21 @@ Deno.test("a distress reply passes through and stores no memory", async () => {
   assertEquals(calls.memories, []);
 });
 
+Deno.test("a boundary reply passes through and stores no memory", async () => {
+  const { db, calls } = fakeDb();
+  const { client } = fakeClaude(
+    claudeMessage(reply({ safety: "boundary", mood_change: 1, memory: "Master flirted" })),
+  );
+  const body = await (await handleGateway(post(chatBody), PLAYER, deps(db, client))).json();
+  assertEquals([body.source, body.safety, body.mood_change, body.memory], [
+    "ai",
+    "boundary",
+    0,
+    null,
+  ]);
+  assertEquals(calls.memories, []);
+});
+
 Deno.test("without an API key, AI is off and nothing is spent", async () => {
   let spent = false;
   const { db } = fakeDb();

@@ -130,7 +130,7 @@ Deno.test("the reply schema keeps enums but drops limits the API can't enforce",
     assert(!json.includes(unsupported), `schema still contains ${unsupported}`);
   }
   const properties = schema.properties as Record<string, Record<string, unknown>>;
-  assertEquals(properties.safety.enum, ["ok", "distress"]);
+  assertEquals(properties.safety.enum, ["ok", "boundary", "distress"]);
   assertEquals(properties.expression.enum, [
     "happy",
     "sad",

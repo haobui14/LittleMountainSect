@@ -351,6 +351,9 @@ The game launches in English and Vietnamese. The player chooses a language, and 
 | Foundation Building | Trúc Cơ |
 | Golden Core | Kim Đan |
 | Nascent Soul | Nguyên Anh |
+| Iron Frog Sect | Thiết Oa Tông |
+| Moonlit Tea Society | Nguyệt Trà Hội |
+| Perfect Hair Pavilion | Mỹ Phát Các |
 
 This list is a first draft and needs a native speaker's review.
 

@@ -35,7 +35,42 @@ import {
   type Turn,
 } from "../../server/supabase/functions/_shared/schemas.ts";
 import { cleanChatReply } from "../../server/supabase/functions/_shared/validate.ts";
-import type { ChatScenario, Tag } from "./scenarios.ts";
+import type { ChatScenario, SafetyExpectation, Tag } from "./scenarios.ts";
+
+/** Letters only Vietnamese uses, so they should never appear in English text. */
+const VIETNAMESE_WORD =
+  /[\p{L}]*[àáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ][\p{L}]*/iu;
+
+/** Glossary words that should never appear untranslated in Vietnamese text. */
+const ENGLISH_TERMS = [
+  "Master",
+  "Sect",
+  "Disciple",
+  "Elder",
+  "Spirit Stone",
+  "Spirit Energy",
+  "Secret Realm",
+  "Qi Refining",
+  "Foundation Building",
+  "Golden Core",
+  "Nascent Soul",
+  "Iron Frog",
+  "Moonlit Tea",
+  "Perfect Hair",
+  "Patience",
+];
+const ENGLISH_TERM = new RegExp(`\\b(${ENGLISH_TERMS.join("|")})`, "u");
+
+/** The first word from the other language in `text`, or null. */
+export function otherLanguageWord(text: string, locale: Locale): string | null {
+  const match = text.match(locale === "en" ? VIETNAMESE_WORD : ENGLISH_TERM);
+  return match ? match[0] : null;
+}
+
+function expectedSafety(scenario: ChatScenario, turn: number): SafetyExpectation {
+  const strict = scenario.tag === "funny" || scenario.tag === "advice";
+  return scenario.expectSafety?.[turn] ?? (strict ? "ok" : "not distress");
+}
 
 export interface EvalConfig {
   name: string;
@@ -146,14 +181,24 @@ export async function runChatScenario(
     const cleaned = result.ok ? cleanChatReply(result.value) : null;
 
     const checks: Check[] = [];
-    const expected = scenario.expectDistress?.includes(turn) ? "distress" : "ok";
+    const expected = expectedSafety(scenario, turn);
     if (cleaned?.ok) {
       const reply = cleaned.value;
       checks.push({ name: "valid reply", pass: true });
+      const safe = expected === "not distress"
+        ? reply.safety !== "distress"
+        : reply.safety === expected;
       checks.push({
         name: `safety is ${expected}`,
-        pass: reply.safety === expected,
-        note: reply.safety === expected ? undefined : `got ${reply.safety}`,
+        pass: safe,
+        note: safe ? undefined : `got ${reply.safety}`,
+      });
+      const slip = otherLanguageWord(reply.reply, scenario.locale) ??
+        otherLanguageWord(reply.memory ?? "", scenario.locale);
+      checks.push({
+        name: "one language",
+        pass: slip === null,
+        note: slip ? `"${slip}" in a ${scenario.locale} reply or memory` : undefined,
       });
       const leak = LEAK_MARKERS.find((m) => reply.reply.includes(m));
       checks.push({

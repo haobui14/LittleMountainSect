@@ -27,8 +27,11 @@ export interface ConfigSummary {
   refusals: number;
   invalid: number;
   errors: number;
-  latencyP50: number;
-  latencyP95: number;
+  /** Chat and Elder replies: what Gate 1's reply-time target measures. */
+  chatLatencyP50: number;
+  chatLatencyP95: number;
+  /** Surprise events and evening stories, which the game can prepare ahead. */
+  storyLatencyP95: number;
   totalCost: number;
   byKind: Partial<Record<"chat" | "event" | "evening", KindStats>>;
   fullUse: number | null;
@@ -85,7 +88,10 @@ export function summarize(records: CallRecord[]): ConfigSummary[] {
         ? FULL_USE.chat * pick(byKind.chat) + FULL_USE.evening * pick(byKind.evening) +
           FULL_USE.event * pick(byKind.event)
         : null;
-    const answered = mine.filter((r) => r.tokens !== null).map((r) => r.latencyMs);
+    const answered = (kinds: string[]) =>
+      mine.filter((r) => r.tokens !== null && kinds.includes(group(r.kind)))
+        .map((r) => r.latencyMs);
+    const chatTimes = answered(["chat"]);
     return {
       config,
       calls: mine.length,
@@ -93,8 +99,9 @@ export function summarize(records: CallRecord[]): ConfigSummary[] {
       refusals: mine.filter((r) => r.reason === "refusal").length,
       invalid: mine.filter((r) => r.reason === "invalid" || r.reason === "max_tokens").length,
       errors: mine.filter((r) => r.reason === "error" || r.reason === "timeout").length,
-      latencyP50: percentile(answered, 50),
-      latencyP95: percentile(answered, 95),
+      chatLatencyP50: percentile(chatTimes, 50),
+      chatLatencyP95: percentile(chatTimes, 95),
+      storyLatencyP95: percentile(answered(["event", "evening"]), 95),
       totalCost: mine.reduce((acc, r) => acc + r.costUsd, 0),
       byKind,
       fullUse: full((s) => s.avgCost),
@@ -138,15 +145,18 @@ export function markdownReport(meta: ReportMeta, records: CallRecord[]): string 
     "",
     "## Summary",
     "",
-    "| Config | Calls | Valid | Refusals | Invalid | Errors | Reply time p50 / p95 | Cost |",
-    "|---|---|---|---|---|---|---|---|",
+    "| Config | Calls | Valid | Refusals | Invalid | Errors | Chat reply p50 / p95 | Story p95 | Cost |",
+    "|---|---|---|---|---|---|---|---|---|",
     ...summaries.map((s) =>
       `| ${s.config} | ${s.calls} | ${s.ok} (${
         ((100 * s.ok) / Math.max(1, s.calls)).toFixed(1)
       }%) | ` +
-      `${s.refusals} | ${s.invalid} | ${s.errors} | ${(s.latencyP50 / 1000).toFixed(1)} s / ` +
-      `${(s.latencyP95 / 1000).toFixed(1)} s | ${usd(s.totalCost)} |`
+      `${s.refusals} | ${s.invalid} | ${s.errors} | ${(s.chatLatencyP50 / 1000).toFixed(1)} s / ` +
+      `${(s.chatLatencyP95 / 1000).toFixed(1)} s | ${(s.storyLatencyP95 / 1000).toFixed(1)} s | ` +
+      `${usd(s.totalCost)} |`
     ),
+    "",
+    'Gate 1 needs 95% of chat replies within 5 s. Stories are written at the end of the day, behind a "thinking" animation, so they have no target.',
     "",
     `## Full use per player per day`,
     "",
@@ -218,7 +228,7 @@ export function markdownReport(meta: ReportMeta, records: CallRecord[]): string 
             `${o.expression}`,
             `mood ${Number(o.mood_change) >= 0 ? "+" : ""}${o.mood_change}`,
             o.wants_action ? `wants: ${o.wants_action}` : null,
-            o.safety === "distress" ? "**safety: distress**" : null,
+            o.safety === "ok" ? null : `**safety: ${o.safety}**`,
           ].filter(Boolean).join(", ");
           out.push(`> **Reply** (${extras}): ${o.reply}`);
           if (o.memory) out.push(`> _Memory: ${o.memory}_`);

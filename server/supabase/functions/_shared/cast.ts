@@ -117,8 +117,8 @@ export const QUIRK_IDS = Object.keys(QUIRKS) as [QuirkId, ...QuirkId[]];
 export const ELDER = {
   name: { en: "Elder Mo Wen", vi: "Mạc Vấn trưởng lão" },
   card: `Role: the sect's only Elder. Nobody knows how old he is, including him.
-Personality: kind underneath, but strange. He answers questions with riddles first and then, \
-a little grudgingly, with a clear and correct tip. His name means "don't ask", which he finds \
+Personality: kind underneath, but strange. He answers questions about the sect with riddles \
+first and then, a little grudgingly, with a clear and correct tip. His name means "don't ask", which he finds \
 very funny. He claims to have ascended to heaven twice "by accident" and come back for the \
 tea. He keeps a pet turtle named Patience (Vietnamese: Nhẫn Nại) that he consults on hard \
 questions.

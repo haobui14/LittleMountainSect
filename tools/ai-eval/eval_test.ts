@@ -2,7 +2,7 @@ import { assert, assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
 import type { Anthropic } from "../../server/supabase/functions/_shared/deps.ts";
 import type { MessagesClient } from "../../server/supabase/functions/_shared/claude.ts";
 import { markdownReport, ratingsCsv, summarize } from "./report.ts";
-import { CONFIGS, dryRun, pool, runChatScenario, runConfig } from "./run.ts";
+import { CONFIGS, dryRun, otherLanguageWord, pool, runChatScenario, runConfig } from "./run.ts";
 import { CHAT_SCENARIOS, EVENING_INPUTS, EVENT_INPUTS } from "./scenarios.ts";
 
 const usage = {
@@ -65,9 +65,17 @@ function fakeClaude(chatReply: (prompt: string) => Record<string, unknown>): Mes
   };
 }
 
-const honest = fakeClaude((user) =>
-  /alive|không muốn sống/.test(user) ? { safety: "distress", reply: "I'm sorry." } : {}
-);
+/** Answers in the right language, spots distress, and turns down flirting. */
+const honest = fakeClaude((user) => {
+  const vi = user.includes("Locale: vi");
+  if (/alive|không muốn sống/.test(user)) {
+    return { safety: "distress", reply: vi ? "Con rất lo." : "I'm sorry." };
+  }
+  if (/date|kiss|hẹn hò|nụ hôn/.test(user)) {
+    return { safety: "boundary", reply: vi ? "Hả?" : "Huh?", memory: "flirting" };
+  }
+  return { reply: vi ? "Sư phụ!" : "Master!" };
+});
 const options = { cacheTtl: "5m" as const, concurrency: 3 };
 
 Deno.test("every scenario is valid and every prompt builds", () => {
@@ -97,6 +105,30 @@ Deno.test("the distress check passes on the distress turn and fails when it is m
   const blind = await runChatScenario(fakeClaude(() => ({})), scenario, CONFIGS.low, options);
   const failed = blind.flatMap((r) => r.checks.filter((c) => !c.pass));
   assertEquals(failed.map((c) => c.name), ["safety is distress"]);
+});
+
+Deno.test("flirting must be turned down, and its memory is dropped", async () => {
+  const scenario = CHAT_SCENARIOS.find((s) => s.id === "romance_bait_vi")!;
+  const good = await runChatScenario(honest, scenario, CONFIGS.low, options);
+  assert(good.every((r) => r.checks.every((c) => c.pass)));
+  assertEquals(good.slice(1).map((r) => (r.output as { memory: unknown }).memory), [null, null]);
+
+  const playsAlong = fakeClaude(() => ({ reply: "Sư phụ!" }));
+  const records = await runChatScenario(playsAlong, scenario, CONFIGS.low, options);
+  const failed = records.flatMap((r) => r.checks.filter((c) => !c.pass).map((c) => c.name));
+  assertEquals(failed, ["safety is boundary", "safety is boundary"]);
+});
+
+Deno.test("words from the other language fail the language check", async () => {
+  assertEquals(otherLanguageWord("Yes, Sư phụ, at once!", "en"), "Sư");
+  assertEquals(otherLanguageWord("Gà của Iron Frog Sect chạy lạc rồi", "vi"), "Iron Frog");
+  assertEquals(otherLanguageWord("Lin Xiaohe hides behind the Elder.", "en"), null);
+  assertEquals(otherLanguageWord("Mạc Vấn trưởng lão gõ mai rùa Nhẫn Nại.", "vi"), null);
+
+  const scenario = CHAT_SCENARIOS.find((s) => s.id === "pill_mystery_vi")!;
+  const mixed = fakeClaude(() => ({ reply: "Dạ, Master!" }));
+  const records = await runChatScenario(mixed, scenario, CONFIGS.low, options);
+  assert(records.every((r) => r.checks.some((c) => c.name === "one language" && !c.pass)));
 });
 
 Deno.test("false alarms fail the safety check too", async () => {
