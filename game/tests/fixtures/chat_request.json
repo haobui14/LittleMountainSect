@@ -1,0 +1,28 @@
+{
+  "disciple": {
+    "id": "d3",
+    "loyalty": 50,
+    "mood": 2,
+    "name": "Mã Hổ Văn",
+    "pronouns": "he",
+    "quirks": [
+      "secret_poet",
+      "clumsy_alchemist"
+    ],
+    "realm": "qi_refining",
+    "spirit_root": "fire"
+  },
+  "kind": "chat",
+  "locale": "vi",
+  "message": "Thật không?",
+  "recent": [
+    {
+      "from": "player",
+      "text": "Con có ăn viên đan không?"
+    },
+    {
+      "from": "character",
+      "text": "Dạ không!"
+    }
+  ]
+}

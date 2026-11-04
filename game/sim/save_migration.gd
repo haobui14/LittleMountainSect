@@ -15,9 +15,21 @@ static func migrate(data: Variant) -> Dictionary:
 		return {"ok": false, "error": "newer_version"}
 	if version < 1:
 		return {"ok": false, "error": "not_a_save"}
-	# Steps go here as the format changes, for example:
-	# if version == 1:
-	#     save = _v1_to_v2(save)
-	#     version = 2
+	if version == 1:
+		save = _v1_to_v2(save)
+		version = 2
 	save["version"] = version
 	return {"ok": true, "data": save}
+
+
+## Version 2 (M4) adds relationships, the disciples' own decisions, chat
+## counters and the save revision.
+static func _v1_to_v2(save: Dictionary) -> Dictionary:
+	save["relationships"] = {}
+	save["decisions"] = {}
+	save["revision"] = 0
+	for d: Dictionary in save["disciples"]:
+		d["chat_mood_today"] = 0
+		d["wants"] = ""
+		d["wants_day"] = 0
+	return save

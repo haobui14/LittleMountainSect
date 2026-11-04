@@ -3,10 +3,15 @@
 // and the server's schemas reject anything else, so the two lists must match.
 
 import { assertEquals } from "jsr:@std/assert@1";
-import { QUIRK_IDS, REALMS, SPIRIT_ROOTS } from "../_shared/cast.ts";
-import { DiscipleCardSchema } from "../_shared/schemas.ts";
+import { ACTIONS, QUIRK_IDS, REALMS, SPIRIT_ROOTS } from "../_shared/cast.ts";
+import {
+  DiscipleCardSchema,
+  EveningRequestSchema,
+  GatewayRequestSchema,
+} from "../_shared/schemas.ts";
 
 const GAME = new URL("../../../../game/sim/", import.meta.url);
+const FIXTURES = new URL("../../../../game/tests/fixtures/", import.meta.url);
 
 async function gdscript(path: string): Promise<string> {
   return await Deno.readTextFile(new URL(path, GAME));
@@ -31,4 +36,19 @@ Deno.test("the game's spirit roots, realms and pronouns match the server's", asy
   assertEquals(stringArray(balance, "SPIRIT_ROOTS"), [...SPIRIT_ROOTS]);
   assertEquals(stringArray(balance, "REALMS"), [...REALMS]);
   assertEquals(stringArray(balance, "PRONOUNS"), DiscipleCardSchema.shape.pronouns.options);
+  assertEquals(stringArray(balance, "ACTIONS"), [...ACTIONS]);
+});
+
+// The game writes these files from its own code (game/tests/unit/test_contract_fixtures.gd).
+async function fixture(name: string): Promise<unknown> {
+  return JSON.parse(await Deno.readTextFile(new URL(name, FIXTURES)));
+}
+
+Deno.test("the server accepts the requests the game sends", async () => {
+  DiscipleCardSchema.parse(await fixture("disciple_card.json"));
+  const chat = GatewayRequestSchema.parse(await fixture("chat_request.json"));
+  assertEquals(chat.kind, "chat");
+  const evening = EveningRequestSchema.parse(await fixture("evening_request.json"));
+  assertEquals(evening.kind, "evening");
+  assertEquals(GatewayRequestSchema.parse(evening).kind, "evening");
 });

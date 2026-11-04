@@ -1,0 +1,102 @@
+{
+  "disciples": [
+    {
+      "allowed_actions": [],
+      "card": {
+        "id": "d1",
+        "loyalty": 50,
+        "mood": 2,
+        "name": "Sở Ninh",
+        "pronouns": "he",
+        "quirks": [
+          "competitive",
+          "secret_poet"
+        ],
+        "realm": "qi_refining",
+        "spirit_root": "water"
+      }
+    },
+    {
+      "allowed_actions": [],
+      "card": {
+        "id": "d2",
+        "loyalty": 50,
+        "mood": 2,
+        "name": "Mai Bảo Bình",
+        "pronouns": "she",
+        "quirks": [
+          "cloud_watcher",
+          "overly_polite"
+        ],
+        "realm": "qi_refining",
+        "spirit_root": "water"
+      }
+    },
+    {
+      "allowed_actions": [
+        "train",
+        "rest",
+        "meditate",
+        "cook",
+        "tend_field",
+        "study",
+        "hide"
+      ],
+      "card": {
+        "id": "d3",
+        "loyalty": 50,
+        "mood": 2,
+        "name": "Mã Hổ Văn",
+        "pronouns": "he",
+        "quirks": [
+          "secret_poet",
+          "clumsy_alchemist"
+        ],
+        "realm": "qi_refining",
+        "spirit_root": "fire"
+      }
+    }
+  ],
+  "facts": [
+    {
+      "mission": "hunt_monster",
+      "return_day": 3,
+      "team": [
+        "d1",
+        "d2"
+      ],
+      "type": "mission_departed"
+    },
+    {
+      "disciples": [
+        "d3"
+      ],
+      "food": 3,
+      "herbs": 1,
+      "type": "worked"
+    },
+    {
+      "food": 1,
+      "type": "ate"
+    }
+  ],
+  "game_day": 1,
+  "kind": "evening",
+  "locale": "vi",
+  "relationships": [
+    {
+      "a": "d1",
+      "b": "d3",
+      "score": 2
+    }
+  ],
+  "sect": {
+    "rank": "unknown_mountain",
+    "resources": {
+      "food": 22,
+      "herbs": 1,
+      "reputation": 0,
+      "stones": 30
+    }
+  }
+}

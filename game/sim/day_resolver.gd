@@ -105,6 +105,10 @@ static func resolve(sect: Sect, plan: DayPlan) -> DayReport:
 		elif d.mood <= Balance.LOYALTY_DOWN_MOOD:
 			d.loyalty -= Balance.LOYALTY_STEP
 		d.talked_today = false
+		d.chat_mood_today = 0
+		# A wish from chat lasts for the next day's plan, then fades.
+		if d.wants_day < sect.day:
+			d.wants = ""
 
 	# 8. Limits.
 	for d in sect.disciples:
@@ -113,4 +117,5 @@ static func resolve(sect: Sect, plan: DayPlan) -> DayReport:
 		report.resource_changes[name] = int(sect.resources[name]) - int(before[name])
 	sect.last_report = report
 	sect.day += 1
+	Decisions.expire(sect)
 	return report

@@ -18,6 +18,21 @@ const PRONOUNS: Array[String] = ["he", "she", "they"]
 ## What a disciple can do for a day at home. Missions are planned separately.
 const HOME_TASKS: Array[String] = ["train", "work", "rest"]
 
+## Actions a character may want or decide on: the server's ACTIONS in
+## server/supabase/functions/_shared/cast.ts (the contract test checks them).
+const ACTIONS: Array[String] = ["train", "rest", "meditate", "cook", "tend_field", "study", "explore", "hide"]
+## The home task each action means on the day plan. Actions missing here
+## ("explore") can't be chosen yet.
+const ACTION_TASK := {
+	"train": "train",
+	"meditate": "train",
+	"study": "train",
+	"cook": "work",
+	"tend_field": "work",
+	"rest": "rest",
+	"hide": "rest",
+}
+
 ## The mountain's 8 fixed slots, in screen order. M3 plays the first four.
 const BUILDINGS: Array[String] = [
 	"main_hall",
@@ -142,3 +157,22 @@ const TIER_LOYALTY := {"great": 1, "success": 0, "partial": 0, "failure": 0, "di
 const FAILURE_INJURY_CHANCE := 0.5
 const INJURY_DAYS: Array[int] = [2, 4]
 const LOST_PROGRESS: Array[int] = [15, 30]
+
+# Living disciples (M4) ------------------------------------------------------
+
+## How two disciples get along, from rivals to close friends.
+const RELATIONSHIP_MIN := -20
+const RELATIONSHIP_MAX := 20
+## The most one evening can move a pair, and how many pairs it can move.
+const RELATIONSHIP_STEP := 2
+const RELATIONSHIP_CHANGES := 3
+## How many disciples may decide what they do tomorrow, each evening.
+const DECISIONS_PER_EVENING := 2
+## Mood lost when the Sect Master overrules a disciple's own decision (once a day).
+const OVERRULE_MOOD := -1
+## Chat moves Mood by at most this per reply, and by at most this in total
+## per disciple per day, so chatting can't farm Mood.
+const CHAT_MOOD_STEP := 2
+const CHAT_MOOD_PER_DAY := 2
+## Reasons and memories longer than this are shortened.
+const REASON_CHARS := 160

@@ -79,6 +79,8 @@ func _run_player(player: String, options: Dictionary) -> Dictionary:
 			for fact in report.of_type("mission_returned"):
 				var by_tier: Dictionary = tiers.get_or_add(fact["mission"], {})
 				by_tier[fact["tier"]] = int(by_tier.get(fact["tier"], 0)) + 1
+			if player == "random":
+				SimPlayers.random_ai(sect, policy_rng)
 			var broken := _broken_values(sect)
 			if broken != "":
 				failures.append("seed %d day %d: %s" % [seed_value, report.day, broken])
@@ -109,6 +111,12 @@ func _broken_values(sect: Sect) -> String:
 			return "%s loyalty %d" % [d.id, d.loyalty]
 		if d.progress < 0 or d.progress > Balance.PROGRESS_MAX:
 			return "%s progress %d" % [d.id, d.progress]
+		if absi(d.chat_mood_today) > Balance.CHAT_MOOD_PER_DAY:
+			return "%s chat mood %d" % [d.id, d.chat_mood_today]
+	for pair: String in sect.relationships:
+		var score := int(sect.relationships[pair])
+		if score < Balance.RELATIONSHIP_MIN or score > Balance.RELATIONSHIP_MAX:
+			return "%s relationship %d" % [pair, score]
 	return ""
 
 

@@ -10,13 +10,16 @@ var tasks: Dictionary = {}
 var missions: Array[Dictionary] = []
 
 
-## Yesterday's tasks for disciples who are home; injured disciples rest.
+## For disciples at home: their own decision for today if they made one,
+## otherwise yesterday's task. Injured disciples rest.
 static func defaults(sect: Sect) -> DayPlan:
 	var plan := DayPlan.new()
 	for d in sect.disciples:
 		if sect.is_away(d.id):
 			continue
-		var task := String(sect.last_tasks.get(d.id, "rest"))
+		var task := Decisions.task_for_today(sect, d.id)
+		if task == "":
+			task = String(sect.last_tasks.get(d.id, "rest"))
 		plan.tasks[d.id] = "rest" if d.is_injured() else task
 	return plan
 

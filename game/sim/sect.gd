@@ -4,7 +4,7 @@ extends RefCounted
 ## and the random generator. [method to_dict] is the save; it carries a
 ## version number so older saves can be upgraded (see SaveMigration).
 
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 
 var day: int = 1
 var resources: Dictionary = {"stones": 0, "food": 0, "herbs": 0, "reputation": 0}
@@ -19,6 +19,13 @@ var next_disciple_number: int = 1
 var last_tasks: Dictionary = {}
 ## The report of the last finished day, or null before day 1 ends.
 var last_report: DayReport = null
+## How each pair of disciples gets along: "a|b" (ids in sorted order) -> score.
+var relationships: Dictionary = {}
+## Choices disciples made for themselves in the evening story:
+## id -> {action, task, reason, day, overruled}.
+var decisions: Dictionary = {}
+## Goes up on every save; the server keeps the save with the highest one.
+var revision: int = 0
 
 
 func _init() -> void:
@@ -91,6 +98,9 @@ func to_dict() -> Dictionary:
 		"next_disciple_number": next_disciple_number,
 		"last_tasks": last_tasks.duplicate(),
 		"last_report": last_report.to_dict() if last_report else null,
+		"relationships": relationships.duplicate(),
+		"decisions": decisions.duplicate(true),
+		"revision": revision,
 	}
 
 
@@ -114,4 +124,16 @@ static func from_dict(data: Dictionary) -> Sect:
 		s.last_tasks[id] = String(data["last_tasks"][id])
 	if data["last_report"] != null:
 		s.last_report = DayReport.from_dict(data["last_report"])
+	for pair: String in data["relationships"]:
+		s.relationships[pair] = int(data["relationships"][pair])
+	for id: String in data["decisions"]:
+		var decision: Dictionary = data["decisions"][id]
+		s.decisions[id] = {
+			"action": String(decision["action"]),
+			"task": String(decision["task"]),
+			"reason": String(decision["reason"]),
+			"day": int(decision["day"]),
+			"overruled": bool(decision["overruled"]),
+		}
+	s.revision = int(data["revision"])
 	return s

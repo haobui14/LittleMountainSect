@@ -1,0 +1,13 @@
+{
+  "id": "d1",
+  "loyalty": 50,
+  "mood": 2,
+  "name": "Sở Ninh",
+  "pronouns": "he",
+  "quirks": [
+    "competitive",
+    "secret_poet"
+  ],
+  "realm": "qi_refining",
+  "spirit_root": "water"
+}

@@ -20,6 +20,12 @@ var loyalty: int = Balance.START_LOYALTY
 var effects: Array[StatusEffect] = []
 ## Free time allows one chat bonus per day.
 var talked_today: bool = false
+## Mood moved by chat replies today; capped by Balance.CHAT_MOOD_PER_DAY.
+var chat_mood_today: int = 0
+## An action the disciple said they want in chat (a hint for the plan), and
+## the day they said it; "" when none.
+var wants: String = ""
+var wants_day: int = 0
 
 
 ## The disciple's name in the given language ("en" or "vi").
@@ -80,6 +86,9 @@ func to_dict() -> Dictionary:
 		"loyalty": loyalty,
 		"effects": effects.map(func(e: StatusEffect) -> Dictionary: return e.to_dict()),
 		"talked_today": talked_today,
+		"chat_mood_today": chat_mood_today,
+		"wants": wants,
+		"wants_day": wants_day,
 	}
 
 
@@ -100,4 +109,7 @@ static func from_dict(data: Dictionary) -> Disciple:
 	for effect in data["effects"]:
 		d.effects.append(StatusEffect.from_dict(effect))
 	d.talked_today = bool(data["talked_today"])
+	d.chat_mood_today = int(data["chat_mood_today"])
+	d.wants = String(data["wants"])
+	d.wants_day = int(data["wants_day"])
 	return d

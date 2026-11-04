@@ -108,3 +108,23 @@ static func _build_next(sect: Sect) -> void:
 	var building := _next_step(sect)
 	if building != "" and int(sect.resources["stones"]) >= _next_cost(sect):
 		BuildingRules.upgrade(sect, building)
+
+
+## Random chat and evening replies, including out-of-range and invalid ones,
+## so the balance sim stresses the M4 limits along with the day plan.
+static func random_ai(sect: Sect, policy_rng: SimRng) -> void:
+	for d in sect.disciples:
+		if policy_rng.chance(0.5):
+			ChatRules.apply(sect, d, {
+				"safety": policy_rng.pick(["ok", "ok", "ok", "boundary"]),
+				"mood_change": policy_rng.randi_range(-9, 9),
+				"wants_action": policy_rng.pick(Balance.ACTIONS),
+			})
+	var decisions: Array = []
+	var changes: Array = []
+	for i in 4:
+		var a: Disciple = policy_rng.pick(sect.disciples)
+		var b: Disciple = policy_rng.pick(sect.disciples)
+		decisions.append({"disciple_id": a.id, "action": policy_rng.pick(Balance.ACTIONS), "reason": "Because."})
+		changes.append({"from": a.id, "to": b.id, "change": policy_rng.randi_range(-9, 9), "reason": "Hm."})
+	EveningRules.apply(sect, {"decisions": decisions, "relationship_changes": changes})
