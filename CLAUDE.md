@@ -61,6 +61,18 @@ The test command uses `game/.gutconfig.json`, which runs `game/tests/` and exits
 godot --headless --path game --export-release Web ../build/web/index.html
 ```
 
+The balance sim plays many seeds headless and exits non-zero on a softlock or a broken limit. Every tunable number is in `game/sim/balance.gd`:
+
+```bash
+godot --headless --path game -s res://tools/balance_sim.gd -- --seeds 100 --days 60
+```
+
+Browser checks need the web build served on port 8060 (for example `python3 -m http.server 8060` in `build/web`). They click controls by name through `window.lmsUi`, which `game/autoload/ui_probe.gd` publishes in web builds:
+
+```bash
+node tools/web-check/play_check.cjs http://127.0.0.1:8060/index.html /tmp 10
+```
+
 Web export needs the 4.7.2 export templates installed.
 
 Database tests run against the local Supabase stack. They need Docker:
@@ -115,8 +127,10 @@ Live evals and the gateway smoke test run in the manual **AI live tests** workfl
 | Path | Contents |
 |---|---|
 | `game/` | The Godot project: `autoload/`, `scenes/`, `sim/` (the rules engine), `i18n/`, `assets/` and `tests/` (GUT) |
+| `game/scenes/` | Screens built in code from `ui/ui_kit.gd`. The canvas is 480×480 with `expand`, so every screen must work narrow (an upright phone) and wide. Tag clickable controls with `UiKit.probe()` so browser checks can click them |
 | `game/config/` | `backend.json`: the public Supabase URL and publishable key |
 | `server/supabase/` | `config.toml`, `migrations/` and `tests/database/` (pgTAP) |
 | `server/supabase/functions/` | `_shared/` (prompts, schemas, the Claude call path, validation, costs), `ai-gateway/`, and `tests/` (Deno) |
-| `tools/` | `ai-eval/` (live AI tests), `smoke/` (gateway smoke test), `web-check/` (browser typing check), and `balance-sim/` (M3) |
+| `game/tools/` | The balance sim (`balance_sim.gd`) and its automatic players. It sits inside the Godot project so it can use `sim/`, and is excluded from the export |
+| `tools/` | `ai-eval/` (live AI tests), `smoke/` (gateway smoke test), and `web-check/` (browser checks: `typing_check.cjs` and `play_check.cjs`) |
 | `docs/` | The GDD, the milestones, `evals/` (AI eval reports) and `playtests/` |

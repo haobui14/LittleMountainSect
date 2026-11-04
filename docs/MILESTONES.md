@@ -132,27 +132,27 @@ Art work starts during M5 and runs alongside the other milestones until M7.
 
 **Goal:** 10 in-game days are playable with placeholder screens and no AI.
 
-- [ ] **Data model.** Typed classes (`Sect`, `Disciple`, `Building`, `Mission`, `StatusEffect`) that convert to and from dictionaries. Saves carry a version number and are local for now.
-- [ ] **Disciple generator.** Each disciple gets:
+- [x] **Data model.** Typed classes (`Sect`, `Disciple`, `ActiveMission`, `StatusEffect`, `DayReport`) that convert to and from dictionaries. Building levels live in `Sect.buildings`. Saves carry a version number, are checked by `SaveMigration`, and are local (`user://`) for now.
+- [x] **Disciple generator.** Each disciple gets:
   - Talent, Body, Spirit and Wit stats
   - A spirit root
   - 2 quirks from a tagged list
   - A name with an English form (pinyin) and a Vietnamese form (Hán-Việt)
-- [ ] **Daily loop:** Morning report → Day plan → Free time (chat) → Results → Evening story.
+- [x] **Daily loop:** Morning report → Day plan → Free time (chat) → Results → Evening story.
   - Players assign each disciple to train, work, rest or go on a mission.
   - The rules cover training progress, Mood and Loyalty drift, food upkeep and production.
-- [ ] **Buildings:** Main Hall, Disciple Huts, Training Yard and Spirit Field, each with 3 levels.
-- [ ] **Missions:** Gather Herbs and Hunt a Monster, with result tiers and the setbacks Injured and Lost cultivation.
-- [ ] **The GDD's start:** a leaky hut, 3 disciples, a small bag of Spirit Stones and the strange Elder.
-- [ ] **Placeholder screens:** Mountain (8 slots), Disciples, Day Plan, Results, and an Evening report written from templates.
-- [ ] **Tests:**
-  - A GUT test for each rule.
-  - `tools/balance-sim`, which plays many seeds headless and reports resource curves and softlocks.
+- [x] **Buildings:** Main Hall, Disciple Huts, Training Yard and Spirit Field, each with 3 levels.
+- [x] **Missions:** Gather Herbs and Hunt a Monster, with result tiers and the setbacks Injured and Lost cultivation.
+- [x] **The GDD's start:** a leaky hut, 3 disciples, a small bag of Spirit Stones and the strange Elder. The Elder gives written tips on days 1–5.
+- [x] **Placeholder screens:** Mountain (8 slots), Disciples, Day Plan, Results, and an Evening report written from templates. They work on an upright phone and on desktop.
+- [x] **Tests:**
+  - A GUT test for each rule (80 GUT tests in all).
+  - The balance sim (`game/tools/balance_sim.gd`), which plays many seeds headless and reports resource curves and softlocks. See [docs/balance](balance/README.md).
 
 **Exit:**
-- [ ] 10 days play from start to finish without AI.
-- [ ] CI is green.
-- [ ] 100 seeds × 60 days run without a softlock or negative resources.
+- [x] 10 days play from start to finish without AI. A GUT test plays them through `GameState`, and `tools/web-check/play_check.cjs` plays them in the web build at phone and desktop sizes.
+- [x] CI is green.
+- [x] 100 seeds × 60 days run without a softlock or negative resources. CI runs this on every push; 1,000 × 120 also passes.
 
 ### M4 — Living disciples · ~20 h
 

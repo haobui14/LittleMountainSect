@@ -14,10 +14,9 @@ Claude makes the disciples feel alive: they talk freely, make choices, remember 
 
 Milestone 1 (Foundations) is done ([#1](https://github.com/haobui14/LittleMountainSect/issues/1)). The test build is live at **https://haobui14.github.io/LittleMountainSect/**.
 
-Milestone 2 (Risk tests) is in progress ([#2](https://github.com/haobui14/LittleMountainSect/issues/2)):
-- The AI gateway is live on Supabase.
-- The AI eval tool and the typing test kit are built.
-- The live AI tests and the device tests come next.
+Milestone 2 (Risk tests) is done except for the people's part of Gate 1: rating the AI chats and testing Vietnamese typing on phones ([#2](https://github.com/haobui14/LittleMountainSect/issues/2), [Gate 1 write-up](docs/playtests/gate-1.md)).
+
+Milestone 3 (Core simulation) is done ([#3](https://github.com/haobui14/LittleMountainSect/issues/3)): 10 in-game days play on the test build with placeholder screens and no AI. The rules engine is tested, and a balance sim checks it.
 
 See the [milestones](docs/MILESTONES.md) for the full plan.
 
