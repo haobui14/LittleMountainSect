@@ -16,10 +16,17 @@ const { chromium } = require("playwright");
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
   })).newPage();
+  // The typing test needs no server, so requests to it are blocked. The
+  // browser and Godot's fetch wrapper report each blocked request; the game
+  // treats them as no connection.
+  await page.route(/supabase\.co/, (route) => route.abort("internetdisconnected"));
+  const expected = (text) => /Failed to fetch|Failed to load resource|net::ERR/.test(text);
   const errors = [];
-  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("pageerror", (e) => {
+    if (!expected(e.message)) errors.push(e.message);
+  });
   page.on("console", (m) => {
-    if (m.type() === "error") errors.push(m.text());
+    if (m.type() === "error" && !expected(m.text())) errors.push(m.text());
   });
 
   // The center of a control the game published in window.lmsUi.
@@ -34,6 +41,18 @@ const { chromium } = require("playwright");
   };
 
   await page.goto(url);
+  // A first launch asks for 18+ before the title screen.
+  const first = await page.waitForFunction(
+    () => globalThis.lmsUi?.items?.age_check || globalThis.lmsUi?.items?.typing_test,
+    null,
+    { timeout: 60000 },
+  );
+  if (
+    (await first.jsonValue()).w && await page.evaluate(() => !!globalThis.lmsUi.items.age_check)
+  ) {
+    await page.mouse.click(...await center("age_check"));
+    await page.mouse.click(...await center("first_start"));
+  }
   await page.mouse.click(...await center("typing_test"));
   const [boxX, boxY] = await center("typing_box");
   const [toggleX, toggleY] = await center("browser_box");

@@ -215,3 +215,38 @@ ACTION_TEND_FIELD,tend the Spirit Field,chăm Linh điền
 ACTION_STUDY,study,học bài
 ACTION_EXPLORE,explore,đi thám hiểm
 ACTION_HIDE,hide,trốn đi
+FIRST_TITLE,Before you begin,Trước khi bắt đầu
+FIRST_AI_NOTICE,"In this game, the disciples and the Elder are voiced by an AI: Claude, made by Anthropic. What you type to them goes to our server and to Anthropic so they can reply. The game keeps short memories of your chats, never the full conversations.","Trong trò chơi này, các đệ tử và Trưởng lão được AI lồng tiếng: Claude, do Anthropic tạo ra. Những gì người nhắn cho họ sẽ được gửi đến máy chủ của trò chơi và đến Anthropic để họ trả lời. Trò chơi chỉ giữ vài ghi nhớ ngắn về cuộc trò chuyện, không bao giờ lưu toàn bộ nội dung."
+FIRST_AGE,I am 18 or older,Tôi từ 18 tuổi trở lên
+FIRST_ADULTS_ONLY,"For now, Little Mountain Sect is for players aged 18 and over.","Hiện tại, Little Mountain Sect dành cho người chơi từ 18 tuổi trở lên."
+FIRST_START,Start,Bắt đầu
+REL_RIVALS,rivals,đối thủ
+REL_COOL,a little cool,hơi lạnh nhạt
+REL_ORDINARY,on ordinary terms,bình thường
+REL_FRIENDLY,friendly,thân thiện
+REL_CLOSE,close friends,bạn thân
+SUPPORT_TITLE,You don't have to face this alone,Bạn không phải đối mặt với chuyện này một mình
+SUPPORT_BODY,"If you are in danger, call your local emergency number: 115 in Vietnam. In the US, call or text 988. To find a helpline in your country, visit findahelpline.com.","Nếu bạn đang gặp nguy hiểm, hãy gọi số khẩn cấp nơi bạn sống: 115 ở Việt Nam. Ở Mỹ, hãy gọi hoặc nhắn tin 988. Để tìm đường dây hỗ trợ ở nước bạn, hãy vào findahelpline.com."
+UI_AI_NOTICE,Replies are written by an AI (Claude). Messages go to our server and to Anthropic.,Lời đáp do AI (Claude) viết. Tin nhắn được gửi đến máy chủ của trò chơi và đến Anthropic.
+UI_ASK_ELDER,Ask the Elder,Hỏi Trưởng lão
+UI_CHAT,Chat,Trò chuyện
+UI_CHAT_COST,Each message costs 1 Spirit Energy. The first chat with each disciple each day lifts their Mood a little.,Mỗi tin nhắn tốn 1 Linh khí. Lần trò chuyện đầu tiên mỗi ngày với mỗi đệ tử giúp tâm trạng họ khá hơn một chút.
+UI_CHAT_PLACEHOLDER,Say something to {name}…,Nói gì đó với {name}…
+UI_DECIDED,Decided to {action} today,Đã quyết định hôm nay sẽ {action}
+UI_OVERRULED,(you overruled them),(người đã gạt đi)
+UI_WANTS,Would like to {action},Muốn {action}
+UI_ELDER_NAME,Elder Mo Wen,Mạc Vấn trưởng lão
+UI_ENERGY,Spirit Energy {left},Linh khí {left}
+UI_OFFLINE,"Offline: replies are written, not AI","Ngoại tuyến: lời đáp là câu viết sẵn, không phải AI"
+UI_EVENING_WRITING,The evening story is being written…,Đang viết chuyện buổi tối…
+UI_WHAT_HAPPENED,What happened,Chuyện đã xảy ra
+UI_LOADED_NEWER,This game was saved in another tab or on another device. The newer copy is open now.,Trò chơi đã được lưu ở thẻ khác hoặc thiết bị khác. Bản mới hơn đang được mở.
+UI_MOOD_CHANGE,{mood} Mood,{mood} Tâm trạng
+UI_NO_SAVE,No saved game was found.,Không tìm thấy trò chơi đã lưu.
+UI_RELATIONSHIP,With {name}: {words} ({score}),Với {name}: {words} ({score})
+UI_REMEMBERS,Remembers: {memories},Còn nhớ: {memories}
+UI_SEND,Send,Gửi
+UI_THINKING,{name} is thinking,{name} đang nghĩ
+UI_USE_GODOT_BOX,Use the game's own text box,Dùng ô nhập của trò chơi
+UI_WRITTEN,written,viết sẵn
+UI_YOU,You,Người

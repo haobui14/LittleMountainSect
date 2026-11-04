@@ -4,7 +4,8 @@ extends Node
 ## (tools/web-check/*.cjs) can click by name instead of by fixed coordinates.
 ## Rectangles are in CSS pixels, relative to the page.
 ##
-##   window.lmsUi = {screen: "plan", day: 3,
+##   window.lmsUi = {screen: "plan", day: 3, chat_lines: 4, waiting: 0,
+##                   evening: "done",
 ##                   items: {"end_day": {x, y, w, h, disabled, pressed, on_screen}}}
 
 const INTERVAL := 0.2
@@ -27,7 +28,17 @@ func _process(delta: float) -> void:
 	var in_game := GameState.has_game() and _has_game_screen(get_tree().root)
 	var screen := GameState.step if in_game else "title"
 	var day := GameState.sect.day if in_game else 0
-	var data := JSON.stringify({"screen": screen, "day": day, "items": items})
+	var lines := 0
+	for target: String in GameState.chats:
+		lines += GameState.chats[target].size()
+	var data := JSON.stringify({
+		"screen": screen,
+		"day": day,
+		"items": items,
+		"chat_lines": lines,
+		"waiting": GameState.waiting.size(),
+		"evening": GameState.evening_state,
+	})
 	JavaScriptBridge.eval("""
 		(function () {
 			const canvas = document.getElementById('canvas');

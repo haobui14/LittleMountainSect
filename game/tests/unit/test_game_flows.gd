@@ -73,7 +73,7 @@ func test_with_no_spirit_energy_the_gateways_written_line_is_used() -> void:
 	var line: Dictionary = await GameState.send_chat(d.id, "Hi")
 	assert_eq([line["text"], line["source"]], ["*yawns* Tomorrow?", "fallback"])
 	assert_eq(line["mood"], Balance.TALK_MOOD, "only the talk bonus")
-	assert_eq(GameState.backend.energy["left"], 0)
+	assert_eq(int(GameState.backend.energy["left"]), 0)
 
 
 func test_a_distress_reply_is_marked_and_changes_no_mood() -> void:
@@ -170,7 +170,7 @@ func test_every_save_goes_to_the_server_with_a_rising_revision() -> void:
 	var revisions: Array = writes.map(func(r: Dictionary) -> int: return int(r["body"]["revision"]))
 	assert_eq(revisions.size(), 2)
 	assert_eq(revisions[1], revisions[0] + 1, "each save goes up by one")
-	assert_eq(writes[1]["body"]["data"]["buildings"]["spirit_field"], 1)
+	assert_eq(int(writes[1]["body"]["data"]["buildings"]["spirit_field"]), 1)
 
 
 func test_a_newer_save_on_the_server_wins() -> void:

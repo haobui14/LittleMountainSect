@@ -40,13 +40,13 @@ func test_the_first_call_signs_up_anonymously_and_keeps_the_session() -> void:
 	assert_eq(fake.header(gateway, "apikey"), "pk_test")
 	assert_eq(fake.header(gateway, "x-region"), "us-west-1")
 	assert_eq(backend.status, "online")
-	assert_eq(backend.energy["left"], 49, "Spirit Energy comes back with each reply")
+	assert_eq(int(backend.energy["left"]), 49, "Spirit Energy comes back with each reply")
 
 	# A new game session reuses the saved session instead of signing up again.
 	var again := _new_backend()
 	await again.refresh_energy()
 	assert_eq(fake.paths().count("/auth/v1/signup"), 1)
-	assert_eq(again.energy["left"], 50)
+	assert_eq(int(again.energy["left"]), 50)
 
 
 func test_an_expired_session_is_refreshed_not_replaced() -> void:
@@ -70,7 +70,7 @@ func test_a_401_refreshes_the_session_and_tries_again() -> void:
 	})
 	var result: Dictionary = await backend.refresh_energy()
 	assert_true(result["ok"])
-	assert_eq(backend.energy["left"], 7)
+	assert_eq(int(backend.energy["left"]), 7)
 
 
 func test_one_retry_after_a_network_error_or_a_502() -> void:
@@ -129,7 +129,7 @@ func test_a_save_from_another_tab_is_a_conflict() -> void:
 			return {"code": 200, "body": [{"revision": 5, "schema_version": 2, "data": {"day": 9}}]},
 	})
 	var loaded: Dictionary = await backend.load_save()
-	assert_eq(loaded["data"]["revision"], 5)
+	assert_eq(int(loaded["data"]["revision"]), 5)
 	var result: Dictionary = await backend.write_save({"version": 2}, 6)
 	assert_eq(result, {"ok": false, "error": "conflict"})
 	assert_eq(backend.server_revision, -1, "the next write reloads first")

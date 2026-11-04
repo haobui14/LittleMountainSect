@@ -17,7 +17,7 @@ func _ready() -> void:
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(background)
 	Events.language_changed.connect(func(_locale: String) -> void: show_screen(_current))
-	show_screen("title")
+	show_screen("title" if Settings.age_confirmed else "first_launch")
 
 
 func show_screen(target: String) -> void:
@@ -27,6 +27,8 @@ func show_screen(target: String) -> void:
 	match target:
 		"game":
 			_screen = GameScreen.new()
+		"first_launch":
+			_screen = FirstLaunchScreen.new()
 		"typing_test":
 			_screen = TYPING_TEST.instantiate()
 		_:

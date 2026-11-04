@@ -3,12 +3,17 @@
 // controls the game publishes in window.lmsUi (see game/autoload/ui_probe.gd).
 // Takes a screenshot of each screen and fails on any page error.
 //
-// Usage: node tools/web-check/play_check.cjs <url> <screenshots-dir> [days]
-// Serve build/web first, for example on port 8060.
+// Usage: node tools/web-check/play_check.cjs <url> <screenshots-dir> [days] [--offline]
+// Serve build/web first, for example on port 8060. With --offline every
+// request to Supabase fails, so the whole game must run on written text
+// (Gate 2: playable with the server off). Without it the game talks to the
+// project in game/config/backend.json, which costs Spirit Energy.
 
 const { chromium } = require("playwright");
 
-const [url, shots, daysArg] = process.argv.slice(2);
+const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const OFFLINE = process.argv.includes("--offline");
+const [url, shots, daysArg] = args;
 const DAYS = Number(daysArg || 10);
 const SIZES = [
   { name: "phone", viewport: { width: 390, height: 844 } },
@@ -18,10 +23,17 @@ const SIZES = [
 async function play(browser, size) {
   const context = await browser.newContext({ viewport: size.viewport, deviceScaleFactor: 1 });
   const page = await context.newPage();
+  if (OFFLINE) await page.route(/supabase\.co/, (route) => route.abort("internetdisconnected"));
   const errors = [];
-  page.on("pageerror", (e) => errors.push(e.message));
+  // Offline, the browser and Godot's fetch wrapper report each blocked
+  // request ("Failed to fetch"); the game treats them as no connection.
+  const expected = (text) =>
+    OFFLINE && /Failed to fetch|Failed to load resource|net::ERR/.test(text);
+  page.on("pageerror", (e) => {
+    if (!expected(e.message)) errors.push(e.message);
+  });
   page.on("console", (m) => {
-    if (m.type() === "error") errors.push(m.text());
+    if (m.type() === "error" && !expected(m.text())) errors.push(m.text());
   });
 
   const ui = () => page.evaluate(() => globalThis.lmsUi || null);
@@ -52,8 +64,25 @@ async function play(browser, size) {
   };
   const shot = (label) => page.screenshot({ path: `${shots}/${size.name}_${label}.png` });
 
+  // Types a chat line into the open chat and waits for the reply.
+  const chat = async (message, label) => {
+    const before = (await ui()).chat_lines;
+    await click("chat_input");
+    await page.keyboard.type(message, { delay: 10 });
+    await page.keyboard.press("Enter");
+    await waitFor((s) => s.chat_lines >= before + 2 && s.waiting === 0, "a chat reply", 30000);
+    await shot(label);
+    await click("chat_back");
+  };
+
   await page.goto(url);
-  await waitFor((s) => s.items.new_game, "the title screen", 60000);
+  await waitFor((s) => s.items.new_game || s.items.age_check, "the first screen", 60000);
+  if ((await ui()).items.age_check) {
+    await shot("0_first_launch");
+    await click("age_check");
+    await click("first_start");
+  }
+  await waitFor((s) => s.items.new_game, "the title screen");
   await shot("0_title");
   await click("new_game");
   await waitFor((s) => s.screen === "morning" && s.day === 1, "day 1 morning");
@@ -82,11 +111,16 @@ async function play(browser, size) {
     await click("done_planning");
     await waitFor((s) => s.screen === "free_time", "free time");
     if (day === 1) {
-      await click("talk_d3");
+      await click("chat_d3");
+      await chat("Xin chào! Hôm nay con thế nào?", "5_chat");
       await shot("5_free_time");
     }
+    if (day === 2) {
+      await click("chat_elder");
+      await chat("What should I build first?", "5_elder");
+    }
     await click("end_day");
-    await waitFor((s) => s.screen === "results", "the evening");
+    await waitFor((s) => s.screen === "results" && s.evening === "done", "the evening", 70000);
     if (day === 1 || day === DAYS) await shot(`6_evening_day${day}`);
     await click("next_morning");
   }

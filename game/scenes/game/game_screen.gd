@@ -14,13 +14,38 @@ var _rebuild_queued := false
 ## Kept across rebuilds, so a tap doesn't jump the list back to the top.
 var _scroll: ScrollContainer
 var _scroll_value := 0
-## Disciple id -> the line they said in free time today.
-var _talk_lines := {}
+## The open chat ("" when none): a disciple id or GameState.ELDER. The chat
+## view is kept while open so the text box keeps what the player types.
+var _chat_target := ""
+var _chat_view: ChatView
+## Disciple id -> their newest memories from the server (fetched on the
+## Disciples tab, once per day).
+var _memories := {}
+var _memories_day := -1
+var _loaded_newer := false
 
 
 func _ready() -> void:
 	Events.state_changed.connect(_queue_rebuild)
 	get_viewport().size_changed.connect(_queue_rebuild)
+	GameState.loaded_newer_save.connect(func() -> void:
+		_loaded_newer = true
+		_chat_target = ""
+		_queue_rebuild())
+	var backend := _backend()
+	if backend:
+		backend.status_changed.connect(func(_s: String) -> void: _queue_rebuild())
+		backend.energy_changed.connect(func(_e: Dictionary) -> void: _queue_rebuild())
+		backend.refresh_energy()
+	_rebuild()
+
+
+func _backend() -> BackendService:
+	return get_node_or_null("/root/Backend")
+
+
+func open_chat(target: String) -> void:
+	_chat_target = target
 	_rebuild()
 
 
@@ -39,6 +64,9 @@ func _rebuild() -> void:
 	if not GameState.has_game():
 		navigate.emit("title")
 		return
+	# An open chat refreshes itself; rebuilding would wipe what is being typed.
+	if _chat_target != "" and is_instance_valid(_chat_view):
+		return
 	if is_instance_valid(_scroll):
 		_scroll_value = _scroll.scroll_vertical
 	UiKit.clear(self)
@@ -46,6 +74,21 @@ func _rebuild() -> void:
 	var root := UiKit.vbox(0)
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(root)
+
+	if _chat_target != "":
+		root.add_child(_hud(narrow))
+		var margin := MarginContainer.new()
+		margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		for side in ["left", "right", "top", "bottom"]:
+			margin.add_theme_constant_override("margin_" + side, 12)
+		_chat_view = ChatView.new(_chat_target)
+		_chat_view.closed.connect(func() -> void:
+			_chat_target = ""
+			_chat_view = null
+			_queue_rebuild())
+		margin.add_child(_chat_view)
+		root.add_child(margin)
+		return
 
 	var tabs := _tabs()
 	if not narrow:
@@ -95,11 +138,22 @@ func _hud(narrow: bool) -> Control:
 		(child as Label).size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		(child as Label).autowrap_mode = TextServer.AUTOWRAP_OFF
 	box.add_child(resources)
+	box.add_child(UiKit.label(_energy_text(), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 	if not GameState.saving_works:
 		box.add_child(UiKit.label(tr("UI_NOT_SAVING"), UiKit.SMALL_SIZE, UiKit.WARN))
+	if _loaded_newer:
+		box.add_child(UiKit.label(tr("UI_LOADED_NEWER"), UiKit.SMALL_SIZE, UiKit.WARN))
 	if not narrow:
 		box.add_theme_constant_override("separation", 2)
 	return panel
+
+
+func _energy_text() -> String:
+	var backend := _backend()
+	if backend == null or backend.status == "offline":
+		return tr("UI_OFFLINE")
+	var left: Variant = backend.energy.get("left")
+	return tr("UI_ENERGY").format({"left": str(left) if left != null else "…"})
 
 
 func _tabs() -> Control:
@@ -147,6 +201,14 @@ func _plan(body: VBoxContainer) -> void:
 		elif d.is_injured():
 			box.add_child(UiKit.label(tr("UI_INJURED").format({"days": d.injury_days()}), UiKit.SMALL_SIZE, UiKit.WARN))
 		else:
+			var decision := Decisions.for_today(sect, d.id)
+			if not decision.is_empty():
+				var note := tr("UI_DECIDED").format({"action": tr("ACTION_" + String(decision["action"]).to_upper())})
+				if decision["overruled"]:
+					note += " " + tr("UI_OVERRULED")
+				box.add_child(UiKit.label(note, UiKit.SMALL_SIZE, UiKit.WARN if decision["overruled"] else UiKit.SOFT_INK))
+			elif ChatRules.wished_task(sect, d) != "":
+				box.add_child(UiKit.label(tr("UI_WANTS").format({"action": tr("ACTION_" + d.wants.to_upper())}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 			var row := UiKit.flow()
 			var current := GameState.choice_of(d.id)
 			for choice in GameState.choices():
@@ -175,6 +237,7 @@ func _plan(body: VBoxContainer) -> void:
 func _free_time(body: VBoxContainer) -> void:
 	var sect := GameState.sect
 	body.add_child(UiKit.label(tr("UI_FREE_TIME_HINT"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+	body.add_child(UiKit.button(tr("UI_ASK_ELDER"), "chat_elder", open_chat.bind(GameState.ELDER), true))
 	var cards := _card_grid()
 	body.add_child(cards)
 	for d in sect.disciples:
@@ -184,14 +247,19 @@ func _free_time(body: VBoxContainer) -> void:
 		var box := UiKit.vbox(6)
 		card.add_child(box)
 		var row := UiKit.hbox()
+		var portrait := Portrait.new(d.spirit_root)
+		portrait.custom_minimum_size = Vector2(48, 48)
+		var lines: Array = GameState.chats.get(d.id, [])
+		if not lines.is_empty():
+			portrait.expression = String(lines[-1].get("expression", "thinking"))
+		row.add_child(portrait)
 		row.add_child(UiKit.label("%s · %s %+d" % [d.display_name(_locale()), tr("UI_MOOD"), d.mood], UiKit.FONT_SIZE, UiKit.JADE))
-		var talk := UiKit.button(tr("UI_TALK") if FreeTime.can_talk(d) else tr("UI_TALKED"), "talk_" + d.id, _talk.bind(d))
-		talk.disabled = not FreeTime.can_talk(d)
-		row.add_child(talk)
+		row.add_child(UiKit.button(tr("UI_CHAT"), "chat_" + d.id, open_chat.bind(d.id)))
 		box.add_child(row)
-		if _talk_lines.has(d.id):
-			box.add_child(UiKit.label(_talk_lines[d.id], UiKit.SMALL_SIZE))
+		if not lines.is_empty():
+			box.add_child(UiKit.label(String(lines[-1]["text"]), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 		cards.add_child(card)
+	body.add_child(UiKit.label(tr("UI_CHAT_COST"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 	body.add_child(UiKit.button(tr("UI_END_DAY"), "end_day", _end_day, true))
 
 
@@ -205,22 +273,30 @@ func _card_grid() -> GridContainer:
 	return grid
 
 
-func _talk(d: Disciple) -> void:
-	var line: Dictionary = await GameState.send_chat(d.id, "…")
-	_talk_lines[d.id] = "%s  (%s)" % [line.get("text", ""), tr("UI_MOOD_UP").format({"mood": line.get("mood", 0)})]
-
-
 func _end_day() -> void:
-	_talk_lines.clear()
 	_scroll_value = 0
 	GameState.end_day()
 
 
 func _results(body: VBoxContainer) -> void:
 	var report := GameState.report
+	var sect := GameState.sect
 	if report:
-		for line in ReportText.evening(report, GameState.sect, _locale()):
-			body.add_child(UiKit.label(line))
+		var evening := sect.evening
+		var story_ready: bool = evening.get("source") == "ai" and int(evening.get("day", 0)) == report.day
+		if GameState.evening_state == "waiting":
+			body.add_child(UiKit.label(tr("UI_EVENING_WRITING"), UiKit.FONT_SIZE, UiKit.SOFT_INK))
+		elif story_ready:
+			var story := UiKit.card()
+			story.add_child(UiKit.label(String(evening["story"])))
+			body.add_child(story)
+			for decision: Dictionary in evening.get("decisions", []):
+				body.add_child(UiKit.label(ReportText.decision_line(sect, decision, _locale()), UiKit.SMALL_SIZE, UiKit.JADE))
+			for change: Dictionary in evening.get("relationships", []):
+				body.add_child(UiKit.label(ReportText.relationship_line(sect, change, _locale()), UiKit.SMALL_SIZE, UiKit.JADE))
+			body.add_child(UiKit.label(tr("UI_WHAT_HAPPENED"), UiKit.FONT_SIZE, UiKit.JADE))
+		for line in ReportText.evening(report, sect, _locale()):
+			body.add_child(UiKit.label(line, UiKit.SMALL_SIZE if story_ready else UiKit.FONT_SIZE))
 		var changes := ReportText.amounts(report.resource_changes)
 		body.add_child(UiKit.label(tr("UI_CHANGES").format({"changes": changes}) if changes != "" else tr("UI_NO_CHANGES"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 	body.add_child(UiKit.button(tr("UI_NEXT_MORNING"), "next_morning", GameState.next_morning, true))
@@ -297,6 +373,36 @@ func _disciples(body: VBoxContainer, _narrow: bool) -> void:
 	for d in GameState.sect.disciples:
 		grid.add_child(_disciple_card(d))
 	body.add_child(grid)
+	if _memories_day != GameState.sect.day:
+		_memories_day = GameState.sect.day
+		_fetch_memories()
+
+
+## Reads each disciple's newest memories from the server, then redraws.
+func _fetch_memories() -> void:
+	var backend := _backend()
+	if backend == null:
+		return
+	for d in GameState.sect.disciples:
+		var result: Dictionary = await backend.memories(d.id)
+		if not result.get("ok", false):
+			return
+		_memories[d.id] = result["data"]
+	if _tab == "disciples":
+		_queue_rebuild()
+
+
+## How two disciples get along, in words.
+func _relationship_words(score: int) -> String:
+	if score <= -10:
+		return tr("REL_RIVALS")
+	if score <= -4:
+		return tr("REL_COOL")
+	if score < 4:
+		return tr("REL_ORDINARY")
+	if score < 10:
+		return tr("REL_FRIENDLY")
+	return tr("REL_CLOSE")
 
 
 func _disciple_card(d: Disciple) -> Control:
@@ -322,4 +428,15 @@ func _disciple_card(d: Disciple) -> Control:
 		box.add_child(UiKit.label(tr("UI_AWAY").format({"mission": ReportText.mission_name(away.mission), "day": away.return_day}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 	elif d.is_injured():
 		box.add_child(UiKit.label(tr("UI_INJURED").format({"days": d.injury_days()}), UiKit.SMALL_SIZE, UiKit.WARN))
+	for other in sect.disciples:
+		var score := Relationships.score(sect, d.id, other.id)
+		if other != d and score != 0:
+			box.add_child(UiKit.label(tr("UI_RELATIONSHIP").format({
+				"name": other.display_name(_locale()),
+				"words": _relationship_words(score),
+				"score": "%+d" % score,
+			}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+	var remembered: Array = _memories.get(d.id, [])
+	if not remembered.is_empty():
+		box.add_child(UiKit.label(tr("UI_REMEMBERS").format({"memories": " / ".join(remembered.slice(0, 3))}), UiKit.SMALL_SIZE))
 	return card

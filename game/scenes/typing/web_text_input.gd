@@ -5,14 +5,17 @@ extends Node
 ## some phone keyboards). Web builds only; it does nothing elsewhere.
 
 signal text_changed(text: String)
+## The player pressed Enter in the box.
+signal submitted(text: String)
 
 const ELEMENT_ID := "lms-text-input"
 
 var _target: Control
 var _font_px := 22
 var _element: JavaScriptObject
-## Kept as a member: if the callback is freed, the browser stops calling it.
+## Kept as members: if a callback is freed, the browser stops calling it.
 var _on_input: JavaScriptObject
+var _on_key: JavaScriptObject
 ## Where the input was last placed, in screen pixels.
 var _placed_rect := Rect2()
 
@@ -21,8 +24,9 @@ static func available() -> bool:
 	return OS.has_feature("web")
 
 
-## Shows the input over `target` and focuses it.
-func attach(target: Control, placeholder: String, font_px: int) -> void:
+## Shows the input over `target` and focuses it. [param max_length] limits
+## the characters the browser lets the player type (0 for no limit).
+func attach(target: Control, placeholder: String, font_px: int, max_length: int = 0) -> void:
 	if not available():
 		return
 	_target = target
@@ -48,8 +52,12 @@ func attach(target: Control, placeholder: String, font_px: int) -> void:
 	""" % [ELEMENT_ID, ELEMENT_ID])
 	_element = JavaScriptBridge.get_interface("document").getElementById(ELEMENT_ID)
 	_element.placeholder = placeholder
+	if max_length > 0:
+		_element.maxLength = max_length
 	_on_input = JavaScriptBridge.create_callback(_handle_input)
 	_element.addEventListener("input", _on_input)
+	_on_key = JavaScriptBridge.create_callback(_handle_key)
+	_element.addEventListener("keydown", _on_key)
 	_placed_rect = Rect2()
 	_process(0.0)
 	_element.focus()
@@ -62,6 +70,7 @@ func detach() -> void:
 	JavaScriptBridge.eval("document.getElementById('%s')?.remove();" % ELEMENT_ID)
 	_element = null
 	_on_input = null
+	_on_key = null
 
 
 func _exit_tree() -> void:
@@ -102,3 +111,27 @@ func _place(rect: Rect2) -> void:
 
 func _handle_input(_args: Array) -> void:
 	text_changed.emit(String(_element.value))
+
+
+func _handle_key(args: Array) -> void:
+	var event: JavaScriptObject = args[0]
+	# Not while an input method is still composing a letter.
+	if String(event.key) == "Enter" and not bool(event.isComposing):
+		event.preventDefault()
+		submitted.emit(text())
+
+
+## The text in the box, or "" when it isn't attached.
+func text() -> String:
+	return String(_element.value) if _element != null else ""
+
+
+func clear() -> void:
+	if _element != null:
+		_element.value = ""
+		text_changed.emit("")
+
+
+func set_enabled(on: bool) -> void:
+	if _element != null:
+		_element.disabled = not on
