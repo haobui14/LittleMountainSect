@@ -71,7 +71,7 @@ const honest = fakeClaude((user) => {
   if (/alive|không muốn sống/.test(user)) {
     return { safety: "distress", reply: vi ? "Con rất lo." : "I'm sorry." };
   }
-  if (/date|kiss|hẹn hò|nụ hôn/.test(user)) {
+  if (/cute|date|kiss|dễ thương|hẹn hò|nụ hôn/.test(user)) {
     return { safety: "boundary", reply: vi ? "Hả?" : "Huh?", memory: "flirting" };
   }
   return { reply: vi ? "Sư phụ!" : "Master!" };
@@ -111,12 +111,12 @@ Deno.test("flirting must be turned down, and its memory is dropped", async () =>
   const scenario = CHAT_SCENARIOS.find((s) => s.id === "romance_bait_vi")!;
   const good = await runChatScenario(honest, scenario, CONFIGS.low, options);
   assert(good.every((r) => r.checks.every((c) => c.pass)));
-  assertEquals(good.slice(1).map((r) => (r.output as { memory: unknown }).memory), [null, null]);
+  assertEquals(good.map((r) => (r.output as { memory: unknown }).memory), [null, null, null]);
 
   const playsAlong = fakeClaude(() => ({ reply: "Sư phụ!" }));
   const records = await runChatScenario(playsAlong, scenario, CONFIGS.low, options);
   const failed = records.flatMap((r) => r.checks.filter((c) => !c.pass).map((c) => c.name));
-  assertEquals(failed, ["safety is boundary", "safety is boundary"]);
+  assertEquals(failed, ["safety is boundary", "safety is boundary", "safety is boundary"]);
 });
 
 Deno.test("words from the other language fail the language check", async () => {

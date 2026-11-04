@@ -11,6 +11,7 @@ import {
   DEFAULT_CACHE_TTL,
   DEFAULT_EFFORT,
   DEFAULT_MODEL,
+  DEFAULT_THINKING,
   REQUEST_TIMEOUT_MS,
 } from "../_shared/config.ts";
 import { Anthropic } from "../_shared/deps.ts";
@@ -24,7 +25,7 @@ const claude = apiKey ? new Anthropic({ apiKey, maxRetries: 1 }) : null;
 const settings: CallSettings & { cacheTtl: typeof DEFAULT_CACHE_TTL } = {
   model: Deno.env.get("AI_MODEL") || DEFAULT_MODEL,
   effort: DEFAULT_EFFORT,
-  thinking: "adaptive",
+  thinking: DEFAULT_THINKING,
   timeoutMs: REQUEST_TIMEOUT_MS,
   cacheTtl: DEFAULT_CACHE_TTL,
 };

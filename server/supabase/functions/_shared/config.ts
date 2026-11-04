@@ -8,6 +8,14 @@ export const DEFAULT_MODEL = "claude-haiku-5-5";
 export type Effort = "low" | "medium" | "high";
 export const DEFAULT_EFFORT: Effort = "low";
 
+/**
+ * Thinking is off for every request. In three evals (docs/evals/) replies
+ * without thinking were as good, faster (95% of chats within 2.7 s instead
+ * of 3.7 s) and cheaper, and mixed in fewer words from the other language.
+ */
+export type Thinking = "adaptive" | "disabled";
+export const DEFAULT_THINKING: Thinking = "disabled";
+
 export type CacheTtl = "5m" | "1h";
 export const DEFAULT_CACHE_TTL: CacheTtl = "5m";
 
