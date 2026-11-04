@@ -111,7 +111,7 @@ Art work starts during M5 and runs alongside the other milestones until M7.
 - [ ] **Vietnamese typing test** on real devices, following [the typing test protocol](playtests/typing-test.md):
   - Test Telex and VNI on Windows (Unikey or EVKey), macOS, Android (Gboard) and iOS.
   - The HTML `<input>` overlay is already built, so both boxes are tested in one sitting. In headless Chromium, Godot's box ignored text committed the way input methods commit it, while the browser's box handled it.
-- [ ] Measure load time on GitHub Pages, and on itch.io if used. Download size is already measured: 39 MB raw, 9.9 MB gzipped.
+- [ ] Measure load time on GitHub Pages, and on itch.io if used. Download size is already measured: 39 MB raw, and GitHub Pages sends 10 MB.
 - [ ] Turn on anonymous sign-ins for the hosted project. In the Supabase dashboard, go to Authentication → Sign In / Providers. The repo's `config.toml` only covers local development.
 - [x] **AI gateway v0**, deployed as the `ai-gateway` Edge Function, with a CORS allowlist, Spirit Energy spending and refunds, and the $0.60 daily cap. A leaked test link can cost at most $0.60 a day.
 - [ ] Set the `ANTHROPIC_API_KEY` secret on the function (Supabase dashboard → Edge Functions → Secrets), then run the **AI live tests** smoke job.

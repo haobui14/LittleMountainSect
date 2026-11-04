@@ -59,7 +59,7 @@ It contains ư, ở, ô, ơ, đ, ệ, ử, ă and á, which covers every Vietnam
 | Everything else | 0.5 MB | 0.3 MB |
 | **Total** | **39 MB** | **9.9 MB** |
 
-- **GitHub Pages** compresses files, so players download about 10 MB.
+- **GitHub Pages** compresses files, so players download about 10 MB. The live site confirms it: every file is sent gzipped, and the engine is 9.8 MB of the 10 MB. CI's deploy job prints these numbers after each publish.
 - **itch.io** does not compress, so players would download about 39 MB, which is slow on a phone.
 
 Measure the first load and a reload on each phone, and note the network (Wi-Fi or 4G):
