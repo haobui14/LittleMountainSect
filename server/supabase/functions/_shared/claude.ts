@@ -6,7 +6,7 @@ import type { BuiltPrompt } from "./prompts.ts";
 export interface CallSettings {
   model: string;
   effort: Effort;
-  /** "adaptive" (the default on Haiku 5.5) or "disabled". Only the eval turns it off. */
+  /** "adaptive" (the default on Haiku 5.5) or "disabled", the gateway's choice (config.ts). */
   thinking: Thinking;
   timeoutMs: number;
 }

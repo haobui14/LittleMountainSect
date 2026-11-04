@@ -275,22 +275,24 @@ Prompt caching saves repeated text, such as world rules, so Claude can reuse it 
 
 ### Cost of each request
 
-Token counts below are estimates, so replace them with real numbers after week 1. Costs include a 25% safety margin for Vietnamese text, AI thinking, and longer replies.
+The token counts below were measured in the M2 eval ([rules-v3](evals/20261104-1621-rules-v3/report.md)), averaged over English and Vietnamese, with Haiku 5.5 at effort `low` and thinking off. Cached tokens are the shared rules at the start of every prompt. When no recent request saved them, they are charged as new input, which gives the "no cache" cost. The nightly memory job is still an estimate; it arrives in M5.
 
-| Request | Cached tokens | New tokens | Output tokens | Cost | Spirit Energy |
-| --- | --- | --- | --- | --- | --- |
-| Chat message | 1,500 | 800 | 250 | $0.00031 | 1 |
-| Surprise event | 1,500 | 600 | 400 | $0.00042 | 2 |
-| Evening story | 2,000 | 2,000 | 900 | $0.00093 | 3 |
-| Nightly memory job (batch) | 0 | 3,000 | 500 | $0.00034 | None |
+| Request | Cached tokens | New tokens | Output tokens | Cost | Cost, no cache | Spirit Energy |
+| --- | --- | --- | --- | --- | --- | --- |
+| Chat message | 3,200 | 230 | 190 | $0.00018 | $0.00044 | 1 |
+| Surprise event | 2,400 | 370 | 360 | $0.00029 | $0.00046 | 2 |
+| Evening story | 2,900 | 610 | 870 | $0.00058 | $0.00078 | 3 |
+| Nightly memory job (batch) | 0 | 3,000 | 500 | $0.00034 | $0.00034 | None |
+
+The shared rules grew to about 2,400 tokens, larger than first estimated, but replies came out shorter. Thinking is off because, in three eval runs, replies without it read as well and arrived faster.
 
 ### How far the budget goes
 
 &#91;embedded content: Cost model in this document, using Claude Haiku 5.5 prices from November 2026\]
 
-The plan keeps $2 as a safety reserve, so the spending cap is $18. Full use means each player spends all 50 Spirit Energy each day, which costs about $0.015. Half use costs about $0.008.
+The plan keeps $2 as a safety reserve, so the spending cap is $18. Full use means each player spends all 50 Spirit Energy each day: 20 chat messages, 3 surprise events and 8 evening stories. The chart shows the first estimate, $0.015 a day.
 
-The chart assumes prompt caching works well. If caching never helps, full use costs about $0.021 a day, and the cap covers about 28 daily players.
+Measured in M2, full use costs about $0.009 a day when caching works, which covers about 66 daily players, and $0.016 if caching never helps, which covers about 37. Real players spread out more than eval calls, so the true cost falls between the two. The Spirit Energy prices stay at 1, 2 and 3. The usage log will show real cache hits once beta players arrive.
 
 ### Protecting the budget
 
@@ -421,11 +423,11 @@ The plan has 4 phases over 13 weeks and assumes about 10 hours of work each week
 
 Claude can write most of the code, prompts, and tests. Start with the tasks that test the riskiest ideas.
 
-- [ ] Run 10 test chats in English and 10 in Vietnamese with Haiku 5.5.
-- [ ] Measure real token counts for chat messages and evening stories.
-- [ ] Build a Godot web test with a Vietnamese chat box, then try it on desktop and phone.
+- [x] Run 10 test chats in English and 10 in Vietnamese with Haiku 5.5. Done in M2; the reports are in `docs/evals/`.
+- [x] Measure real token counts for chat messages and evening stories. Done in M2; see the cost table.
+- [ ] Build a Godot web test with a Vietnamese chat box, then try it on desktop and phone. The test is built and live; the device tests are next.
 - [ ] Create a Godot project with one disciple, one full day loop, and a local save.
-- [ ] Create the Supabase AI gateway with Spirit Energy checks and the daily budget cap.
+- [x] Create the Supabase AI gateway with Spirit Energy checks and the daily budget cap. Live since M2.
 
 ### Beta success measures
 
