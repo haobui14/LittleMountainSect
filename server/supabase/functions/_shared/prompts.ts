@@ -55,6 +55,11 @@ function characterBlock(text: string): Anthropic.TextBlockParam {
   return { type: "text", text, cache_control: { type: "ephemeral", ttl: "5m" } };
 }
 
+/** First line of every user message: the reply language, stated plainly. */
+function localeLine(locale: Locale): string {
+  return `Locale: ${locale} (write only in ${locale === "vi" ? "Vietnamese" : "English"})`;
+}
+
 export function describeDisciple(card: DiscipleCard, locale: Locale): string {
   const quirks = card.quirks.map((id) => QUIRKS[id][locale]).join("; ");
   return [
@@ -85,7 +90,7 @@ function conversation(
     : "";
   return [{
     role: "user",
-    content: `Locale: ${request.locale}\n${history}` +
+    content: `${localeLine(request.locale)}\n${history}` +
       `<player_message>${defuse(request.message)}</player_message>`,
   }];
 }
@@ -124,7 +129,7 @@ export function buildEvent(input: EventInput, options: PromptOptions): BuiltProm
     system: sharedBlocks(TASK_EVENT, options),
     messages: [{
       role: "user",
-      content: `Locale: ${input.locale}\n# The event\nPlace: ${input.place}\n` +
+      content: `${localeLine(input.locale)}\n# The event\nPlace: ${input.place}\n` +
         `Problem: ${input.problem}\n\n# The disciples involved\n${disciples}\n\n` +
         `# The choices\n${choices}`,
     }],
@@ -147,7 +152,7 @@ export function buildEvening(
     system: sharedBlocks(TASK_EVENING, options),
     messages: [{
       role: "user",
-      content: `Locale: ${input.locale}\nDay ${input.day}. Sect rank: ${input.sect.rank}. ` +
+      content: `${localeLine(input.locale)}\nDay ${input.day}. Sect rank: ${input.sect.rank}. ` +
         `Resources: ${input.sect.resources}\n\n# The disciples\n${disciples}\n\n` +
         `# What happened today\n${facts}`,
     }],
