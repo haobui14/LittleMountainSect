@@ -12,7 +12,12 @@ Claude makes the disciples feel alive: they talk freely, make choices, remember 
 
 ## Status
 
-Planning is done and Milestone 1 (Foundations) is in progress, tracked in [#1](https://github.com/haobui14/LittleMountainSect/issues/1). See the [milestones](docs/MILESTONES.md) for the full plan.
+Milestone 1 (Foundations) is done except for turning on GitHub Pages ([#1](https://github.com/haobui14/LittleMountainSect/issues/1)). Milestone 2 (Risk tests) is in progress ([#2](https://github.com/haobui14/LittleMountainSect/issues/2)):
+- The AI gateway is live on Supabase.
+- The AI eval tool and the typing test kit are built.
+- The live AI tests and the device tests come next.
+
+See the [milestones](docs/MILESTONES.md) for the full plan.
 
 ## Working on the game
 
@@ -27,6 +32,8 @@ godot --headless --path game -s addons/gut/gut_cmdln.gd
 ```
 
 The first command imports assets. The second runs the GUT unit tests.
+
+Server code and tools are TypeScript on Deno 2.9.6. [CLAUDE.md](CLAUDE.md) lists their commands; `deno test --allow-read=.` runs every Deno test.
 
 Database tests need Docker and the Supabase CLI:
 

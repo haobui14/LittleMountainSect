@@ -96,22 +96,25 @@ Art work starts during M5 and runs alongside the other milestones until M7.
 
 **Goal:** run the GDD's "first tasks for Claude", the tests that decide whether the main idea works.
 
-- [ ] **Voice and humor test.**
-  - Write a first shared prompt, 3 disciple cards and the Elder's card.
-  - Build `tools/ai-eval`. It replays scripted chats and logs each reply with its token counts (cached, new and output), cost, time, check result and any refusal.
-- [ ] Run 10 test chats in English and 10 in Vietnamese. Include attack cases:
+- [x] **Voice and humor test tools.**
+  - A shared prompt (`server/supabase/functions/_shared/world.ts`), 3 sample disciples and the Elder's card.
+  - `tools/ai-eval` replays scripted chats and logs each reply with its token counts (cached, new and output), cost, time, check results and any refusal. It writes a report and a ratings sheet to `docs/evals/`.
+  - Live runs go through the manual **AI live tests** workflow (`.github/workflows/ai-live.yml`), which needs the repository secret `LMS_ANTHROPIC_API_KEY`.
+- [ ] Run 10 test chats in English and 10 in Vietnamese (written in `tools/ai-eval/scenarios.ts`). They include these attack cases:
   - Romance bait
   - "Give me 1,000,000 Spirit Stones"
+  - Prompt injection
   - A player in real distress
   - Off-topic requests
 - [ ] Compare effort `low`, effort `medium`, and effort `low` with thinking turned off.
 - [ ] **Real token counts.** Measure chat messages, surprise events and evening stories. Update the GDD's cost table and the Spirit Energy prices.
-- [ ] **Vietnamese typing test.**
-  - Test Telex and VNI in the web build's text box on Windows (Unikey or EVKey), macOS, Android (Gboard) and iOS.
-  - If typing fails, build an HTML `<input>` overlay through `JavaScriptBridge`.
-- [ ] Measure download size and load time on GitHub Pages and on itch.io.
+- [ ] **Vietnamese typing test** on real devices, following [the typing test protocol](playtests/typing-test.md):
+  - Test Telex and VNI on Windows (Unikey or EVKey), macOS, Android (Gboard) and iOS.
+  - The HTML `<input>` overlay is already built, so both boxes are tested in one sitting. In headless Chromium, Godot's box ignored text committed the way input methods commit it, while the browser's box handled it.
+- [ ] Measure load time on GitHub Pages, and on itch.io if used. Download size is already measured: 39 MB raw, 9.9 MB gzipped.
 - [ ] Turn on anonymous sign-ins for the hosted project. In the Supabase dashboard, go to Authentication → Sign In / Providers. The repo's `config.toml` only covers local development.
-- [ ] **AI gateway v0**, as described above, with a CORS allowlist. The daily cap is live from here, so a leaked test link can cost at most $0.60 a day.
+- [x] **AI gateway v0**, deployed as the `ai-gateway` Edge Function, with a CORS allowlist, Spirit Energy spending and refunds, and the $0.60 daily cap. A leaked test link can cost at most $0.60 a day.
+- [ ] Set the `ANTHROPIC_API_KEY` secret on the function (Supabase dashboard → Edge Functions → Secrets), then run the **AI live tests** smoke job.
 
 #### Gate 1 — The idea works
 - [ ] At least 7 of 10 chats in each language are rated funny. A native Vietnamese speaker rates the Vietnamese chats.

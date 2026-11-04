@@ -33,7 +33,8 @@ A funny, warm xianxia sect-management web game. It is built with Godot 4 (GDScri
    - No streamed HTTP replies, so show a "thinking" animation instead
 7. **Claude API settings** (see "Claude API settings" in docs/GDD.md):
    - The model name `claude-haiku-5-5` lives in one server setting.
-   - Use structured outputs (`output_config.format`) and set `effort` explicitly.
+   - Use structured outputs (`output_config.format`) and set `effort` explicitly. Build the schema with `_shared/json_schema.ts`, not the SDK's `zodOutputFormat`, which in SDK 1.4.0 turns `enum` into a description.
+   - Call through `_shared/claude.ts` (`messages.create`, then parse), so a failed reply is still costed and logged.
    - Never send `temperature`, `top_p` or `top_k`, and never prefill the assistant turn.
    - Read reply content blocks by `type`.
    - Handle `stop_reason: "refusal"`.
@@ -68,6 +69,33 @@ Database tests run against the local Supabase stack. They need Docker:
 cd server && npx supabase@3.0.0 db start && npx supabase@3.0.0 test db
 ```
 
+Edge Function and tool code is TypeScript on **Deno 2.9.6**, matching `DENO_VERSION` in CI. Third-party imports are pinned in `server/supabase/functions/_shared/deps.ts`. Run these from the repo root:
+
+```bash
+deno fmt --check && deno lint && deno check server/supabase/functions/ tools/
+```
+
+```bash
+deno test --allow-read=.
+```
+
+The tests need no network and no secrets; Claude and the database are faked.
+
+The AI eval checks every scenario and builds every prompt without calling Claude:
+
+```bash
+deno run --allow-read --allow-env tools/ai-eval/main.ts --dry-run
+```
+
+Live evals and the gateway smoke test run in the manual **AI live tests** workflow (`.github/workflows/ai-live.yml`). Each full eval costs about $0.10–0.25, and the report is committed to `docs/evals/`.
+
+## Secrets
+
+- `ANTHROPIC_API_KEY`: on the `ai-gateway` Edge Function, set in the Supabase dashboard (Edge Functions → Secrets). Without it, the gateway answers with written lines and spends nothing.
+- `LMS_ANTHROPIC_API_KEY`: a GitHub repository secret for the eval. Tools read this name, never `ANTHROPIC_API_KEY`, so it can't mix with other Claude credentials.
+- Optional function secrets: `AI_MODEL` (overrides `claude-haiku-5-5`) and `ALLOWED_ORIGINS` (comma-separated; the defaults are in `ai-gateway/cors.ts`).
+- `game/config/backend.json` holds the project URL and the publishable key. Both are public by design; never put a secret there.
+
 ## Hosted services
 
 **Supabase** hosts the project `little-mountain-sect`:
@@ -75,12 +103,15 @@ cd server && npx supabase@3.0.0 db start && npx supabase@3.0.0 test db
 - Its migration history must match `server/supabase/migrations/`. Apply new migrations with the Supabase connector, or with `supabase db push` after running `supabase link`.
 - If the project records a different version number for a migration, rename the local file to match.
 - Free projects pause after 7 days without use and have no automatic backups.
+- The `ai-gateway` Edge Function is deployed with the Supabase connector. Upload every file under `server/supabase/functions/` that it imports, named relative to that folder (`ai-gateway/index.ts`, `_shared/deps.ts` and so on), with entrypoint `ai-gateway/index.ts` and `verify_jwt` on.
 
 ## Layout
 
 | Path | Contents |
 |---|---|
 | `game/` | The Godot project: `autoload/`, `scenes/`, `sim/` (the rules engine), `i18n/`, `assets/` and `tests/` (GUT) |
-| `server/supabase/` | `config.toml`, `migrations/` and `tests/database/` (pgTAP). Edge Functions arrive in M2. |
-| `tools/` | `ai-eval` (M2) and `balance-sim` (M3) |
-| `docs/` | The GDD and the milestones |
+| `game/config/` | `backend.json`: the public Supabase URL and publishable key |
+| `server/supabase/` | `config.toml`, `migrations/` and `tests/database/` (pgTAP) |
+| `server/supabase/functions/` | `_shared/` (prompts, schemas, the Claude call path, validation, costs), `ai-gateway/`, and `tests/` (Deno) |
+| `tools/` | `ai-eval/` (live AI tests), `smoke/` (gateway smoke test), `web-check/` (browser typing check), and `balance-sim/` (M3) |
+| `docs/` | The GDD, the milestones, `evals/` (AI eval reports) and `playtests/` |
