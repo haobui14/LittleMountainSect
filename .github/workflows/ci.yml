@@ -13,6 +13,8 @@ env:
   GODOT_VERSION: "4.7.2"
   SUPABASE_CLI_VERSION: "3.0.0"
   DENO_VERSION: "2.9.6"
+  # The browser checks in tools/web-check use this Playwright and its Chromium.
+  PLAYWRIGHT_VERSION: "1.63.0"
 
 jobs:
   godot-tests:
@@ -133,6 +135,31 @@ jobs:
           name: web-build
           path: build/web
           if-no-files-found: error
+
+      # Plays 10 days in Chromium at phone and desktop sizes with Supabase
+      # blocked, so every chat and evening must fall back to written text.
+      - name: Install Playwright
+        run: |
+          node --version
+          npm install --no-save --no-audit --no-fund "playwright@${PLAYWRIGHT_VERSION}"
+          npx playwright install --with-deps chromium
+
+      - name: Play 10 days offline in the browser
+        run: |
+          python3 -m http.server 8060 --directory build/web > /dev/null 2>&1 &
+          for _ in $(seq 30); do
+            curl -sf http://127.0.0.1:8060/index.html > /dev/null && break
+            sleep 1
+          done
+          node tools/web-check/play_check.cjs http://127.0.0.1:8060/index.html web-check-shots 10 --offline
+
+      - name: Upload the browser check's screenshots
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-check-shots
+          path: web-check-shots
+          if-no-files-found: ignore
 
   # Publishes the web build once every test job passes. Runs only on the
   # default branch, on a push or a manual run, and only after GitHub Pages is
