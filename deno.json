@@ -1,0 +1,33 @@
+{
+  "fmt": {
+    "lineWidth": 100,
+    "include": [
+      "server/supabase/functions/",
+      "tools/"
+    ],
+    "exclude": [
+      "**/*.md"
+    ]
+  },
+  "lint": {
+    "include": [
+      "server/supabase/functions/",
+      "tools/"
+    ],
+    "rules": {
+      "exclude": [
+        "no-import-prefix"
+      ]
+    }
+  },
+  "test": {
+    "include": [
+      "server/supabase/functions/tests/",
+      "tools/ai-eval/"
+    ]
+  },
+  "tasks": {
+    "check": "deno check server/supabase/functions/ tools/ai-eval/",
+    "test": "deno test --allow-read=. --allow-env=AI_MODEL"
+  }
+}
