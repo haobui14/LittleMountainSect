@@ -158,35 +158,37 @@ Art work starts during M5 and runs alongside the other milestones until M7.
 
 **Goal:** Claude makes the cast feel alive inside the real loop, with saves on the server.
 
-- [ ] **`Backend` service:**
+- [x] **`Backend` service:**
   - Anonymous sign-in and a saved session
   - Request helpers with timeouts and retries
   - A "thinking" animation, because web builds can't stream replies
-- [ ] **Server saves.** The save is JSON in `saves`, with a version check. The game loads it at start.
-- [ ] **Chat screen:**
+- [x] **Server saves.** The save is JSON in `saves`, with a version check. The game loads it at start.
+- [x] **Chat screen:**
   - A placeholder portrait with 6 expressions
   - A Spirit Energy counter and the AI notice
   - The once-a-day Mood bonus
   - A message length limit
-- [ ] **Evening story (3 Spirit Energy).** One request returns:
+- [x] **Evening story (3 Spirit Energy).** One request returns:
   - The story and the next morning report
   - 1 or 2 disciple decisions, chosen from actions the rules allow
   - Small relationship changes, within the rules' limits
   - New memories
 
   The server keeps the finished reply, so a background tab can load it later.
-- [ ] **The Elder.** Advisor chat costs 1 Spirit Energy. The first 5 days have free written tips.
-- [ ] **Memory v1.** A disciple card plus up to 10 key memories in `memories`.
-- [ ] **Written fallbacks v1:**
+- [x] **The Elder.** Advisor chat costs 1 Spirit Energy. The first 5 days have free written tips.
+- [x] **Memory v1.** A disciple card plus up to 10 key memories in `memories`.
+- [x] **Written fallbacks v1:**
   - Chat lines for each quirk and expression
   - Evening story templates
-- [ ] **First launch basics:** choose a language, confirm 18+, and see the AI notice. M8 finishes this flow.
+- [x] **First launch basics:** choose a language, confirm 18+, and see the AI notice. M8 finishes this flow.
 
 #### Gate 2 — Fun with placeholders
+Tester guide, hand checks and `ai_usage` queries: [docs/playtests/gate-2.md](playtests/gate-2.md).
+
 - [ ] You and 3–5 friends each play at least 10 days.
 - [ ] At least 3 testers want to keep playing.
 - [ ] Each tester can retell at least one funny moment.
-- [ ] The game is fully playable with Spirit Energy at 0 and with the server off.
+- [x] The game is fully playable with Spirit Energy at 0 and with the server off (CI plays 10 days in the browser with the server blocked; GUT covers no Spirit Energy). Confirm once by hand on the live build.
 - [ ] `ai_usage` shows all three of these:
   - $0.015 or less per active player per day
   - 95% of replies within 5 seconds

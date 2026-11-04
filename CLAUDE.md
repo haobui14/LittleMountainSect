@@ -67,11 +67,15 @@ The balance sim plays many seeds headless and exits non-zero on a softlock or a 
 godot --headless --path game -s res://tools/balance_sim.gd -- --seeds 100 --days 60
 ```
 
-Browser checks need the web build served on port 8060 (for example `python3 -m http.server 8060` in `build/web`). They click controls by name through `window.lmsUi`, which `game/autoload/ui_probe.gd` publishes in web builds:
+Browser checks need the web build served on port 8060 (for example `python3 -m http.server 8060` in `build/web`). They click controls by name through `window.lmsUi`, which `game/autoload/ui_probe.gd` publishes in web builds. `play_check.cjs` plays 10 days at phone and desktop sizes, chatting on days 1 and 2:
 
 ```bash
-node tools/web-check/play_check.cjs http://127.0.0.1:8060/index.html /tmp 10
+node tools/web-check/play_check.cjs http://127.0.0.1:8060/index.html /tmp 10 --offline
 ```
+
+- `--offline` blocks Supabase, so every chat and evening must fall back to written text. CI's web-build job runs it this way on every push, with Playwright pinned as `PLAYWRIGHT_VERSION` in `ci.yml`.
+- Without `--offline`, the game talks to the hosted project and spends Spirit Energy. This container can't reach `*.supabase.co`, so run it offline here.
+- `typing_check.cjs` always blocks the server.
 
 Web export needs the 4.7.2 export templates installed.
 
@@ -92,6 +96,10 @@ deno test --allow-read=.
 ```
 
 The tests need no network and no secrets; Claude and the database are faked.
+
+The game and the server share **contract fixtures** in `game/tests/fixtures/` (a disciple card, a chat request and an evening request):
+- GUT checks that the game still builds them exactly; Deno checks that the server's schemas accept them.
+- After a deliberate change to a request, regenerate them with `LMS_UPDATE_FIXTURES=1` in front of the GUT command.
 
 The AI eval checks every scenario and builds every prompt without calling Claude:
 
@@ -127,6 +135,7 @@ Live evals and the gateway smoke test run in the manual **AI live tests** workfl
 | Path | Contents |
 |---|---|
 | `game/` | The Godot project: `autoload/`, `scenes/`, `sim/` (the rules engine), `i18n/`, `assets/` and `tests/` (GUT) |
+| `game/autoload/` | `GameState` (the game loop, chats, the evening story, saves), `Backend` (anonymous sign-in, the session, retries, server saves; HTTP goes through `HttpTransport`, which tests replace with `tests/helpers/fake_transport.gd`), `SaveStore` (local saves), `Settings`, `Events` and `UiProbe` |
 | `game/scenes/` | Screens built in code from `ui/ui_kit.gd`. The canvas is 480×480 with `expand`, so every screen must work narrow (an upright phone) and wide. Tag clickable controls with `UiKit.probe()` so browser checks can click them |
 | `game/config/` | `backend.json`: the public Supabase URL and publishable key |
 | `server/supabase/` | `config.toml`, `migrations/` and `tests/database/` (pgTAP) |
