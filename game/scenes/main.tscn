@@ -91,10 +91,43 @@ theme_override_font_sizes/font_size = 18
 text = "UI_TYPING_TEST_LABEL"
 
 [node name="TypingTest" type="LineEdit" parent="Center/Column"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 placeholder_text = "UI_TYPING_TEST_PLACEHOLDER"
+
+[node name="TypingTools" type="HBoxContainer" parent="Center/Column"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BrowserBox" type="CheckButton" parent="Center/Column/TypingTools"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3, 0.25, 0.2, 1)
+theme_override_colors/font_hover_color = Color(0.3, 0.25, 0.2, 1)
+theme_override_colors/font_pressed_color = Color(0.3, 0.25, 0.2, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.3, 0.25, 0.2, 1)
+theme_override_colors/font_focus_color = Color(0.3, 0.25, 0.2, 1)
+theme_override_font_sizes/font_size = 16
+text = "UI_TYPING_BROWSER_BOX"
+
+[node name="CopyReport" type="Button" parent="Center/Column/TypingTools"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 36)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "UI_TYPING_COPY_REPORT"
+
+[node name="CodePoints" type="Label" parent="Center/Column"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(560, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.42, 0.36, 0.3, 1)
+theme_override_font_sizes/font_size = 13
+text = "UI_TYPING_CODE_POINTS"
+autowrap_mode = 3
 
 [node name="BuildNote" type="Label" parent="Center/Column"]
 layout_mode = 2

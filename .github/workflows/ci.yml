@@ -106,6 +106,20 @@ jobs:
           test -s build/web/index.wasm
           du -sh build/web
 
+      # GitHub Pages serves files gzipped; itch.io serves them as they are.
+      - name: Report the build size
+        run: |
+          {
+            echo "### Web build size"
+            echo ""
+            echo "| File | Raw | Gzipped |"
+            echo "|---|---|---|"
+            for f in build/web/index.*; do
+              raw=$(stat -c %s "$f"); gz=$(gzip -9 -c "$f" | wc -c)
+              echo "| $(basename "$f") | $(numfmt --to=iec --suffix=B "$raw") | $(numfmt --to=iec --suffix=B "$gz") |"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - uses: actions/upload-artifact@v7
         with:
           name: web-build

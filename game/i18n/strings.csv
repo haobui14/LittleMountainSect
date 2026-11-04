@@ -5,4 +5,8 @@ UI_TAGLINE,Found a tiny sect on a leaky mountain.,Lập một tông môn nhỏ t
 UI_GLOSSARY_SAMPLE,Sect · Sect Master · Disciple · Elder · Cultivation · Spirit Stones,Tông môn · Chưởng môn · Đệ tử · Trưởng lão · Tu luyện · Linh thạch
 UI_TYPING_TEST_LABEL,Keyboard test: type some Vietnamese.,Thử bàn phím: gõ vài chữ tiếng Việt.
 UI_TYPING_TEST_PLACEHOLDER,"For example: Chưởng môn, Linh thạch","Ví dụ: Chưởng môn, Linh thạch"
-UI_BUILD_NOTE,Milestone 1 · placeholder screen,Cột mốc 1 · màn hình tạm
+UI_BUILD_NOTE,Milestone 2 · typing test screen,Cột mốc 2 · màn hình thử gõ phím
+UI_TYPING_CODE_POINTS,Code points: %s,Mã ký tự: %s
+UI_TYPING_BROWSER_BOX,Use the browser's text box,Dùng ô nhập của trình duyệt
+UI_TYPING_COPY_REPORT,Copy report,Sao chép báo cáo
+UI_TYPING_COPIED,Copied!,Đã sao chép!
