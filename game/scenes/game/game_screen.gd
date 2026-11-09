@@ -33,6 +33,12 @@ var _resource_labels := {}
 var _selected_building := ""
 var _shown_building := ""
 var _celebrate := ""
+## Whether the morning's event still waited for a choice at the last look.
+var _event_was_pending := false
+## The evening's breakthrough lines (shown as banners, not again as lines),
+## and the day whose banners already sparkled.
+var _banner_texts: Array[String] = []
+var _celebrated_day := -1
 
 
 func _ready() -> void:
@@ -316,7 +322,11 @@ func _morning(body: VBoxContainer) -> void:
 	for line in ReportText.morning(sect, _locale()):
 		body.add_child(UiKit.label(line))
 	if not sect.event.is_empty() and int(sect.event["day"]) == sect.day:
-		body.add_child(MorningCards.event_card(sect, _locale(), GameState.event_waiting))
+		# Reveal the result when the choice was made since the last look.
+		var pending := EventRules.pending(sect)
+		var reveal := _event_was_pending and not pending
+		_event_was_pending = pending
+		body.add_child(MorningCards.event_card(sect, _locale(), GameState.event_waiting, reveal))
 	if not sect.candidate.is_empty():
 		body.add_child(MorningCards.candidate_card(sect, _locale()))
 
@@ -483,29 +493,75 @@ func _team_card(entry: Dictionary) -> Control:
 func _free_time(body: VBoxContainer) -> void:
 	var sect := GameState.sect
 	body.add_child(UiKit.label(tr("UI_FREE_TIME_HINT"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
-	body.add_child(UiKit.button(tr("UI_ASK_ELDER"), "chat_elder", open_chat.bind(GameState.ELDER), true))
+	body.add_child(UiKit.button(tr("UI_ASK_ELDER"), "chat_elder", open_chat.bind(GameState.ELDER), true, "elder"))
 	var cards := _card_grid()
 	body.add_child(cards)
 	for d in sect.disciples:
-		if sect.is_away(d.id):
-			continue
-		var card := UiKit.card()
-		var box := UiKit.vbox(6)
-		card.add_child(box)
-		var row := UiKit.hbox()
-		var portrait := Portrait.of(d)
-		portrait.custom_minimum_size = Vector2(48, 48)
-		var lines: Array = GameState.chats.get(d.id, [])
-		if not lines.is_empty():
-			portrait.expression = String(lines[-1].get("expression", "thinking"))
-		row.add_child(portrait)
-		row.add_child(UiKit.label("%s · %s %+d" % [d.display_name(_locale()), tr("UI_MOOD"), d.mood], UiKit.FONT_SIZE, UiKit.JADE))
-		row.add_child(UiKit.button(tr("UI_CHAT"), "chat_" + d.id, open_chat.bind(d.id)))
-		box.add_child(row)
-		if not lines.is_empty():
-			box.add_child(UiKit.label(String(lines[-1]["text"]), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
-		cards.add_child(card)
+		if not sect.is_away(d.id):
+			cards.add_child(_talk_card(d))
 	body.add_child(UiKit.label(tr("UI_CHAT_COST"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+
+
+## A disciple to talk to: the whole card opens the chat (probe chat_<id>).
+func _talk_card(d: Disciple) -> Control:
+	var card := UiKit.card(Portrait.ROOT_COLORS.get(d.spirit_root, UiKit.LINE))
+	var box := UiKit.vbox(6)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(box)
+	var row := UiKit.hbox(10)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var portrait := Portrait.of(d)
+	portrait.custom_minimum_size = Vector2(64, 64)
+	var lines: Array = GameState.chats.get(d.id, [])
+	portrait.expression = String(lines[-1].get("expression", "thinking")) if not lines.is_empty() else ("happy" if d.mood >= 3 else "thinking")
+	row.add_child(portrait)
+	var who := UiKit.vbox(4)
+	who.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	who.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	who.add_child(UiKit.label(d.display_name(_locale()), UiKit.FONT_SIZE + 1, UiKit.JADE))
+	var mood := UiKit.chip("%s %+d" % [tr("UI_MOOD"), d.mood], UiKit.GOLD if d.mood >= 0 else UiKit.WARN, Icons.mood_kind(d.mood))
+	who.add_child(mood)
+	row.add_child(who)
+	var talk := UiKit.icon_label("chat", tr("UI_CHAT"), UiKit.SMALL_SIZE, UiKit.JADE, 26.0)
+	talk.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	talk.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	(talk.get_child(1) as Label).size_flags_horizontal = Control.SIZE_SHRINK_END
+	(talk.get_child(1) as Label).autowrap_mode = TextServer.AUTOWRAP_OFF
+	talk.size_flags_horizontal = Control.SIZE_SHRINK_END
+	row.add_child(talk)
+	box.add_child(row)
+	if not lines.is_empty():
+		var said := PanelContainer.new()
+		var bubble := StyleBoxFlat.new()
+		bubble.bg_color = UiKit.PAPER
+		bubble.set_corner_radius_all(12)
+		bubble.content_margin_left = 10
+		bubble.content_margin_right = 10
+		bubble.content_margin_top = 6
+		bubble.content_margin_bottom = 6
+		said.add_theme_stylebox_override("panel", bubble)
+		said.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		said.add_child(UiKit.label(String(lines[-1]["text"]), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+		box.add_child(said)
+	# The whole card is the button.
+	var open := Button.new()
+	open.flat = true
+	open.focus_mode = Control.FOCUS_NONE
+	open.tooltip_text = tr("UI_CHAT")
+	var hover := StyleBoxFlat.new()
+	hover.bg_color = Color(UiKit.JADE, 0.07)
+	hover.set_corner_radius_all(10)
+	var pressed := hover.duplicate() as StyleBoxFlat
+	pressed.bg_color = Color(UiKit.JADE, 0.14)
+	open.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	open.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	open.add_theme_stylebox_override("hover", hover)
+	open.add_theme_stylebox_override("pressed", pressed)
+	open.button_down.connect(func() -> void: Motion.bounce(card))
+	open.pressed.connect(open_chat.bind(d.id))
+	UiKit.probe(open, "chat_" + d.id)
+	card.add_child(open)
+	return card
 
 
 ## Disciple cards side by side when the screen is wide enough.
@@ -540,10 +596,67 @@ func _results(body: VBoxContainer) -> void:
 			for change: Dictionary in evening.get("relationships", []):
 				body.add_child(UiKit.label(ReportText.relationship_line(sect, change, _locale()), UiKit.SMALL_SIZE, UiKit.JADE))
 			body.add_child(UiKit.label(tr("UI_WHAT_HAPPENED"), UiKit.FONT_SIZE, UiKit.JADE))
-		for line in ReportText.evening(report, sect, _locale()):
-			body.add_child(UiKit.label(line, UiKit.SMALL_SIZE if story_ready else UiKit.FONT_SIZE))
+		var banners := _breakthrough_banners(report)
+		for banner in banners:
+			body.add_child(banner)
+		for item in ReportText.evening_items(report, sect, _locale()):
+			if String(item["text"]) in _banner_texts:
+				continue
+			var line := UiKit.icon_label(String(item["icon"]), String(item["text"]), UiKit.SMALL_SIZE if story_ready else UiKit.FONT_SIZE, UiKit.INK, 22.0)
+			(line.get_child(0) as Control).size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+			body.add_child(line)
+		if not banners.is_empty() and _celebrated_day != report.day:
+			_celebrated_day = report.day
+			_celebrate_banners.call_deferred(banners)
 		var changes := ReportText.amounts(report.resource_changes)
 		body.add_child(UiKit.label(tr("UI_CHANGES").format({"changes": changes}) if changes != "" else tr("UI_NO_CHANGES"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+
+
+## A banner for each breakthrough tonight: a glowing face on success; on a
+## failure, the face shows its new side effect.
+func _breakthrough_banners(report: DayReport) -> Array[Control]:
+	var sect := GameState.sect
+	var banners: Array[Control] = []
+	_banner_texts = []
+	for fact in report.facts:
+		var type := String(fact["type"])
+		if not type.begins_with("breakthrough"):
+			continue
+		var d := sect.disciple(String(fact["disciple"]))
+		if d == null:
+			continue
+		var won := type == "breakthrough"
+		var card := UiKit.card(UiKit.GOLD if won else UiKit.LINE)
+		var row := UiKit.hbox(12)
+		card.add_child(row)
+		var portrait := Portrait.of(d)
+		portrait.custom_minimum_size = Vector2(72, 72)
+		portrait.glowing = won or portrait.glowing
+		portrait.expression = "proud" if won else "nervous"
+		row.add_child(portrait)
+		var words := UiKit.vbox(4)
+		words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		words.add_child(UiKit.heading(tr("UI_BREAKTHROUGH_WON" if won else "UI_BREAKTHROUGH_LOST")))
+		var text := ReportText.describe(fact, sect, _locale())
+		_banner_texts.append(text)
+		words.add_child(UiKit.label(text, UiKit.SMALL_SIZE))
+		row.add_child(words)
+		card.set_meta("won", won)
+		banners.append(card)
+	return banners
+
+
+func _celebrate_banners(banners: Array[Control]) -> void:
+	await get_tree().process_frame
+	for banner in banners:
+		if not is_instance_valid(banner):
+			continue
+		var face: Control = banner.get_child(0).get_child(0)
+		if banner.get_meta("won", false):
+			Motion.sparkle(face.get_global_rect().get_center())
+			Motion.bounce(face)
+		else:
+			Motion.wobble(face)
 
 
 # Mountain: the 8 building slots --------------------------------------------
@@ -762,17 +875,61 @@ func _relationship_words(score: int) -> String:
 	return tr("REL_CLOSE")
 
 
+## Talent, Body, Spirit and Wit as small bars out of Balance.STAT_MAX.
+func _stat_bars(d: Disciple) -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 2)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for stat in Balance.STATS:
+		var name := UiKit.label(tr("STAT_" + stat.to_upper()), UiKit.SMALL_SIZE, UiKit.SOFT_INK)
+		name.size_flags_horizontal = Control.SIZE_FILL
+		name.autowrap_mode = TextServer.AUTOWRAP_OFF
+		grid.add_child(name)
+		var bar := UiKit.bar(d.stat(stat), Balance.STAT_MAX)
+		bar.custom_minimum_size = Vector2(60, 8)
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		grid.add_child(bar)
+		var value := UiKit.label(str(d.stat(stat)), UiKit.SMALL_SIZE)
+		value.size_flags_horizontal = Control.SIZE_SHRINK_END
+		value.autowrap_mode = TextServer.AUTOWRAP_OFF
+		grid.add_child(value)
+	return grid
+
+
 func _disciple_card(d: Disciple) -> Control:
 	var sect := GameState.sect
-	var card := UiKit.card()
-	var box := UiKit.vbox(4)
+	var root_color: Color = Portrait.ROOT_COLORS.get(d.spirit_root, UiKit.LINE)
+	var card := UiKit.card(root_color)
+	var box := UiKit.vbox(6)
 	card.add_child(box)
-	box.add_child(UiKit.label(d.display_name(_locale()), UiKit.FONT_SIZE + 2, UiKit.JADE))
-	box.add_child(UiKit.label("%s · %s" % [tr("ROOT_" + d.spirit_root.to_upper()), tr("REALM_" + d.realm.to_upper())], UiKit.SMALL_SIZE))
+	var header := UiKit.hbox(10)
+	var portrait := Portrait.of(d)
+	portrait.custom_minimum_size = Vector2(72, 72)
+	portrait.expression = "happy" if d.mood >= 3 else ("sad" if d.mood <= -3 else "thinking")
+	header.add_child(portrait)
+	var who := UiKit.vbox(4)
+	who.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var name := UiKit.label(d.display_name(_locale()), UiKit.FONT_SIZE + 3, UiKit.JADE)
+	name.add_theme_font_override("font", load("res://assets/fonts/nunito_title.tres"))
+	who.add_child(name)
+	var tags := UiKit.flow(4)
+	tags.add_child(UiKit.chip(tr("ROOT_" + d.spirit_root.to_upper()), root_color))
+	tags.add_child(UiKit.chip(tr("REALM_" + d.realm.to_upper()), UiKit.JADE_LIGHT, "breakthrough" if CultivationRules.can_break_through(d) else ""))
+	who.add_child(tags)
+	header.add_child(who)
+	box.add_child(header)
 	box.add_child(UiKit.label("%s %d/%d" % [tr("UI_PROGRESS"), d.progress, Balance.PROGRESS_MAX], UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 	box.add_child(UiKit.bar(d.progress, Balance.PROGRESS_MAX))
-	box.add_child(UiKit.label(ReportText.stats_line(d), UiKit.SMALL_SIZE))
-	box.add_child(UiKit.label("%s %+d · %s %d" % [tr("UI_MOOD"), d.mood, tr("UI_LOYALTY"), d.loyalty], UiKit.SMALL_SIZE))
+	var feelings := UiKit.hbox(14)
+	feelings.add_child(UiKit.icon_label(Icons.mood_kind(d.mood), "%s %+d" % [tr("UI_MOOD"), d.mood], UiKit.SMALL_SIZE, UiKit.INK, 18.0))
+	feelings.add_child(UiKit.icon_label("loyalty", "%s %d" % [tr("UI_LOYALTY"), d.loyalty], UiKit.SMALL_SIZE, UiKit.INK, 18.0))
+	for child in feelings.get_children():
+		(child as Control).size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		((child as HBoxContainer).get_child(1) as Label).autowrap_mode = TextServer.AUTOWRAP_OFF
+	box.add_child(feelings)
+	box.add_child(_stat_bars(d))
 	box.add_child(UiKit.label(ReportText.quirks_line(d), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 	if d.technique > 0:
 		box.add_child(UiKit.label(tr("UI_TECHNIQUE").format({"technique": ReportText.technique_name(CultivationRules.technique_of(d)), "tier": d.technique}), UiKit.SMALL_SIZE))
@@ -785,11 +942,19 @@ func _disciple_card(d: Disciple) -> Control:
 	for other in sect.disciples:
 		var score := Relationships.score(sect, d.id, other.id)
 		if other != d and score != 0:
-			box.add_child(UiKit.label(tr("UI_RELATIONSHIP").format({
+			var bond := UiKit.hbox(6)
+			var face := Portrait.of(other)
+			face.custom_minimum_size = Vector2(24, 24)
+			face.expression = "happy" if score >= 4 else ("angry" if score <= -4 else "thinking")
+			bond.add_child(face)
+			var words := UiKit.label(tr("UI_RELATIONSHIP").format({
 				"name": other.display_name(_locale()),
 				"words": _relationship_words(score),
 				"score": "%+d" % score,
-			}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+			}), UiKit.SMALL_SIZE, UiKit.SOFT_INK)
+			words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			bond.add_child(words)
+			box.add_child(bond)
 	var remembered: Array = _memories.get(d.id, [])
 	if not remembered.is_empty():
 		box.add_child(UiKit.label(tr("UI_REMEMBERS").format({"memories": " / ".join(remembered.slice(0, 3))}), UiKit.SMALL_SIZE))

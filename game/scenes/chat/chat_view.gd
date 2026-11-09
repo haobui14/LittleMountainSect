@@ -26,6 +26,9 @@ var _send: Button
 var _web: WebTextInput
 var _dots := 0
 var _shown := -1
+var _typing: Control
+var _typing_dots: Label
+var _expression := ""
 
 
 func _init(target_id: String) -> void:
@@ -37,11 +40,17 @@ func _init(target_id: String) -> void:
 func _ready() -> void:
 	var d := _disciple()
 	var header := UiKit.hbox(10)
-	header.add_child(UiKit.button(tr("UI_BACK"), "chat_back", func() -> void: closed.emit()))
+	var back := UiKit.button(tr("UI_BACK"), "chat_back", func() -> void: closed.emit())
+	back.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	header.add_child(back)
 	_portrait = Portrait.of(d) if d else Portrait.new("", true)
+	_portrait.custom_minimum_size = Vector2(88, 88)
 	header.add_child(_portrait)
 	var names := UiKit.vbox(2)
-	names.add_child(UiKit.label(_name(), UiKit.FONT_SIZE + 2, UiKit.JADE))
+	names.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var title := UiKit.label(_name(), UiKit.FONT_SIZE + 4, UiKit.JADE)
+	title.add_theme_font_override("font", load("res://assets/fonts/nunito_title.tres"))
+	names.add_child(title)
 	_energy = UiKit.label("", UiKit.SMALL_SIZE, UiKit.SOFT_INK)
 	names.add_child(_energy)
 	header.add_child(names)
@@ -160,6 +169,11 @@ func _tick() -> void:
 	if GameState.waiting.has(target):
 		_dots = (_dots + 1) % 4
 		_status.text = tr("UI_THINKING").format({"name": _name()}) + ".".repeat(_dots)
+		if is_instance_valid(_typing_dots):
+			var marks := PackedStringArray()
+			for i in 3:
+				marks.append("●" if i == _dots % 3 else "○")
+			_typing_dots.text = " ".join(marks)
 
 
 ## Shows the conversation and the status. Rebuilds the list only when the
@@ -173,40 +187,150 @@ func _refresh() -> void:
 	if _web:
 		_web.set_enabled(not waiting)
 	_status.text = tr("UI_THINKING").format({"name": _name()}) if waiting else ""
+	_status.visible = waiting and not Motion.enabled()
 	_energy.text = _energy_text()
+	if waiting and not is_instance_valid(_typing):
+		_typing = _typing_bubble()
+		_list.add_child(_typing)
+		Motion.pop(_typing)
+		_scroll_to_end.call_deferred()
+	elif not waiting and is_instance_valid(_typing):
+		_typing.queue_free()
+		_typing = null
 	if lines.size() == _shown:
 		return
+	var first_look := _shown < 0
 	_shown = lines.size()
-	UiKit.clear(_list)
+	for child in _list.get_children():
+		if child != _typing:
+			_list.remove_child(child)
+			child.queue_free()
 	var distress := false
+	var last: Control
 	for line: Dictionary in lines:
-		_list.add_child(_line_label(line))
+		last = _bubble(line)
+		_list.add_child(last)
 		if line.get("safety") == "distress":
 			distress = true
+	if is_instance_valid(_typing):
+		_list.move_child(_typing, -1)
+	if last and not first_look:
+		Motion.pop(last)
 	for i in range(lines.size() - 1, -1, -1):
 		if lines[i]["from"] == "character":
-			_portrait.expression = String(lines[i].get("expression", "thinking"))
+			var expression := String(lines[i].get("expression", "thinking"))
+			_portrait.expression = expression
+			if not first_look and expression != _expression:
+				Motion.bounce(_portrait)
+			_expression = expression
+			var mood := int(lines[i].get("mood", 0))
+			if not first_look and i == lines.size() - 1 and mood != 0:
+				_float_mood.call_deferred(mood)
 			break
 	_support.visible = distress
 	_scroll_to_end.call_deferred()
 
 
-func _line_label(line: Dictionary) -> Label:
-	if line["from"] == "player":
-		var mine := UiKit.label("%s: %s" % [tr("UI_YOU"), line["text"]], UiKit.FONT_SIZE, UiKit.JADE)
-		mine.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		return mine
-	var notes: Array[String] = []
-	if line.get("source") != "ai":
-		notes.append(tr("UI_WRITTEN"))
-	if int(line.get("mood", 0)) != 0:
-		notes.append(tr("UI_MOOD_CHANGE").format({"mood": "%+d" % int(line["mood"])}))
-	var suffix := "  (%s)" % ", ".join(notes) if not notes.is_empty() else ""
-	# The game's own written lines already start with the speaker's name.
+func _float_mood(mood: int) -> void:
+	if is_instance_valid(_portrait):
+		Motion.float_text(tr("UI_MOOD_CHANGE").format({"mood": "%+d" % mood}), _portrait.get_global_rect().get_center(), UiKit.JADE if mood > 0 else UiKit.WARN)
+
+
+## The character's "typing" bubble, shown while they think.
+func _typing_bubble() -> Control:
+	var row := UiKit.hbox(6)
+	row.add_child(_face(32.0))
+	var bubble := _bubble_panel(UiKit.CARD, UiKit.LINE)
+	_typing_dots = UiKit.label("● ○ ○", UiKit.FONT_SIZE, UiKit.JADE_LIGHT)
+	_typing_dots.autowrap_mode = TextServer.AUTOWRAP_OFF
+	bubble.add_child(_typing_dots)
+	bubble.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	row.add_child(bubble)
+	return row
+
+
+func _face(size: float) -> Portrait:
+	var d := _disciple()
+	var face := Portrait.of(d) if d else Portrait.new("", true)
+	face.custom_minimum_size = Vector2(size, size)
+	face.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	return face
+
+
+func _bubble_panel(fill: Color, border: Color) -> PanelContainer:
+	var bubble := PanelContainer.new()
+	var box := StyleBoxFlat.new()
+	box.bg_color = fill
+	box.border_color = border
+	box.set_border_width_all(1 if border.a > 0 else 0)
+	box.set_corner_radius_all(14)
+	box.content_margin_left = 12
+	box.content_margin_right = 12
+	box.content_margin_top = 8
+	box.content_margin_bottom = 8
+	box.shadow_color = UiKit.SHADOW
+	box.shadow_size = 3
+	box.shadow_offset = Vector2(0, 1)
+	bubble.add_theme_stylebox_override("panel", box)
+	return bubble
+
+
+## One line of the conversation as a speech bubble: the player's on the
+## right in jade, the character's on the left with their face (the Elder's
+## in plum), with "written" and Mood changes as chips underneath.
+func _bubble(line: Dictionary) -> Control:
+	var row := UiKit.hbox(6)
 	var text := String(line["text"])
-	if not text.begins_with(_name()):
-		text = "%s: %s" % [_name(), text]
-	return UiKit.label(text + suffix)
+	var short := text.length() < 26
+	if line["from"] == "player":
+		var spacer := Control.new()
+		spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		spacer.size_flags_stretch_ratio = 0.35
+		row.add_child(spacer)
+		var mine := _bubble_panel(UiKit.JADE, Color.TRANSPARENT)
+		var label := UiKit.label(text, UiKit.FONT_SIZE, Color.WHITE)
+		mine.add_child(label)
+		_fit(mine, label, short, true)
+		row.add_child(mine)
+		return row
+	row.add_child(_face(32.0))
+	var column := UiKit.vbox(3)
+	var elder := target == GameState.ELDER
+	var theirs := _bubble_panel(UiKit.PLUM.lerp(UiKit.CARD, 0.82) if elder else UiKit.CARD, UiKit.PLUM.lerp(UiKit.LINE, 0.4) if elder else UiKit.LINE)
+	# The game's own written lines already start with the speaker's name.
+	var prefix := _name() + ": "
+	if text.begins_with(prefix):
+		text = text.substr(prefix.length())
+	var label := UiKit.label(text)
+	theirs.add_child(label)
+	column.add_child(theirs)
+	var chips := UiKit.hbox(4)
+	if line.get("source") != "ai":
+		chips.add_child(UiKit.chip(tr("UI_WRITTEN"), UiKit.LINE))
+	if int(line.get("mood", 0)) != 0:
+		var mood := int(line["mood"])
+		chips.add_child(UiKit.chip(tr("UI_MOOD_CHANGE").format({"mood": "%+d" % mood}), UiKit.GOLD if mood > 0 else UiKit.WARN, Icons.mood_kind(mood * 3)))
+	if chips.get_child_count() > 0:
+		column.add_child(chips)
+	_fit(theirs, label, short, false)
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.size_flags_stretch_ratio = 1.0
+	row.add_child(column)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.size_flags_stretch_ratio = 0.25
+	row.add_child(spacer)
+	return row
+
+
+## Short lines get a snug bubble; long ones wrap across most of the row.
+func _fit(bubble: PanelContainer, label: Label, short: bool, right: bool) -> void:
+	if short:
+		label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		bubble.size_flags_horizontal = Control.SIZE_SHRINK_END if right else Control.SIZE_SHRINK_BEGIN
+	else:
+		bubble.size_flags_horizontal = Control.SIZE_EXPAND_FILL if right else Control.SIZE_FILL
 
 
 func _energy_text() -> String:

@@ -251,19 +251,64 @@ static func describe(fact: Dictionary, sect: Sect, locale: String) -> String:
 ## one funny line about a disciple's quirk.
 static func evening(report: DayReport, sect: Sect, locale: String) -> Array[String]:
 	var lines: Array[String] = []
+	for item in evening_items(report, sect, locale):
+		lines.append(item["text"])
+	return lines
+
+
+## The evening's lines, each with an icon (see Icons): [{text, icon}].
+static func evening_items(report: DayReport, sect: Sect, locale: String) -> Array[Dictionary]:
+	var items: Array[Dictionary] = []
 	var rested: Array = []
 	for fact in report.facts:
 		if fact["type"] == "rested":
 			rested.append(fact["disciple"])
 		else:
-			lines.append(describe(fact, sect, locale))
+			items.append({"text": describe(fact, sect, locale), "icon": fact_icon(fact)})
 	if not rested.is_empty():
-		lines.append(t("FACT_RESTED").format({"names": names(sect, rested, locale)}))
+		items.append({"text": t("FACT_RESTED").format({"names": names(sect, rested, locale)}), "icon": "rest"})
 	if not sect.disciples.is_empty():
 		var d: Disciple = sect.disciples[(report.day * 7) % sect.disciples.size()]
 		var quirk: String = d.quirks[report.day % d.quirks.size()]
-		lines.append(t("EVENING_" + quirk.to_upper()).format({"name": d.display_name(locale)}))
-	return lines
+		items.append({"text": t("EVENING_" + quirk.to_upper()).format({"name": d.display_name(locale)}), "icon": "chat"})
+	return items
+
+
+## The icon for a fact's line in the evening.
+static func fact_icon(fact: Dictionary) -> String:
+	var type := String(fact["type"])
+	match type:
+		"trained":
+			return "train"
+		"worked":
+			return "work"
+		"healed", "cured", "effect_ended":
+			return "heal"
+		"mission_departed", "mission_returned":
+			return Icons.task_kind(String(fact.get("mission", "")))
+		"injured", "lost_cultivation", "breakthrough_failed":
+			return "mood_sad"
+		"ate", "hungry":
+			return "food"
+		"breakthrough":
+			return "breakthrough"
+		"studied", "learned":
+			return "study"
+		"lost":
+			return "mountain"
+		"left", "returned":
+			return "gate"
+		"recruited":
+			return "disciples"
+		"rank_up":
+			return "reputation"
+		"brewed":
+			return "brew"
+		"found_item":
+			return String(fact.get("item", "golden_pill"))
+		"event":
+			return "event"
+	return "sparkle"
 
 
 ## The morning report for the sect's current day.

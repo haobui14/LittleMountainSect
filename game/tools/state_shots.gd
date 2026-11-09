@@ -17,11 +17,12 @@ extends SceneTree
 ## Files are named <width>x<height>_<state>.png. Nothing is saved and nothing
 ## goes to the server.
 
-const STATES: Array[String] = ["event", "event_done", "plan", "mountain", "disciples", "portraits"]
+const STATES: Array[String] = ["title", "event", "event_done", "plan", "free_time", "chat", "evening", "mountain", "disciples", "portraits"]
 const SAVE_PATH := "user://state_shots_save.json"
 ## Loaded when used: a main-loop script is compiled before the autoloads
 ## exist, and the game screen uses them.
 const GAME_SCREEN := "res://scenes/game/game_screen.gd"
+const TITLE_SCREEN := "res://scenes/title/title_screen.gd"
 
 
 func _init() -> void:
@@ -70,7 +71,17 @@ func _show(state: String) -> Control:
 	game_state.sect = Showcase.sect()
 	game_state.step = "morning"
 	game_state.plan = null
+	game_state.chats = {}
 	var tab := "today"
+	var chat := ""
+	if state == "title":
+		var title_app := _paper()
+		var title: Control = load(TITLE_SCREEN).new()
+		title.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		title_app.add_child(title)
+		root.add_child(title_app)
+		return title_app
+	var sect: Sect = game_state.sect
 	match state:
 		"event_done":
 			EventRules.choose(game_state.sect, "take_lesson")
@@ -80,10 +91,38 @@ func _show(state: String) -> Control:
 			game_state.start_planning()
 		"mountain", "disciples":
 			tab = state
+		"free_time", "chat":
+			EventRules.choose(sect, "decline")
+			game_state.step = "free_time"
+			var d: Disciple = sect.disciples[1]
+			game_state.chats[d.id] = [
+				{"from": "player", "text": "How is the green hair?"},
+				{"from": "character", "text": "Master, the frogs think I am one of them now. It is an honour, I suppose.", "expression": "nervous", "source": "ai", "mood": 1},
+				{"from": "player", "text": "It suits you."},
+				{"from": "character", "text": d.display_name("en") + ": I will wear it proudly.", "expression": "proud", "source": "fallback", "mood": 0},
+			]
+			if state == "chat":
+				chat = d.id
+		"evening":
+			EventRules.choose(sect, "decline")
+			game_state.step = "results"
+			var report := DayReport.new(sect.day)
+			var ready: Disciple = sect.disciples[0]
+			var green: Disciple = sect.disciples[1]
+			ready.realm = "foundation_building"
+			report.add("breakthrough", {"disciple": ready.id, "realm": "foundation_building", "pill": "foundation_pill"})
+			report.add("breakthrough_failed", {"disciple": green.id, "realm": "foundation_building", "lost": 40, "effect": "green_hair", "days": 4, "pill": "none"})
+			report.add("trained", {"disciple": sect.disciples[4].id, "gain": 9, "ready": false})
+			report.add("worked", {"disciples": [sect.disciples[2].id], "food": 3, "herbs": 1})
+			report.add("ate", {"food": 4})
+			report.resource_changes = {"food": -1, "herbs": 1}
+			game_state.report = report
+			game_state.evening_state = "done"
 
 	var app := _paper()
 	var screen: Control = load(GAME_SCREEN).new()
 	screen.set("_tab", tab)
+	screen.set("_chat_target", chat)
 	screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	app.add_child(screen)
 	root.add_child(app)

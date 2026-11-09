@@ -11,24 +11,31 @@ static func t(key: String) -> String:
 
 ## Today's event, when there is one: pending (choice buttons, probes
 ## "event_<choice>") or resolved (the choice and its results). [param writing]
-## is true while Claude is still writing its words.
-static func event_card(sect: Sect, locale: String, writing: bool) -> Control:
+## is true while Claude is still writing its words. With [param reveal]
+## (the choice was just made), the results appear one by one and the pair
+## cheer or wobble.
+static func event_card(sect: Sect, locale: String, writing: bool, reveal: bool = false) -> Control:
 	var event := sect.event
 	var pending := EventRules.pending(sect)
-	var card := UiKit.card()
+	var card := UiKit.card(UiKit.PLUM)
 	var box := UiKit.vbox(6)
 	card.add_child(box)
-	box.add_child(UiKit.label(ReportText.event_title(sect, event, locale), UiKit.FONT_SIZE + 2, UiKit.JADE))
+	var title := UiKit.icon_label("event", ReportText.event_title(sect, event, locale), UiKit.FONT_SIZE + 2, UiKit.JADE, 26.0)
+	(title.get_child(1) as Label).add_theme_font_override("font", load("res://assets/fonts/nunito_title.tres"))
+	box.add_child(title)
 	box.add_child(UiKit.label(t("UI_EVENT_AT").format({"place": ReportText.place_name(String(event["place"]))}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 
 	var face := "nervous"
 	if not pending:
 		face = "sad" if event.get("result") == "lose" else "happy"
 	var faces := UiKit.hbox(12)
+	var portraits: Array[Control] = []
 	for id: Variant in event["disciples"]:
 		var d := sect.disciple(String(id))
 		if d:
-			faces.add_child(_face(d, locale, face))
+			var who := _face(d, locale, face)
+			portraits.append(who.get_child(0))
+			faces.add_child(who)
 	box.add_child(faces)
 
 	if pending and writing and not event.get("words", {}).has("story"):
@@ -49,18 +56,37 @@ static func event_card(sect: Sect, locale: String, writing: bool) -> Control:
 	else:
 		var chosen := ReportText.event_choice(sect, event, String(event["choice"]), locale)
 		box.add_child(UiKit.label(t("UI_EVENT_CHOSE").format({"choice": chosen}), UiKit.SMALL_SIZE, UiKit.JADE))
+		var results: Array[Control] = []
 		for line in ReportText.event_result(sect, event, locale):
-			box.add_child(UiKit.label(line, UiKit.SMALL_SIZE))
+			var result := UiKit.label(line, UiKit.SMALL_SIZE)
+			results.append(result)
+			box.add_child(result)
+		if reveal:
+			_reveal.call_deferred(results, portraits, event.get("result") != "lose")
 	return card
+
+
+## The results appear one by one; the faces cheer (with sparkles) or wobble.
+static func _reveal(results: Array[Control], portraits: Array[Control], good: bool) -> void:
+	for i in results.size():
+		Motion.pop(results[i], 0.12 * i)
+	for portrait in portraits:
+		if not is_instance_valid(portrait):
+			continue
+		if good:
+			Motion.bounce(portrait)
+			Motion.sparkle(portrait.get_global_rect().get_center())
+		else:
+			Motion.wobble(portrait)
 
 
 ## The hopeful at the gate, with "recruit_accept" and "recruit_decline".
 static func candidate_card(sect: Sect, locale: String) -> Control:
 	var hopeful := Recruiting.candidate(sect)
-	var card := UiKit.card()
+	var card := UiKit.card(UiKit.GOLD)
 	var box := UiKit.vbox(6)
 	card.add_child(box)
-	box.add_child(UiKit.label(t("UI_CANDIDATE"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+	box.add_child(UiKit.icon_label("gate", t("UI_CANDIDATE"), UiKit.SMALL_SIZE, UiKit.SOFT_INK, 20.0))
 	var row := UiKit.hbox()
 	var portrait := Portrait.of(hopeful)
 	portrait.custom_minimum_size = Vector2(56, 56)
@@ -86,7 +112,7 @@ static func candidate_card(sect: Sect, locale: String) -> Control:
 		"not_enough_stones":
 			box.add_child(UiKit.label(t("UI_RECRUIT_POOR"), UiKit.SMALL_SIZE, UiKit.WARN))
 	var buttons := UiKit.hbox()
-	var accept := UiKit.button(t("UI_RECRUIT_ACCEPT"), "recruit_accept", func() -> void: GameState.recruit(true), true)
+	var accept := UiKit.primary(t("UI_RECRUIT_ACCEPT"), "recruit_accept", func() -> void: GameState.recruit(true), "disciples")
 	accept.disabled = not check["ok"]
 	buttons.add_child(accept)
 	buttons.add_child(UiKit.button(t("UI_RECRUIT_DECLINE"), "recruit_decline", func() -> void: GameState.recruit(false), true))

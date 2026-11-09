@@ -5,7 +5,6 @@ UI_TAGLINE,Found a tiny sect on a leaky mountain.,Lập một tông môn nhỏ t
 UI_GLOSSARY_SAMPLE,Sect · Sect Master · Disciple · Elder · Cultivation · Spirit Stones,Tông môn · Chưởng môn · Đệ tử · Trưởng lão · Tu luyện · Linh thạch
 UI_TYPING_TEST_LABEL,Keyboard test: type some Vietnamese.,Thử bàn phím: gõ vài chữ tiếng Việt.
 UI_TYPING_TEST_PLACEHOLDER,"For example: Chưởng môn, Linh thạch","Ví dụ: Chưởng môn, Linh thạch"
-UI_BUILD_NOTE,"Milestone 3 · placeholder screens, no AI yet","Cột mốc 3 · màn hình tạm, chưa có AI"
 UI_TYPING_CODE_POINTS,Code points: %s,Mã ký tự: %s
 UI_TYPING_BROWSER_BOX,Use the browser's text box,Dùng ô nhập của trình duyệt
 UI_TYPING_COPY_REPORT,Copy report,Sao chép báo cáo
@@ -131,7 +130,6 @@ TASK_WORK,Work,Làm việc
 TASK_REST,Rest,Nghỉ ngơi
 TASK_STUDY,Study,Nghiên cứu
 TASK_BREAKTHROUGH,Break through,Đột phá
-UI_TEAM,{mission}: {names}. Likely result: {tier}.,{mission}: {names}. Dự đoán: {tier}.
 TIER_GREAT,great success,thành công rực rỡ
 TIER_SUCCESS,success,thành công
 TIER_PARTIAL,so-so,tàm tạm
@@ -453,3 +451,5 @@ UI_MISSIONS,Missions,Nhiệm vụ
 UI_LIKELY,Likely: {tier},Dự đoán: {tier}
 UI_LESS_MOTION,Less motion,Giảm chuyển động
 UI_TAP_BUILDING,"Tap a building to see it, build it or upgrade it.","Chạm vào một công trình để xem, xây hoặc nâng cấp."
+UI_BREAKTHROUGH_WON,Breakthrough!,Đột phá thành công!
+UI_BREAKTHROUGH_LOST,Not this time…,Lần này chưa được…
