@@ -60,7 +60,7 @@ func test_the_spirit_field_raises_work_output() -> void:
 	var sect := SimFixtures.sect()
 	assert_eq([BuildingRules.work_food(sect), BuildingRules.work_herbs(sect)], [2, 0], "foraging")
 	sect.buildings["spirit_field"] = 3
-	assert_eq([BuildingRules.work_food(sect), BuildingRules.work_herbs(sect)], [5, 3])
+	assert_eq([BuildingRules.work_food(sect), BuildingRules.work_herbs(sect)], [5, 2])
 
 
 func test_the_training_yard_speeds_training_and_low_mood_slows_it() -> void:

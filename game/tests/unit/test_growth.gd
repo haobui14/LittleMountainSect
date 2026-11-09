@@ -141,3 +141,22 @@ func test_a_version_2_save_migrates_to_version_3() -> void:
 	assert_eq(loaded.disciples[0].status, "home")
 	assert_eq(loaded.disciples[0].technique, 0)
 	assert_eq(loaded.to_dict()["version"], 3)
+
+
+func test_a_good_secret_realm_trip_brings_back_a_pill() -> void:
+	for tier in ["great", "success", "partial"]:
+		var sect := SimFixtures.sect()
+		var m := ActiveMission.new()
+		m.mission = "explore_secret_realm"
+		m.team.assign(["a", "b"])
+		m.departed_day = 1
+		m.return_day = 4
+		m.tier = tier
+		var report := DayReport.new(1)
+		MissionResolver.complete(sect, m, report)
+		var found := report.of_type("found_item")
+		if tier == "partial":
+			assert_true(found.is_empty(), "only success or better")
+			continue
+		assert_eq(found.size(), 1, tier)
+		assert_eq(sect.item(String(found[0]["item"])), 1)

@@ -39,7 +39,7 @@ jobs:
       # softlock, a negative resource or a value out of range.
       - name: Run the balance sim
         run: |
-          godot --headless --path game -s res://tools/balance_sim.gd -- --seeds 100 --days 60 \
+          godot --headless --path game -s res://tools/balance_sim.gd -- --seeds 100 --days 120 \
             --out "$RUNNER_TEMP/balance.md"
           cat "$RUNNER_TEMP/balance.md" >> "$GITHUB_STEP_SUMMARY"
 

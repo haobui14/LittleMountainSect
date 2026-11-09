@@ -86,7 +86,7 @@ const QUIRKS_PER_DISCIPLE := 2
 const MAX_LEVEL := 3
 ## Spirit Stones to reach each level, by index (index 0 is unused).
 const UPGRADE_COST := {
-	"main_hall": [0, 0, 150, 300],
+	"main_hall": [0, 0, 150, 250],
 	"disciple_huts": [0, 40, 100, 200],
 	"training_yard": [0, 40, 100, 200],
 	"spirit_field": [0, 30, 80, 160],
@@ -109,7 +109,7 @@ const FOOD_PER_DISCIPLE := 1
 const HUNGRY_MOOD := -2
 ## Food per worker by Spirit Field level; level 0 means foraging on the slopes.
 const WORK_FOOD: Array[int] = [2, 3, 4, 5]
-const WORK_HERBS: Array[int] = [0, 1, 2, 3]
+const WORK_HERBS: Array[int] = [0, 1, 1, 2]
 const WORK_MOOD := 0
 
 const TRAIN_BASE := 6
@@ -151,13 +151,13 @@ const MISSIONS := {
 		"days": [2, 3],
 		"difficulty": 14.0,
 		"stats": ["body", "talent"],
-		"rewards": {"stones": [20, 45], "reputation": [1, 3]},
+		"rewards": {"stones": [25, 50], "reputation": [1, 3]},
 	},
 	"escort_merchant": {
 		"days": [3, 4],
 		"difficulty": 18.0,
 		"stats": ["body", "wit"],
-		"rewards": {"stones": [30, 60], "reputation": [3, 6]},
+		"rewards": {"stones": [35, 70], "reputation": [3, 6]},
 	},
 	## On success or better, the team also finds a random pill.
 	"explore_secret_realm": {

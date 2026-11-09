@@ -30,9 +30,9 @@ func test_work_grows_food_and_herbs_by_spirit_field_level() -> void:
 	sect.buildings["spirit_field"] = 2
 	var report := DayResolver.resolve(sect, SimFixtures.plan_all(sect, "work"))
 	var worked := report.of_type("worked")[0]
-	assert_eq([worked["food"], worked["herbs"]], [12, 6])
+	assert_eq([worked["food"], worked["herbs"]], [12, 3])
 	assert_eq(sect.resources["food"], 100 + 12 - 3)
-	assert_eq(sect.resources["herbs"], 6)
+	assert_eq(sect.resources["herbs"], 3)
 	assert_eq(report.resource_changes["food"], 9)
 
 

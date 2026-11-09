@@ -4,8 +4,11 @@ extends SceneTree
 ## any run breaks a rule of the game:
 ##   - a resource is negative or a disciple's value is out of range;
 ##   - a day plan is rejected;
-##   - with the sensible player, Food stays at 0 for 5 days in a row, or no
-##     disciple can be planned for 5 days in a row (a softlock).
+##   - more disciples than the Main Hall holds, or pills out of range;
+##   - a lost or departed disciple stays away more than AWAY_LIMIT days;
+##   - with the sensible player, Food stays at 0 for 5 days in a row, no
+##     disciple can be planned for 5 days in a row (a softlock), or someone
+##     stays ready to break through for READY_LIMIT days.
 ##
 ## Run from the repo root:
 ##   godot --headless --path game -s res://tools/balance_sim.gd -- --seeds 100 --days 60
@@ -13,7 +16,13 @@ extends SceneTree
 ##          --out PATH (also write the Markdown report to PATH)
 
 const STREAK_LIMIT := 5
+const AWAY_LIMIT := 20
+const READY_LIMIT := 45
 const REPORT_DAYS: Array[int] = [1, 5, 10, 20, 30, 45, 60, 90, 120]
+## Facts counted across all seeds, for the report.
+const COUNTED: Array[String] = [
+	"breakthrough", "breakthrough_failed", "learned", "recruited", "event", "lost", "left", "found_item", "rank_up",
+]
 
 
 func _init() -> void:
@@ -61,6 +70,7 @@ func _run_player(player: String, options: Dictionary) -> Dictionary:
 	var series := {}  # metric -> day -> Array[float] across seeds
 	var tiers := {}  # mission -> tier -> count
 	var first_build := {}  # "building:level" -> Array[int] days
+	var counts := {}  # fact type -> count
 	var failures: Array[String] = []
 	for n in options["seeds"]:
 		var seed_value: int = options["first_seed"] + n
@@ -68,6 +78,8 @@ func _run_player(player: String, options: Dictionary) -> Dictionary:
 		var policy_rng := SimRng.new(seed_value * 7919 + 1)
 		var food_zero := 0
 		var nobody_free := 0
+		var away := {}  # disciple id -> days lost or left in a row
+		var ready := {}  # disciple id -> days ready at home in a row
 		var reached := {}  # "building:level" -> first day, for this seed
 		for day in days:
 			var plan := SimPlayers.sensible(sect, policy_rng) if player == "sensible" else SimPlayers.random(sect, policy_rng)
@@ -79,6 +91,9 @@ func _run_player(player: String, options: Dictionary) -> Dictionary:
 			for fact in report.of_type("mission_returned"):
 				var by_tier: Dictionary = tiers.get_or_add(fact["mission"], {})
 				by_tier[fact["tier"]] = int(by_tier.get(fact["tier"], 0)) + 1
+			for fact in report.facts:
+				if fact["type"] in COUNTED:
+					counts[fact["type"]] = int(counts.get(fact["type"], 0)) + 1
 			if player == "random":
 				SimPlayers.random_ai(sect, policy_rng)
 			var broken := _broken_values(sect)
@@ -93,18 +108,47 @@ func _run_player(player: String, options: Dictionary) -> Dictionary:
 			if player == "sensible" and nobody_free >= STREAK_LIMIT:
 				failures.append("seed %d day %d: nobody free for %d days" % [seed_value, report.day, nobody_free])
 				break
+			var stuck := _stuck(sect, away, ready, player == "sensible")
+			if stuck != "":
+				failures.append("seed %d day %d: %s" % [seed_value, report.day, stuck])
+				break
 			_record(series, sect, report.day)
 		for key: String in reached:
 			var list: Array = first_build.get_or_add(key, [])
 			list.append(reached[key])
-	return {"series": series, "tiers": tiers, "first_build": first_build, "failures": failures}
+	return {"series": series, "tiers": tiers, "first_build": first_build, "counts": counts, "failures": failures}
+
+
+## Disciples away too long, or (for the sensible player) ready to break
+## through for too long without trying.
+func _stuck(sect: Sect, away: Dictionary, ready: Dictionary, sensible: bool) -> String:
+	for d in sect.disciples:
+		away[d.id] = int(away.get(d.id, 0)) + 1 if d.status != "home" else 0
+		if int(away[d.id]) > AWAY_LIMIT:
+			return "%s %s for %d days" % [d.id, d.status, away[d.id]]
+		var waiting := CultivationRules.can_break_through(d) and not sect.is_away(d.id)
+		ready[d.id] = int(ready.get(d.id, 0)) + 1 if waiting else 0
+		if sensible and int(ready[d.id]) > READY_LIMIT:
+			return "%s ready to break through for %d days" % [d.id, ready[d.id]]
+	return ""
 
 
 func _broken_values(sect: Sect) -> String:
 	for name in Balance.RESOURCES:
 		if int(sect.resources[name]) < 0:
 			return "%s is negative" % name
+	if sect.disciples.size() > sect.disciple_limit():
+		return "%d disciples, the Main Hall holds %d" % [sect.disciples.size(), sect.disciple_limit()]
+	for pill in Balance.PILLS:
+		if sect.item(pill) < 0 or sect.item(pill) > Balance.PILL_MAX:
+			return "%d %s" % [sect.item(pill), pill]
+	if not sect.event.is_empty():
+		for id in sect.event["disciples"]:
+			if sect.disciple(String(id)) == null:
+				return "the event names %s" % id
 	for d in sect.disciples:
+		if d.technique < 0 or d.technique > Balance.TECHNIQUE_MAX or d.study < 0 or d.study > Balance.STUDY_MAX:
+			return "%s technique %d study %d" % [d.id, d.technique, d.study]
 		if d.mood < Balance.MOOD_MIN or d.mood > Balance.MOOD_MAX:
 			return "%s mood %d" % [d.id, d.mood]
 		if d.loyalty < Balance.LOYALTY_MIN or d.loyalty > Balance.LOYALTY_MAX:
@@ -124,10 +168,12 @@ func _record(series: Dictionary, sect: Sect, day: int) -> void:
 	var mood := 0.0
 	var loyalty := 0.0
 	var progress := 0.0
+	var realm := 0.0
 	for d in sect.disciples:
 		mood += d.mood
 		loyalty += d.loyalty
 		progress += d.progress
+		realm += d.realm_index()
 	var n := float(sect.disciples.size())
 	var values := {
 		"stones": sect.resources["stones"],
@@ -137,6 +183,9 @@ func _record(series: Dictionary, sect: Sect, day: int) -> void:
 		"mood": mood / n,
 		"loyalty": loyalty / n,
 		"progress": progress / n,
+		"realm": realm / n,
+		"disciples": n,
+		"rank": sect.level("main_hall"),
 	}
 	for metric: String in values:
 		var by_day: Dictionary = series.get_or_add(metric, {})
@@ -172,7 +221,7 @@ func _report(player: String, result: Dictionary, options: Dictionary) -> Array[S
 	lines.append("")
 	lines.append("Median (10th–90th percentile) across seeds, at the end of each day:")
 	lines.append("")
-	var metrics := ["stones", "food", "herbs", "reputation", "mood", "loyalty", "progress"]
+	var metrics := ["stones", "food", "herbs", "reputation", "mood", "loyalty", "progress", "realm", "disciples", "rank"]
 	lines.append("| Day | " + " | ".join(metrics) + " |")
 	lines.append("|---" .repeat(metrics.size() + 1) + "|")
 	var series: Dictionary = result["series"]
@@ -189,6 +238,17 @@ func _report(player: String, result: Dictionary, options: Dictionary) -> Array[S
 				String.num(_percentile(values, 90), digits),
 			])
 		lines.append("| " + " | ".join(cells) + " |")
+	lines.append("")
+	lines.append("Realm is the average realm (0 Qi Refining to 3 Nascent Soul); rank is the Main Hall level.")
+	lines.append("")
+	lines.append("Events across all seeds (per seed in brackets):")
+	lines.append("")
+	var counts: Dictionary = result["counts"]
+	var seeds := maxi(1, int(options["seeds"]))
+	var parts: Array[String] = []
+	for type in COUNTED:
+		parts.append("%s %d (%.1f)" % [type, int(counts.get(type, 0)), float(counts.get(type, 0)) / seeds])
+	lines.append(", ".join(parts) + ".")
 	lines.append("")
 	lines.append("Mission results:")
 	lines.append("")
