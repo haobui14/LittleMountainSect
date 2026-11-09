@@ -81,6 +81,15 @@ static func theme() -> Theme:
 	t.set_stylebox("pressed", "PrimaryButton", _box(JADE.darkened(0.15), JADE, 10))
 	t.set_stylebox("disabled", "PrimaryButton", _box(Color(JADE, 0.35), Color.TRANSPARENT, 10))
 	t.set_stylebox("focus", "PrimaryButton", _box(Color.TRANSPARENT, JADE_LIGHT, 10))
+	# Text boxes on paper, like the cards.
+	t.set_stylebox("normal", "LineEdit", _box(CARD, LINE, 10))
+	t.set_stylebox("focus", "LineEdit", _box(Color.TRANSPARENT, JADE_LIGHT, 10))
+	t.set_stylebox("read_only", "LineEdit", _box(Color(CARD, 0.7), LINE, 10))
+	t.set_color("font_color", "LineEdit", INK)
+	t.set_color("font_placeholder_color", "LineEdit", Color(SOFT_INK, 0.8))
+	t.set_color("caret_color", "LineEdit", JADE)
+	t.set_color("selection_color", "LineEdit", Color(JADE_LIGHT, 0.35))
+	t.set_color("font_uneditable_color", "LineEdit", SOFT_INK)
 	# A breakthrough choice stands out in gold.
 	t.set_type_variation("GoldButton", "Button")
 	t.set_stylebox("normal", "GoldButton", _box(GOLD.lerp(CARD, 0.7), GOLD))

@@ -258,6 +258,7 @@ Tester guide, hand checks and `ai_usage` queries: [docs/playtests/gate-2.md](pla
   - One mountain illustration with art for each building level
   - Mist and bird animations
   - A soft, rounded style on all 7 main screens
+  - **Done early, with art drawn in code** (after M5): layered portraits, the illustrated Mountain with every building level, mist, birds, smoke and drips, icons, motion and a "Less motion" setting. The real art from [the style brief](art/style-brief.md) replaces the drawings without changing the layout.
 - [ ] **Audio:**
   - Guzheng and flute music loops
   - Short, playful sound effects

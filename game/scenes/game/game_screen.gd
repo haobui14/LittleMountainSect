@@ -182,7 +182,12 @@ func _hud(narrow: bool) -> Control:
 		label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		_resource_labels[resource] = label
 		resources.add_child(item)
-	resources.add_child(UiKit.chip(_energy_text(), Color(0.55, 0.62, 0.85), "energy"))
+	var backend := _backend()
+	var offline := backend == null or backend.status == "offline"
+	var energy := UiKit.chip(tr("UI_OFFLINE_SHORT") if offline else _energy_text(), Color(0.55, 0.62, 0.85), "energy")
+	energy.tooltip_text = _energy_text()
+	energy.mouse_filter = Control.MOUSE_FILTER_PASS
+	resources.add_child(energy)
 	for pill in Balance.PILLS:
 		if GameState.sect.item(pill) > 0:
 			var chip := UiKit.chip("×%d" % GameState.sect.item(pill), UiKit.GOLD, pill)

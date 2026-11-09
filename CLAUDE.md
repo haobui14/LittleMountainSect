@@ -78,7 +78,12 @@ node tools/web-check/play_check.cjs http://127.0.0.1:8060/index.html /tmp 10 --o
 - `typing_check.cjs` always blocks the server.
 - For the M5 exit check, play 30 days locally by passing `30` instead of `10`.
 
-`game/tools/state_shots.gd` saves screenshots of states a short run rarely reaches, such as an event, a hopeful, pills or a ready breakthrough, plus a portrait sheet. It needs a display, so run it under Xvfb (`xvfb-run` works in this container). The command is at the top of the file.
+`game/tools/state_shots.gd` saves screenshots of every main screen in states a short run rarely reaches (an event, a hopeful, pills, a breakthrough evening, a chat), plus a portrait sheet. It needs a display, so run it under Xvfb (`xvfb-run` works in this container). The command is at the top of the file. It turns on Less motion so nothing is caught half way through an animation.
+
+Browser checks and animation:
+- `play_check.cjs` waits until a control stops moving before it clicks it.
+- UiProbe reports a control as `on_screen` only when no scrolling list clips it. The action bar is fixed over the list's bottom edge, so a control hidden under it doesn't count.
+- On the Mountain, a check taps `plot_<building>` first, then `upgrade_<building>` or `brew_<pill>`.
 
 Web export needs the 4.7.2 export templates installed.
 
@@ -141,6 +146,8 @@ Live evals and the gateway smoke test run in the manual **AI live tests** workfl
 | `game/` | The Godot project: `autoload/`, `scenes/`, `sim/` (the rules engine), `i18n/`, `assets/` and `tests/` (GUT) |
 | `game/autoload/` | `GameState` (the game loop, chats, the evening story, saves), `Backend` (anonymous sign-in, the session, retries, server saves; HTTP goes through `HttpTransport`, which tests replace with `tests/helpers/fake_transport.gd`), `SaveStore` (local saves), `Settings`, `Events` and `UiProbe` |
 | `game/scenes/` | Screens built in code from `ui/ui_kit.gd`. The canvas is 480×480 with `expand`, so every screen must work narrow (an upright phone) and wide. Tag clickable controls with `UiKit.probe()` so browser checks can click them |
+| `game/scenes/ui/` | `UiKit`, plus three helpers. `Art` turns SVG written in code into cached textures. `Icons` holds the icon set as SVG. `Motion` has the animations, which become no-ops when `Settings.reduce_motion` ("Less motion") is on. Floating text and sparkles go on the overlay layer that `app.gd` adds, which screen rebuilds don't clear. Inside containers, animate only `modulate` and `scale`, because containers reset `position` |
+| `game/scenes/game/` | `GameScreen` rebuilds itself on every state change; cards pop in only when the step, tab or day changes. The illustrated Mountain is `mountain_art.gd` (SVG) and `mountain_view.gd` (plots, selection, animation). Also the day tracker and the morning cards |
 | `game/config/` | `backend.json`: the public Supabase URL and publishable key |
 | `server/supabase/` | `config.toml`, `migrations/` and `tests/database/` (pgTAP) |
 | `server/supabase/functions/` | `_shared/` (prompts, schemas, the Claude call path, validation, costs), `ai-gateway/`, and `tests/` (Deno) |

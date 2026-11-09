@@ -100,27 +100,48 @@ That is 1 robe, 4 heads, 5 hair layers, 6 faces, 3 Elder layers and up to 4 extr
 
 ## The mountain
 
-One illustrated screen replaces the Mountain tab's list of cards (M7).
+One illustrated screen is the Mountain tab. The game now draws a placeholder in code (`game/scenes/game/mountain_art.gd`), and the real art should keep its layout, so the tap areas and tests stay valid.
 
-- **Composition:** a tall mountain with 8 building plots on its terraces, with mist and sky behind it.
-  - It must work on a phone held upright and on a wide screen. Keep the plots inside a central square, and let the sky and the mountainside extend to the sides and top.
-  - On a phone, the screen scrolls up and down.
-- **Buildings:** 8 buildings × 4 states (an empty plot, then levels 1, 2 and 3), so 32 drawings. Each level should look a little grander and a little less leaky. The buildings are:
-  - Main Hall
-  - Disciple Huts
-  - Training Yard
-  - Spirit Field
-  - Kitchen
-  - Alchemy Room
-  - Library
-  - Mission Hall
+- **Composition:** a terraced mountain with 8 building plots on 4 terraces, with sky, far peaks and drifting mist.
+  - The picture is 4:3. On a phone it fills the width, with the building's card below it. On a wide screen the card sits beside it.
+- **Plots:** each building stands with its base at a fixed spot, given as a fraction of the picture's width and height.
+
+  | Building | Base (x, y) | Terrace |
+  | --- | --- | --- |
+  | Main Hall | 0.50, 0.30 | Top |
+  | Library | 0.30, 0.51 | Second |
+  | Alchemy Room | 0.70, 0.51 | Second |
+  | Disciple Huts | 0.17, 0.72 | Third |
+  | Training Yard | 0.50, 0.72 | Third |
+  | Kitchen | 0.83, 0.72 | Third |
+  | Spirit Field | 0.29, 0.93 | Bottom |
+  | Mission Hall | 0.71, 0.93 | Bottom |
+
+- **Buildings:** 8 buildings × 4 states (an empty plot with a "build here" sign, then levels 1, 2 and 3), so 32 drawings.
+  - Level 1 leaks: a patched roof and drips.
+  - Level 2 is mended.
+  - Level 3 has gold trim, banners and lanterns.
+  - The silhouettes in the placeholder:
+
+  | Building | Silhouette |
+  | --- | --- |
+  | Main Hall | A hall on a stone platform with red pillars; two curved roofs from level 2 |
+  | Disciple Huts | Straw huts: 1, then 2, then 3 with tiled roofs and lanterns |
+  | Training Yard | A sand ring with practice dummies (1, 2, 3) and a weapon rack |
+  | Spirit Field | Rows of crops on brown soil; a scarecrow at level 1, glowing herbs at 3 |
+  | Kitchen | A hut with a chimney (it smokes) and a cooking pot |
+  | Alchemy Room | A cauldron under a straw shelter, then a hall with a round window (it glows) |
+  | Library | A one-storey reading room, then a two-storey tower with a hanging scroll |
+  | Mission Hall | A notice board, then a red gate with a plaque |
+
 - **Life:**
-  - 2–3 mist strips that drift slowly.
-  - A small flock of birds: a 4-frame wing flap that crosses the sky now and then.
-  - Optional: steam from the Kitchen, and a glow from the Alchemy Room while it brews.
+  - Two bands of mist drift.
+  - Three birds flap across the sky every 20 seconds or so.
+  - The Kitchen smokes, the Alchemy Room glows while it has brews left, and leaky roofs drip.
+  - With "Less motion" on, it all stands still.
 - **Sizes:**
-  - The background is 2048×2048, with its safe area in the central 1536×1536.
-  - Each building fits a 384×384 box with a transparent background.
+  - The background is 1600×1200.
+  - Each building is drawn in a 500×400 box with a transparent background, standing on the point 250, 370.
   - Mist strips are 2048×256, and birds are 64×64 per frame.
 
 ### Files
@@ -135,7 +156,12 @@ mountain/
 
 ## Everything else
 
-- **Icons:** 64×64, in the same soft style. There are 4 resources (Spirit Stones, Food, Herbs and Reputation) and 3 pills (Foundation, Healing and Golden Core).
+- **Icons:** 64×64, in the same soft style. The placeholders are SVG in `game/scenes/ui/icons.gd`:
+  - the 4 resources and Spirit Energy
+  - the 3 pills
+  - the 5 home tasks and the 4 missions
+  - the 3 tabs
+  - moods, loyalty, chat, the event scroll and the gate
 - **Event cards:** no art needed. They use the two disciples' portraits.
 - **Font:** Nunito, already in the game. Hand-lettered headings are optional.
 - **UI:** the existing panels stay: rounded corners (8 px), a 1-pixel sand border, and buttons at least 44 px tall for thumbs.
@@ -147,7 +173,7 @@ mountain/
 | Portrait layers | 19 (+4 optional) | M7 |
 | Mountain background, mist and birds | 1 + 3 + 4 frames | M7 |
 | Buildings | 32 | M7 |
-| Icons | 7 | M7 |
+| Icons | about 30 | M7 |
 
 ## How to try art in the game
 
