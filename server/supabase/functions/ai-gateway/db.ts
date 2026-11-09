@@ -46,6 +46,9 @@ export interface GatewayDb {
   getEveningStory(player: string, gameDay: number): Promise<unknown | null>;
   /** Stores a day's story unless one exists; returns the one that is stored. */
   storeEveningStory(player: string, gameDay: number, reply: unknown): Promise<unknown>;
+  /** The same for the surprise event that starts on a game day (M5). */
+  getEventStory(player: string, gameDay: number): Promise<unknown | null>;
+  storeEventStory(player: string, gameDay: number, reply: unknown): Promise<unknown>;
 }
 
 /** The one supabase-js method we use. */
@@ -98,6 +101,14 @@ export function supabaseDb(client: RpcClient): GatewayDb {
       call<unknown | null>(client, "get_evening_story", { p_player: player, p_game_day: gameDay }),
     storeEveningStory: (player, gameDay, reply) =>
       call<unknown>(client, "store_evening_story", {
+        p_player: player,
+        p_game_day: gameDay,
+        p_reply: reply,
+      }),
+    getEventStory: (player, gameDay) =>
+      call<unknown | null>(client, "get_event_story", { p_player: player, p_game_day: gameDay }),
+    storeEventStory: (player, gameDay, reply) =>
+      call<unknown>(client, "store_event_story", {
         p_player: player,
         p_game_day: gameDay,
         p_reply: reply,

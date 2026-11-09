@@ -55,6 +55,10 @@ export const LIMITS = {
   reasonChars: 160,
   decisions: 2,
   relationshipChanges: 3,
+  /** Surprise events (M5): a short title, a 60-120-word story, short choices. */
+  eventTitleChars: 60,
+  eventStoryChars: 900,
+  choiceChars: 120,
 } as const;
 
 /**

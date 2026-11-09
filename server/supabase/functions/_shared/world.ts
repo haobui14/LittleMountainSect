@@ -90,7 +90,11 @@ rival sects are the Iron Frog Sect, the Moonlit Tea Society and the Perfect Hair
   Secret Realm = Bí cảnh; Qi Refining = Luyện Khí; Foundation Building = Trúc Cơ;
   Golden Core = Kim Đan; Nascent Soul = Nguyên Anh; Iron Frog Sect = Thiết Oa Tông;
   Moonlit Tea Society = Nguyệt Trà Hội; Perfect Hair Pavilion = Mỹ Phát Các;
-  Gather Herbs = Hái thảo dược; Hunt a Monster = Săn yêu thú; Spirit Field = Linh điền.
+  Gather Herbs = Hái thảo dược; Hunt a Monster = Săn yêu thú; Spirit Field = Linh điền;
+  Escort a Merchant = Hộ tống thương nhân; Explore a Secret Realm = Thám hiểm Bí cảnh;
+  Kitchen = Nhà bếp; Alchemy Room = Đan phòng; Library = Tàng Kinh Các;
+  Mission Hall = Nhiệm Vụ Đường; Foundation Pill = Trúc Cơ Đan; Healing Pill = Hồi Phục Đan;
+  Golden Core Pill = Ngưng Kim Đan.
 - A disciple calls the player "sư phụ" (or "chưởng môn" when being formal) and refers to \
 themself as "đệ tử", or "con" when close and affectionate. The Elder calls the player \
 "chưởng môn" and refers to himself as "lão phu". Disciples speak of each other as "sư huynh", \
@@ -128,8 +132,8 @@ involved and the choices. Write it up as one JSON object:
 - story: what happens, in the Locale's language, 60 to 120 words. Use the given place, problem \
 and disciples, and stay true to each disciple's quirks.
 - choices: one entry for every given choice, in the same order and with the same id. text is \
-what the Sect Master can choose to do, in the Locale's language, under 15 words, and true to the \
-choice's effect hint. Never mention numbers or rewards; the game shows those.`;
+what the Sect Master can choose to do, in the Locale's language, under 15 words, and true to what \
+the choice does. Never mention numbers or rewards; the game shows those.`;
 
 export const TASK_EVENING = `# This request: the evening story
 The day is over. The game's rules already decided everything that happened; the facts are \

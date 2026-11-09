@@ -3,7 +3,17 @@
 // and the server's schemas reject anything else, so the two lists must match.
 
 import { assertEquals } from "jsr:@std/assert@1";
-import { ACTIONS, QUIRK_IDS, REALMS, SPIRIT_ROOTS } from "../_shared/cast.ts";
+import {
+  ACTIONS,
+  PILLS,
+  QUIRK_IDS,
+  REALMS,
+  SIDE_EFFECTS,
+  SPIRIT_ROOTS,
+  STATUSES,
+  TECHNIQUES,
+} from "../_shared/cast.ts";
+import { choiceIds, PLACE_IDS, PROBLEM_IDS } from "../_shared/events.ts";
 import {
   DiscipleCardSchema,
   EveningRequestSchema,
@@ -39,10 +49,30 @@ Deno.test("the game's spirit roots, realms and pronouns match the server's", asy
   assertEquals(stringArray(balance, "ACTIONS"), [...ACTIONS]);
 });
 
+Deno.test("the game's M5 ids match the server's: statuses, pills, side effects, techniques", async () => {
+  const balance = await gdscript("balance.gd");
+  assertEquals(stringArray(balance, "STATUSES"), [...STATUSES]);
+  assertEquals(stringArray(balance, "PILLS"), [...PILLS]);
+  assertEquals(stringArray(balance, "SIDE_EFFECTS"), [...SIDE_EFFECTS]);
+  assertEquals(stringArray(balance, "TECHNIQUES"), [...TECHNIQUES]);
+});
+
 // The game writes these files from its own code (game/tests/unit/test_contract_fixtures.gd).
 async function fixture(name: string): Promise<unknown> {
   return JSON.parse(await Deno.readTextFile(new URL(name, FIXTURES)));
 }
+
+Deno.test("the game's event catalog has the server's places, problems and choices", async () => {
+  const catalog = await fixture("event_catalog.json") as {
+    places: string[];
+    problems: Record<string, string[]>;
+  };
+  assertEquals(catalog.places.toSorted(), [...PLACE_IDS].toSorted());
+  assertEquals(Object.keys(catalog.problems).toSorted(), [...PROBLEM_IDS].toSorted());
+  for (const problem of PROBLEM_IDS) {
+    assertEquals(catalog.problems[problem], choiceIds(problem), `choices of ${problem}`);
+  }
+});
 
 Deno.test("the server accepts the requests the game sends", async () => {
   DiscipleCardSchema.parse(await fixture("disciple_card.json"));

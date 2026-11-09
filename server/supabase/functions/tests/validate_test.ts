@@ -1,6 +1,16 @@
 import { assert, assertEquals } from "jsr:@std/assert@1";
-import { cleanChatReply, cleanEveningReply, shorten } from "../_shared/validate.ts";
-import { type ChatReply, type EveningReply, EveningRequestSchema } from "../_shared/schemas.ts";
+import {
+  cleanChatReply,
+  cleanEveningReply,
+  cleanEventReply,
+  shorten,
+} from "../_shared/validate.ts";
+import {
+  type ChatReply,
+  type EveningReply,
+  EveningRequestSchema,
+  EventRequestSchema,
+} from "../_shared/schemas.ts";
 
 const base: ChatReply = {
   safety: "ok",
@@ -183,4 +193,74 @@ Deno.test("evening memories: one per known disciple, shortened", () => {
 Deno.test("an empty story or morning report is rejected", () => {
   assertEquals(cleanEveningReply(evening({ story: " " }), eveningRequest).ok, false);
   assertEquals(cleanEveningReply(evening({ morning_report: "" }), eveningRequest).ok, false);
+});
+
+// Surprise events -------------------------------------------------------------------
+
+const eventRequest = EventRequestSchema.parse({
+  kind: "event",
+  locale: "en",
+  game_day: 5,
+  problem: "broken_sword",
+  place: "training_yard",
+  disciples: [eveningRequest.disciples[0].card, eveningRequest.disciples[1].card],
+});
+
+Deno.test("an event reply keeps every catalog choice, in the catalog's order", () => {
+  const result = cleanEventReply({
+    title: "  The Snapped Sword ",
+    story: "It went 'ping'.",
+    choices: [
+      { id: "use_broom", text: "Train with a broom" },
+      { id: "made_up", text: "Fly away" },
+      { id: "buy_new", text: "Buy a shiny new sword" },
+      { id: "glue_it", text: "x".repeat(300) },
+      { id: "buy_new", text: "A second answer is ignored" },
+    ],
+  }, eventRequest);
+  assert(result.ok);
+  assertEquals(result.value.title, "The Snapped Sword");
+  assertEquals(result.value.choices.map((c) => c.id), ["buy_new", "glue_it", "use_broom"]);
+  assertEquals(result.value.choices[0].text, "Buy a shiny new sword");
+  assertEquals(Array.from(result.value.choices[1].text).length, 120);
+});
+
+Deno.test("an event reply missing a choice or its words is rejected", () => {
+  const reply = {
+    title: "T",
+    story: "S",
+    choices: [{ id: "buy_new", text: "a" }, { id: "glue_it", text: "b" }],
+  };
+  assertEquals(cleanEventReply(reply, eventRequest).ok, false);
+  assertEquals(
+    cleanEventReply(
+      { ...reply, choices: [...reply.choices, { id: "use_broom", text: " " }] },
+      eventRequest,
+    )
+      .ok,
+    false,
+  );
+  assertEquals(cleanEventReply({ ...reply, title: "" }, eventRequest).ok, false);
+});
+
+Deno.test("an event request must name as many disciples as its problem needs", () => {
+  const two = [eveningRequest.disciples[0].card, eveningRequest.disciples[1].card];
+  const base = { kind: "event", locale: "vi", game_day: 2, place: "mountain_path" };
+  assertEquals(
+    EventRequestSchema.safeParse({ ...base, problem: "rescue", disciples: two }).success,
+    false,
+  );
+  assertEquals(
+    EventRequestSchema.safeParse({ ...base, problem: "rescue", disciples: [two[0]] }).success,
+    true,
+  );
+  assertEquals(
+    EventRequestSchema.safeParse({ ...base, problem: "frog_duel", disciples: [two[0]] }).success,
+    false,
+  );
+  assertEquals(
+    EventRequestSchema.safeParse({ ...base, problem: "frog_duel", place: "moon", disciples: two })
+      .success,
+    false,
+  );
 });

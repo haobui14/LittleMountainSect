@@ -5,22 +5,32 @@
 // → record usage → save memory → reply. Any failure after the spend refunds
 // the Spirit Energy and answers with a written line, so the game never breaks.
 //
-// Evening stories (kind "evening") answer with the story already stored for
-// that game day when there is one, so asking twice never pays twice; on a
-// failure they answer {source: "fallback"} and the game writes its own.
+// Evening stories and surprise events (kinds "evening" and "event") answer
+// with the reply already stored for that game day when there is one, so
+// asking twice never pays twice; on a failure they answer
+// {source: "fallback"} and the game writes its own.
 
 import { type CallSettings, callStructured, type MessagesClient } from "../_shared/claude.ts";
 import type { CacheTtl } from "../_shared/config.ts";
 import { LIMITS, TIMEOUT_MS } from "../_shared/config.ts";
 import { costUsd, tokenBreakdown } from "../_shared/cost.ts";
 import { fallbackLine, type FallbackReason, type Speaker } from "../_shared/fallbacks.ts";
-import { buildChat, buildEvening } from "../_shared/prompts.ts";
-import { type ChatRequest, type EveningRequest, GatewayRequestSchema } from "../_shared/schemas.ts";
+import { buildChat, buildEvening, buildEvent, type BuiltPrompt } from "../_shared/prompts.ts";
+import {
+  type ChatRequest,
+  type EveningReply,
+  type EveningRequest,
+  type EventReply,
+  type EventRequest,
+  GatewayRequestSchema,
+} from "../_shared/schemas.ts";
 import {
   type CleanChatReply,
   cleanChatReply,
   type CleanEveningReply,
   cleanEveningReply,
+  type CleanEventReply,
+  cleanEventReply,
 } from "../_shared/validate.ts";
 import type { GatewayDb, Outcome } from "./db.ts";
 
@@ -116,6 +126,7 @@ export async function handleGateway(
   }
   const request = parsed.data;
   if (request.kind === "evening") return await handleEvening(request, playerId, deps);
+  if (request.kind === "event") return await handleEvent(request, playerId, deps);
   const speaker: Speaker = request.kind === "chat" ? "disciple" : "elder";
   const zeroUsage = {
     player: playerId,
@@ -206,20 +217,42 @@ export async function handleGateway(
   }
 }
 
-type EveningBody =
-  | (CleanEveningReply & { source: "ai"; stored: boolean; spirit_energy_left: number | null })
+type StoryBody<T> =
+  | (T & { source: "ai"; stored: boolean; spirit_energy_left: number | null })
   | { source: "fallback"; reason: FallbackReason; spirit_energy_left: number };
 
-async function handleEvening(
-  request: EveningRequest,
+/** How one kind of stored story (an evening or a surprise event) is made. */
+interface StoryKind<Raw, Clean> {
+  kind: "evening" | "event";
+  gameDay: number;
+  get(): Promise<unknown | null>;
+  store(reply: Clean): Promise<unknown>;
+  build(): Promise<BuiltPrompt<Raw>>;
+  clean(raw: Raw): { ok: true; value: Clean } | { ok: false; detail: string };
+  /** Runs after a good reply, before it is stored (evening memories). */
+  keep?(reply: Clean): Promise<void>;
+}
+
+/**
+ * The flow both stored kinds share: return the stored reply for that game
+ * day for free; otherwise spend, call Claude, check, record usage, keep and
+ * store. Any failure refunds and answers {source: "fallback"}, and the game
+ * writes its own text.
+ */
+async function handleStory<Raw, Clean>(
+  story: StoryKind<Raw, Clean>,
   playerId: string,
   deps: GatewayDeps,
 ): Promise<Response> {
+  const kind = story.kind;
   const fallback = (reason: FallbackReason, left: number, status = 200) =>
-    json(status, { source: "fallback", reason, spirit_energy_left: left } satisfies EveningBody);
+    json(
+      status,
+      { source: "fallback", reason, spirit_energy_left: left } satisfies StoryBody<Clean>,
+    );
   const zeroUsage = {
     player: playerId,
-    kind: "evening" as const,
+    kind,
     model: deps.settings.model,
     inputTokens: 0,
     cacheReadTokens: 0,
@@ -231,44 +264,40 @@ async function handleEvening(
 
   try {
     if (deps.claude === null) {
-      log({ kind: "evening", outcome: "disabled", note: "no ANTHROPIC_API_KEY" });
+      log({ kind, outcome: "disabled", note: "no ANTHROPIC_API_KEY" });
       return fallback("disabled", 0);
     }
 
-    const stored = await deps.db.getEveningStory(playerId, request.game_day);
+    const stored = await story.get();
     if (stored) {
-      log({ kind: "evening", outcome: "stored" });
+      log({ kind, outcome: "stored" });
       const body = {
-        ...(stored as CleanEveningReply),
+        ...(stored as Clean),
         source: "ai" as const,
         stored: true,
         spirit_energy_left: null,
       };
-      return json(200, body satisfies EveningBody);
+      return json(200, body satisfies StoryBody<Clean>);
     }
 
-    const spend = await deps.db.spend(playerId, "evening");
+    const spend = await deps.db.spend(playerId, kind);
     if (!spend.ok) {
       if (spend.reason === "no_player") throw new Error("no players row for this user");
       await deps.db.recordUsage({ ...zeroUsage, outcome: spend.reason });
-      log({ kind: "evening", outcome: spend.reason });
+      log({ kind, outcome: spend.reason });
       return fallback(spend.reason, spend.spirit_energy_left);
     }
 
-    const memories: Record<string, string[]> = {};
-    await Promise.all(request.disciples.map(async ({ card }) => {
-      memories[card.id] = await deps.db.recentMemories(playerId, card.id, LIMITS.eveningMemories);
-    }));
-    const prompt = buildEvening(request, memories, { cacheTtl: deps.settings.cacheTtl });
+    const prompt = await story.build();
     const result = await callStructured(deps.claude, prompt, {
       ...deps.settings,
-      timeoutMs: TIMEOUT_MS.evening,
+      timeoutMs: TIMEOUT_MS[kind],
     });
 
-    let reply: CleanEveningReply | null = null;
+    let reply: Clean | null = null;
     let outcome: Outcome;
     if (result.ok) {
-      const cleaned = cleanEveningReply(result.value, request);
+      const cleaned = story.clean(result.value);
       reply = cleaned.ok ? cleaned.value : null;
       outcome = cleaned.ok ? "ok" : "invalid";
     } else {
@@ -288,7 +317,7 @@ async function handleEvening(
       outcome,
     });
     log({
-      kind: "evening",
+      kind,
       outcome,
       latency_ms: result.latencyMs,
       cost_usd: cost,
@@ -297,29 +326,80 @@ async function handleEvening(
     });
 
     if (reply === null) {
-      const left = await deps.db.refund(playerId, "evening");
+      const left = await deps.db.refund(playerId, kind);
       return fallback(outcome === "refusal" ? "refusal" : "error", left);
     }
 
-    for (const memory of reply.memories) {
-      await deps.db.addMemory(playerId, memory.disciple_id, memory.text, request.game_day);
-    }
-    const kept = await deps.db.storeEveningStory(playerId, request.game_day, reply);
+    await story.keep?.(reply);
+    const kept = await story.store(reply);
     let left = spend.spirit_energy_left;
     if (canonical(kept) !== canonical(reply)) {
       // Another request for the same day finished first and was stored; it
       // was already paid for, so this one is refunded.
-      left = await deps.db.refund(playerId, "evening");
+      left = await deps.db.refund(playerId, kind);
     }
     const body = {
-      ...(kept as CleanEveningReply),
+      ...(kept as Clean),
       source: "ai" as const,
       stored: false,
       spirit_energy_left: left,
     };
-    return json(200, body satisfies EveningBody);
+    return json(200, body satisfies StoryBody<Clean>);
   } catch (error) {
-    log({ kind: "evening", outcome: "server_error", detail: String(error) });
+    log({ kind, outcome: "server_error", detail: String(error) });
     return fallback("error", 0, 503);
   }
+}
+
+function handleEvening(
+  request: EveningRequest,
+  playerId: string,
+  deps: GatewayDeps,
+): Promise<Response> {
+  return handleStory<EveningReply, CleanEveningReply>(
+    {
+      kind: "evening",
+      gameDay: request.game_day,
+      get: () => deps.db.getEveningStory(playerId, request.game_day),
+      store: (reply) => deps.db.storeEveningStory(playerId, request.game_day, reply),
+      build: async () => {
+        const memories: Record<string, string[]> = {};
+        await Promise.all(request.disciples.map(async ({ card }) => {
+          memories[card.id] = await deps.db.recentMemories(
+            playerId,
+            card.id,
+            LIMITS.eveningMemories,
+          );
+        }));
+        return buildEvening(request, memories, { cacheTtl: deps.settings.cacheTtl });
+      },
+      clean: (raw) => cleanEveningReply(raw, request),
+      keep: async (reply) => {
+        for (const memory of reply.memories) {
+          await deps.db.addMemory(playerId, memory.disciple_id, memory.text, request.game_day);
+        }
+      },
+    },
+    playerId,
+    deps,
+  );
+}
+
+function handleEvent(
+  request: EventRequest,
+  playerId: string,
+  deps: GatewayDeps,
+): Promise<Response> {
+  return handleStory<EventReply, CleanEventReply>(
+    {
+      kind: "event",
+      gameDay: request.game_day,
+      get: () => deps.db.getEventStory(playerId, request.game_day),
+      store: (reply) => deps.db.storeEventStory(playerId, request.game_day, reply),
+      build: () => Promise.resolve(buildEvent(request, { cacheTtl: deps.settings.cacheTtl })),
+      clean: (raw) => cleanEventReply(raw, request),
+    },
+    playerId,
+    deps,
+  );
 }

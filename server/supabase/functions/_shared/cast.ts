@@ -45,6 +45,67 @@ export const ACTIONS = [
 ] as const;
 export type Action = typeof ACTIONS[number];
 
+/** Where a disciple is: at home, on a mission, lost on the mountain, or left the sect. */
+export const STATUSES = ["home", "mission", "lost", "left"] as const;
+export type Status = typeof STATUSES[number];
+
+/** Pills from the Alchemy Room (M5). */
+export const PILLS = ["foundation_pill", "healing_pill", "golden_pill"] as const;
+export type Pill = typeof PILLS[number];
+export const PILL_NAMES: Record<Pill, string> = {
+  foundation_pill: "a Foundation Pill",
+  healing_pill: "a Healing Pill",
+  golden_pill: "a Golden Core Pill",
+};
+
+/** Timed funny side effects of a failed breakthrough (M5). */
+export const SIDE_EFFECTS = [
+  "green_hair",
+  "hiccups",
+  "floating",
+  "backwards_qi",
+  "squeaky_voice",
+  "glowing",
+] as const;
+export type SideEffect = typeof SIDE_EFFECTS[number];
+/** How each effect reads in a sentence: "Lin [has bright green hair]". */
+export const SIDE_EFFECT_TEXT: Record<SideEffect, string> = {
+  green_hair: "has bright green hair",
+  hiccups: "can't stop hiccuping",
+  floating: "keeps floating a little off the ground",
+  backwards_qi: "has qi flowing backwards",
+  squeaky_voice: "speaks in a squeaky voice",
+  glowing: "glows faintly all night",
+};
+/** The effect as a noun: "Lin's [green hair] wore off". */
+export const SIDE_EFFECT_NAMES: Record<SideEffect, string> = {
+  green_hair: "green hair",
+  hiccups: "hiccups",
+  floating: "floating",
+  backwards_qi: "backwards qi",
+  squeaky_voice: "squeaky voice",
+  glowing: "glow",
+};
+/** Effects a disciple card can list: the side effects, plus an injury. */
+export const CARD_EFFECTS = [...SIDE_EFFECTS, "injured"] as const;
+
+/** Each spirit root's technique, taught in the Library (M5), in SPIRIT_ROOTS order. */
+export const TECHNIQUES = [
+  "iron_chopsticks_palm",
+  "swaying_bamboo_step",
+  "puddle_mirror_art",
+  "spicy_breath_fist",
+  "immovable_nap_stance",
+] as const;
+export type Technique = typeof TECHNIQUES[number];
+export const TECHNIQUE_NAMES: Record<Technique, string> = {
+  iron_chopsticks_palm: "Iron Chopsticks Palm",
+  swaying_bamboo_step: "Swaying Bamboo Step",
+  puddle_mirror_art: "Puddle Mirror Art",
+  spicy_breath_fist: "Spicy Breath Fist",
+  immovable_nap_stance: "Immovable Nap Stance",
+};
+
 /** Funny traits. A disciple card names one to three of these by id. */
 export const QUIRKS = {
   afraid_of_chickens: { en: "afraid of chickens", vi: "sợ gà" },

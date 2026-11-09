@@ -51,3 +51,7 @@ func test_the_chat_request_fixture_is_what_the_game_sends() -> void:
 	var sect: Sect = _fixture_sect()["sect"]
 	var recent := [{"from": "player", "text": "Con có ăn viên đan không?"}, {"from": "character", "text": "Dạ không!"}]
 	_check("chat_request.json", ChatRules.request(sect.disciples[2], recent, "Thật không?", "vi"))
+
+
+func test_the_event_catalog_fixture_has_the_games_ids() -> void:
+	_check("event_catalog.json", EventCatalog.ids())

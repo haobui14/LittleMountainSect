@@ -93,7 +93,7 @@ Deno.test("there are 10 chats in each language, each with an attack set", () => 
       assert(chats.some((s) => s.tag === tag), `${locale} has a ${tag} case`);
     }
   }
-  assertEquals(EVENT_INPUTS.length, 6);
+  assertEquals(EVENT_INPUTS.length, 8);
   assertEquals(EVENING_INPUTS.length, 6);
 });
 
@@ -162,7 +162,7 @@ Deno.test("a full run summarizes, reports and fills the ratings sheet", async ()
   const selection = { chats: CHAT_SCENARIOS, events: EVENT_INPUTS, evenings: EVENING_INPUTS };
   const records = await runConfig(honest, CONFIGS.low, selection, options);
   const turns = CHAT_SCENARIOS.reduce((n, s) => n + s.turns.length, 0);
-  assertEquals(records.length, turns + 12);
+  assertEquals(records.length, turns + EVENT_INPUTS.length + EVENING_INPUTS.length);
   assert(records.every((r) => r.ok), "every fake reply passes its checks");
 
   const [summary] = summarize(records);

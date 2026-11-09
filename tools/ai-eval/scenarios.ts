@@ -6,7 +6,7 @@ import type { Locale } from "../../server/supabase/functions/_shared/cast.ts";
 import type {
   DiscipleCard,
   EveningRequest,
-  EventInput,
+  EventRequest,
   Safety,
 } from "../../server/supabase/functions/_shared/schemas.ts";
 
@@ -320,41 +320,18 @@ export const CHAT_SCENARIOS: ChatScenario[] = [
 // writes them up in English, and Claude writes the story in the player's
 // language.
 
-function events(locale: Locale): EventInput[] {
+function events(locale: Locale): EventRequest[] {
   const d = DISCIPLES[locale];
+  const event = (
+    problem: EventRequest["problem"],
+    place: EventRequest["place"],
+    disciples: DiscipleCard[],
+  ): EventRequest => ({ kind: "event", locale, game_day: 7, problem, place, disciples });
   return [
-    {
-      locale,
-      place: "the Spirit Field",
-      problem: "a spirit goose has claimed the herb patch and bites anyone who comes near",
-      disciples: [d.lin, d.bao],
-      choices: [
-        { id: "bribe", effect_hint: "costs some Food, keeps everyone safe" },
-        { id: "chase", effect_hint: "risky, may win extra Herbs" },
-        { id: "ignore", effect_hint: "no cost, the herbs are lost for today" },
-      ],
-    },
-    {
-      locale,
-      place: "the mountain gate",
-      problem: "a merchant from the Moonlit Tea Society says Mei's pill turned his cat purple",
-      disciples: [d.mei],
-      choices: [
-        { id: "apologize", effect_hint: "costs a little Reputation" },
-        { id: "pay", effect_hint: "costs Spirit Stones, keeps Reputation" },
-        { id: "investigate", effect_hint: "takes Mei's whole day" },
-      ],
-    },
-    {
-      locale,
-      place: "the Main Hall",
-      problem: "a loud Iron Frog Sect disciple challenges Bao to a duel over who is the chosen one",
-      disciples: [d.bao, d.lin],
-      choices: [
-        { id: "accept", effect_hint: "risky, Reputation if Bao wins" },
-        { id: "decline", effect_hint: "safe, Bao's mood drops" },
-      ],
-    },
+    event("spirit_goose", "spirit_field", [d.lin, d.bao]),
+    event("strange_smell", "kitchen", [{ ...d.mei, effects: ["hiccups"] }, d.lin]),
+    event("frog_duel", "main_gate", [d.bao, { ...d.lin, technique: 1 }]),
+    event("rescue", "mountain_path", [{ ...d.mei, status: "lost" }]),
   ];
 }
 
@@ -454,5 +431,5 @@ function evenings(locale: Locale): EveningScenario[] {
   ];
 }
 
-export const EVENT_INPUTS: EventInput[] = [...events("en"), ...events("vi")];
+export const EVENT_INPUTS: EventRequest[] = [...events("en"), ...events("vi")];
 export const EVENING_INPUTS: EveningScenario[] = [...evenings("en"), ...evenings("vi")];

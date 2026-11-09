@@ -1,6 +1,14 @@
 import { type Action, ACTIONS, type Expression } from "./cast.ts";
 import { LIMITS } from "./config.ts";
-import type { ChatReply, EveningReply, EveningRequest, Safety } from "./schemas.ts";
+import { choiceIds } from "./events.ts";
+import type {
+  ChatReply,
+  EveningReply,
+  EveningRequest,
+  EventReply,
+  EventRequest,
+  Safety,
+} from "./schemas.ts";
 
 /** A chat reply after the server's checks: every value is safe for the rules to use. */
 export interface CleanChatReply {
@@ -152,6 +160,50 @@ export function cleanEveningReply(raw: EveningReply, request: EveningRequest): C
       decisions,
       memories,
       relationship_changes: changes,
+    },
+  };
+}
+
+// Surprise events ----------------------------------------------------------------
+
+export interface CleanEventReply {
+  title: string;
+  story: string;
+  /** One entry per choice the rules offer, in the catalog's order. */
+  choices: Array<{ id: string; text: string }>;
+}
+
+export type CleanEventResult =
+  | { ok: true; value: CleanEventReply }
+  | { ok: false; detail: string };
+
+/**
+ * Checks an event reply against the catalog: every choice the rules offer
+ * must have words, in the catalog's order. Unknown choices are dropped; a
+ * missing one, an empty title or an empty story is rejected.
+ */
+export function cleanEventReply(raw: EventReply, request: EventRequest): CleanEventResult {
+  const title = raw.title.trim();
+  const story = raw.story.trim();
+  if (title.length === 0) return { ok: false, detail: "empty title" };
+  if (story.length === 0) return { ok: false, detail: "empty story" };
+  const written = new Map<string, string>();
+  for (const choice of raw.choices) {
+    const text = choice.text.trim();
+    if (text.length > 0 && !written.has(choice.id)) written.set(choice.id, text);
+  }
+  const choices: CleanEventReply["choices"] = [];
+  for (const id of choiceIds(request.problem)) {
+    const text = written.get(id);
+    if (text === undefined) return { ok: false, detail: `no words for choice ${id}` };
+    choices.push({ id, text: shorten(text, LIMITS.choiceChars) });
+  }
+  return {
+    ok: true,
+    value: {
+      title: shorten(title, LIMITS.eventTitleChars),
+      story: shorten(story, LIMITS.eventStoryChars),
+      choices,
     },
   };
 }

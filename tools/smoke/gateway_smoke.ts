@@ -1,7 +1,8 @@
 // End-to-end smoke test of the deployed AI gateway. Signs in anonymously,
-// then checks sign-in, validation, a chat line, an Elder question and an
-// evening story, asked twice: the second answer is the stored story, free.
-// Each run creates one anonymous player and spends 5 Spirit Energy.
+// then checks sign-in, validation, a chat line, an Elder question, an evening
+// story and a surprise event. The story and the event are each asked twice:
+// the second answer is the stored one, for free.
+// Each run creates one anonymous player and spends 7 Spirit Energy.
 //
 //   deno run --allow-read=game/config --allow-net=<project host> tools/smoke/gateway_smoke.ts
 
@@ -207,6 +208,46 @@ check(
   `status ${again.status}, stored ${again.json.stored}`,
 );
 
+// Surprise event (2 Spirit Energy) -----------------------------------------------
+
+const event = {
+  kind: "event",
+  locale: "en",
+  game_day: 2,
+  problem: "frog_duel",
+  place: "main_gate",
+  disciples: [evening.disciples[0].card, { ...evening.disciples[1].card, effects: ["green_hair"] }],
+};
+const surprise = await callGateway(event, token);
+check("the event arrives", surprise.status === 200, `status ${surprise.status}, ${surprise.ms} ms`);
+check(
+  "the event comes from Claude and is new",
+  surprise.json.source === "ai" && surprise.json.stored === false,
+  `source ${surprise.json.source}, stored ${surprise.json.stored}`,
+);
+const choices = (surprise.json.choices ?? []) as Array<{ id: string; text: string }>;
+check(
+  "it has a title, a story and words for every choice, in order",
+  typeof surprise.json.title === "string" && surprise.json.title.length > 0 &&
+    typeof surprise.json.story === "string" && surprise.json.story.length > 0 &&
+    choices.map((c) => c.id).join(",") === "accept,send_b,decline" &&
+    choices.every((c) => c.text.length > 0),
+  choices.map((c) => c.id).join(","),
+);
+check(
+  "an event costs 2 Spirit Energy",
+  surprise.json.spirit_energy_left === 43,
+  `left ${surprise.json.spirit_energy_left}`,
+);
+console.log(`     Event: ${surprise.json.title} / ${choices.map((c) => c.text).join(" | ")}`);
+const surpriseAgain = await callGateway(event, token);
+check(
+  "asking again returns the stored event",
+  surpriseAgain.status === 200 && surpriseAgain.json.stored === true &&
+    surpriseAgain.json.title === surprise.json.title,
+  `status ${surpriseAgain.status}, stored ${surpriseAgain.json.stored}`,
+);
+
 const energy = await fetch(`${backend.supabase_url}/rest/v1/rpc/spirit_energy_status`, {
   method: "POST",
   headers: {
@@ -218,8 +259,8 @@ const energy = await fetch(`${backend.supabase_url}/rest/v1/rpc/spirit_energy_st
 });
 const status = await energy.json();
 check(
-  "the stored story was free",
-  energy.ok && status.left === 45,
+  "the stored story and event were free",
+  energy.ok && status.left === 43,
   `status ${energy.status}, left ${status.left}`,
 );
 check(

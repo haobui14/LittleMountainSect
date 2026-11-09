@@ -1,6 +1,18 @@
 import type { Anthropic, z } from "./deps.ts";
-import { ELDER, type Locale, QUIRKS, REALM_NAMES, SPIRIT_ROOT_NAMES } from "./cast.ts";
+import {
+  ELDER,
+  type Locale,
+  QUIRKS,
+  REALM_NAMES,
+  SIDE_EFFECT_TEXT,
+  type SideEffect,
+  SPIRIT_ROOT_NAMES,
+  SPIRIT_ROOTS,
+  TECHNIQUE_NAMES,
+  TECHNIQUES,
+} from "./cast.ts";
 import { type CacheTtl, MAX_TOKENS, type RequestKind } from "./config.ts";
+import { fill, PLACES, PROBLEMS } from "./events.ts";
 import { factSentences, rankName, relationshipWords, resourceList } from "./facts.ts";
 import {
   type ChatReply,
@@ -10,9 +22,9 @@ import {
   type EveningReply,
   EveningReplySchema,
   type EveningRequest,
-  type EventInput,
   type EventReply,
   EventReplySchema,
+  type EventRequest,
 } from "./schemas.ts";
 import { LANGUAGE_RULES, TASK_CHAT, TASK_EVENING, TASK_EVENT, WORLD_RULES } from "./world.ts";
 
@@ -66,6 +78,14 @@ function characterBlock(text: string): Anthropic.TextBlockParam {
   return { type: "text", text, cache_control: { type: "ephemeral", ttl: "5m" } };
 }
 
+/** Why a disciple can't choose what to do tomorrow. */
+const AWAY: Record<string, string> = {
+  home: "Can't choose tomorrow",
+  mission: "Away on a mission tomorrow",
+  lost: "Lost on the mountain",
+  left: "Has left the sect for now",
+};
+
 /** First line of every user message: the reply language, stated plainly. */
 function localeLine(locale: Locale): string {
   return `Locale: ${locale} (write only in ${locale === "vi" ? "Vietnamese" : "English"})`;
@@ -73,14 +93,26 @@ function localeLine(locale: Locale): string {
 
 export function describeDisciple(card: DiscipleCard, locale: Locale): string {
   const quirks = card.quirks.map((id) => QUIRKS[id][locale]).join("; ");
-  return [
+  const lines = [
     `Name: ${card.name} (${PRONOUNS[card.pronouns]}), a disciple of the sect. Id: ${card.id}.`,
     `Spirit root: ${SPIRIT_ROOT_NAMES[card.spirit_root][locale]}. ` +
     `Realm: ${REALM_NAMES[card.realm][locale]}.`,
     `Quirks: ${quirks}.`,
     `Mood: ${card.mood} (from -10, miserable, to 10, delighted). ` +
     `Loyalty to the Sect Master: ${card.loyalty} of 100.`,
-  ].join("\n");
+  ];
+  if (card.technique) {
+    const technique = TECHNIQUES[SPIRIT_ROOTS.indexOf(card.spirit_root)];
+    lines.push(`Technique: ${TECHNIQUE_NAMES[technique]}, level ${card.technique} of 3.`);
+  }
+  const now = (card.effects ?? []).map((e) =>
+    e === "injured" ? "is injured" : SIDE_EFFECT_TEXT[e as SideEffect]
+  );
+  if (card.status === "lost") now.push("is lost on the mountain");
+  if (card.status === "left") now.push("has left the sect for a while");
+  if (card.status === "mission") now.push("is away on a mission");
+  if (now.length > 0) lines.push(`Right now: ${card.name} ${now.join("; ")}.`);
+  return lines.join("\n");
 }
 
 function memoriesSection(name: string, memories: string[]): string {
@@ -131,18 +163,27 @@ export function buildChat(
   };
 }
 
-export function buildEvent(input: EventInput, options: PromptOptions): BuiltPrompt<EventReply> {
-  const disciples = input.disciples.map((d) => describeDisciple(d, input.locale)).join("\n\n");
-  const choices = input.choices.map((c) => `- id: ${c.id}; effect hint: ${c.effect_hint}`)
+/**
+ * A surprise event. The game sends only ids; the catalog (events.ts) says
+ * what the problem, the place and each choice mean.
+ */
+export function buildEvent(request: EventRequest, options: PromptOptions): BuiltPrompt<EventReply> {
+  const problem = PROBLEMS[request.problem];
+  const names = request.disciples.map((d) => d.name);
+  const place = PLACES[request.place];
+  const disciples = request.disciples.map((d) => describeDisciple(d, request.locale))
+    .join("\n\n");
+  const choices = Object.entries(problem.choices)
+    .map(([id, hint]) => `- id: ${id}; what it does: ${fill(hint, names, place)}`)
     .join("\n");
   return {
     kind: "event",
-    system: sharedBlocks(TASK_EVENT, input.locale, options),
+    system: sharedBlocks(TASK_EVENT, request.locale, options),
     messages: [{
       role: "user",
-      content: `${localeLine(input.locale)}\n# The event\nPlace: ${input.place}\n` +
-        `Problem: ${input.problem}\n\n# The disciples involved\n${disciples}\n\n` +
-        `# The choices\n${choices}`,
+      content: `${localeLine(request.locale)}\nDay ${request.game_day}.\n# The event\n` +
+        `Place: ${place}\nProblem: ${fill(problem.setup, names, place)}\n\n` +
+        `# The disciples involved\n${disciples}\n\n# The choices\n${choices}`,
     }],
     maxTokens: MAX_TOKENS.event,
     schema: EventReplySchema,
@@ -167,7 +208,7 @@ export function buildEvening(
         : "Remembers nothing special yet.",
       allowed_actions.length > 0
         ? `Allowed actions tomorrow: ${allowed_actions.join(", ")}`
-        : "Away on a mission tomorrow: no allowed actions.",
+        : `${AWAY[card.status ?? "mission"]}: no allowed actions.`,
     ].join("\n");
   }).join("\n\n");
   const names = new Map(request.disciples.map((d) => [d.card.id, d.card.name]));

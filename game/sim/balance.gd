@@ -33,6 +33,16 @@ const ACTION_TASK := {
 	"hide": "rest",
 }
 
+## Where a disciple is (M5). "mission" is derived from the sect's missions;
+## the save stores home, lost or left.
+const STATUSES: Array[String] = ["home", "mission", "lost", "left"]
+## Alchemy Room pills (M5).
+const PILLS: Array[String] = ["foundation_pill", "healing_pill", "golden_pill"]
+## Timed funny side effects of a failed breakthrough (M5).
+const SIDE_EFFECTS: Array[String] = ["green_hair", "hiccups", "floating", "backwards_qi", "squeaky_voice", "glowing"]
+## Each spirit root's technique, in SPIRIT_ROOTS order (M5).
+const TECHNIQUES: Array[String] = ["iron_chopsticks_palm", "swaying_bamboo_step", "puddle_mirror_art", "spicy_breath_fist", "immovable_nap_stance"]
+
 ## The mountain's 8 fixed slots, in screen order. M3 plays the first four.
 const BUILDINGS: Array[String] = [
 	"main_hall",

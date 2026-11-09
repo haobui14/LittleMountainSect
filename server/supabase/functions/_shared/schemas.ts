@@ -1,6 +1,18 @@
 import { z } from "./deps.ts";
-import { ACTIONS, EXPRESSIONS, QUIRK_IDS, REALMS, SPIRIT_ROOTS } from "./cast.ts";
+import {
+  ACTIONS,
+  CARD_EFFECTS,
+  EXPRESSIONS,
+  PILLS,
+  QUIRK_IDS,
+  REALMS,
+  SIDE_EFFECTS,
+  SPIRIT_ROOTS,
+  STATUSES,
+  TECHNIQUES,
+} from "./cast.ts";
 import { LIMITS } from "./config.ts";
+import { choiceIds, PLACE_IDS, PROBLEM_IDS, PROBLEMS } from "./events.ts";
 
 export const LocaleSchema = z.enum(["en", "vi"]);
 
@@ -20,6 +32,11 @@ export const DiscipleCardSchema = z.strictObject({
   realm: z.enum(REALMS),
   mood: z.int().min(-10).max(10),
   loyalty: z.int().min(0).max(100),
+  // M5: where they are, timed effects (such as green hair) and how far they
+  // have learned their root's technique. Optional, so older games still fit.
+  status: z.enum(STATUSES).optional(),
+  effects: z.array(z.enum(CARD_EFFECTS)).max(CARD_EFFECTS.length).optional(),
+  technique: z.int().min(0).max(3).optional(),
 });
 export type DiscipleCard = z.infer<typeof DiscipleCardSchema>;
 
@@ -50,6 +67,8 @@ export const TIERS = ["great", "success", "partial", "failure", "disaster"] as c
 export const RESOURCES = ["stones", "food", "herbs", "reputation"] as const;
 export const RANKS = ["unknown_mountain", "rising_sect", "famous_sect"] as const;
 const Amount = z.int().min(0).max(1_000_000);
+const PillOrNone = z.enum([...PILLS, "none"]);
+const ChoiceIdSchema = z.string().regex(/^[a-z0-9_]{1,32}$/);
 
 export const FactSchema = z.discriminatedUnion("type", [
   z.strictObject({
@@ -97,6 +116,66 @@ export const FactSchema = z.discriminatedUnion("type", [
   }),
   z.strictObject({ type: z.literal("ate"), food: Amount }),
   z.strictObject({ type: z.literal("hungry"), disciples: DiscipleIdsSchema }),
+  // M5 ----------------------------------------------------------------------
+  z.strictObject({
+    type: z.literal("breakthrough"),
+    disciple: DiscipleIdSchema,
+    realm: z.enum(REALMS),
+    pill: PillOrNone,
+  }),
+  z.strictObject({
+    type: z.literal("breakthrough_failed"),
+    disciple: DiscipleIdSchema,
+    realm: z.enum(REALMS),
+    pill: PillOrNone,
+    effect: z.enum(SIDE_EFFECTS),
+    days: z.int().min(1).max(60),
+    lost: z.int().min(0).max(100),
+  }),
+  z.strictObject({
+    type: z.literal("effect_ended"),
+    disciple: DiscipleIdSchema,
+    effect: z.enum(SIDE_EFFECTS),
+  }),
+  z.strictObject({
+    type: z.literal("studied"),
+    disciple: DiscipleIdSchema,
+    gain: z.int().min(0).max(100),
+  }),
+  z.strictObject({
+    type: z.literal("learned"),
+    disciple: DiscipleIdSchema,
+    technique: z.enum(TECHNIQUES),
+    tier: z.int().min(1).max(3),
+  }),
+  z.strictObject({
+    type: z.literal("lost"),
+    disciple: DiscipleIdSchema,
+    mission: z.enum(MISSIONS),
+  }),
+  z.strictObject({
+    type: z.literal("left"),
+    disciple: DiscipleIdSchema,
+    mission: z.enum(MISSIONS),
+  }),
+  z.strictObject({
+    type: z.literal("returned"),
+    disciple: DiscipleIdSchema,
+    from: z.enum(["lost", "left"]),
+  }),
+  z.strictObject({ type: z.literal("recruited"), disciple: DiscipleIdSchema }),
+  z.strictObject({ type: z.literal("rank_up"), rank: z.enum(RANKS) }),
+  z.strictObject({ type: z.literal("brewed"), pill: z.enum(PILLS) }),
+  z.strictObject({ type: z.literal("cured"), disciple: DiscipleIdSchema }),
+  z.strictObject({ type: z.literal("found_item"), mission: z.enum(MISSIONS), item: z.enum(PILLS) }),
+  z.strictObject({
+    type: z.literal("event"),
+    problem: z.enum(PROBLEM_IDS),
+    place: z.enum(PLACE_IDS),
+    choice: ChoiceIdSchema,
+    result: z.enum(["win", "lose", "done"]),
+    disciples: z.array(DiscipleIdSchema).min(1).max(2),
+  }),
 ]);
 export type Fact = z.infer<typeof FactSchema>;
 
@@ -139,6 +218,9 @@ export const EveningRequestSchema = z.strictObject({
         ctx.addIssue({ code: "custom", message: `unknown disciple ${id}`, path: ["facts", i] });
       }
     }
+    if (fact.type === "event" && !choiceIds(fact.problem).includes(fact.choice)) {
+      ctx.addIssue({ code: "custom", message: "unknown choice", path: ["facts", i] });
+    }
   });
   request.relationships.forEach((r, i) => {
     if (!ids.has(r.a) || !ids.has(r.b) || r.a === r.b) {
@@ -151,6 +233,29 @@ export const EveningRequestSchema = z.strictObject({
   });
 });
 export type EveningRequest = z.infer<typeof EveningRequestSchema>;
+
+// Surprise events (M5) -------------------------------------------------------
+//
+// The rules start an event and pick its problem, place and disciples; the
+// game sends only those ids. The server's catalog (events.ts) says what they
+// mean, and Claude writes the title, the story and every choice's words.
+
+export const EventRequestSchema = z.strictObject({
+  kind: z.literal("event"),
+  locale: LocaleSchema,
+  game_day: z.int().min(1).max(1_000_000),
+  problem: z.enum(PROBLEM_IDS),
+  place: z.enum(PLACE_IDS),
+  disciples: z.array(DiscipleCardSchema).min(1).max(2),
+}).superRefine((request, ctx) => {
+  if (request.disciples.length !== PROBLEMS[request.problem].pair) {
+    ctx.addIssue({ code: "custom", message: "wrong number of disciples", path: ["disciples"] });
+  }
+  if (new Set(request.disciples.map((d) => d.id)).size !== request.disciples.length) {
+    ctx.addIssue({ code: "custom", message: "duplicate disciple id", path: ["disciples"] });
+  }
+});
+export type EventRequest = z.infer<typeof EventRequestSchema>;
 
 /** What the game sends to the AI gateway. */
 export const GatewayRequestSchema = z.discriminatedUnion("kind", [
@@ -168,6 +273,7 @@ export const GatewayRequestSchema = z.discriminatedUnion("kind", [
     message: MessageSchema,
   }),
   EveningRequestSchema,
+  EventRequestSchema,
 ]);
 export type GatewayRequest = z.infer<typeof GatewayRequestSchema>;
 /** A chat line with a disciple or the Elder. */
@@ -194,20 +300,7 @@ export const ChatReplySchema = z.object({
 });
 export type ChatReply = z.infer<typeof ChatReplySchema>;
 
-// Surprise events and evening stories. In M2 only tools/ai-eval uses these, to
-// measure real token counts; the gateway serves them from M4 and M5.
-
-export const EventInputSchema = z.strictObject({
-  locale: LocaleSchema,
-  place: z.string().min(1).max(80),
-  problem: z.string().min(1).max(200),
-  disciples: z.array(DiscipleCardSchema).min(1).max(4),
-  choices: z.array(z.strictObject({
-    id: z.string().regex(/^[a-z0-9_]{1,32}$/),
-    effect_hint: z.string().min(1).max(120),
-  })).min(2).max(3),
-});
-export type EventInput = z.infer<typeof EventInputSchema>;
+// What Claude returns for surprise events and evening stories.
 
 export const EventReplySchema = z.object({
   title: z.string(),

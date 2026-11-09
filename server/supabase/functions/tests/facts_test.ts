@@ -68,6 +68,65 @@ Deno.test("every fact type becomes a sentence with the right names and numbers",
       { type: "hungry", disciples: ["a", "c"] },
       "There wasn't enough Food: Lin and Mei went to bed hungry.",
     ],
+    [
+      {
+        type: "breakthrough",
+        disciple: "a",
+        realm: "foundation_building",
+        pill: "foundation_pill",
+      },
+      "Lin broke through to Foundation Building, with help from a Foundation Pill.",
+    ],
+    [
+      {
+        type: "breakthrough_failed",
+        disciple: "b",
+        realm: "golden_core",
+        pill: "none",
+        effect: "green_hair",
+        days: 7,
+        lost: 30,
+      },
+      "Bao tried to break through to Golden Core and failed, losing 30 progress. " +
+      "Now Bao has bright green hair, for 7 days.",
+    ],
+    [
+      { type: "effect_ended", disciple: "b", effect: "hiccups" },
+      "Bao's hiccups wore off.",
+    ],
+    [{ type: "studied", disciple: "c", gain: 14 }, "Mei studied in the Library."],
+    [
+      { type: "learned", disciple: "c", technique: "puddle_mirror_art", tier: 2 },
+      "Mei learned the Puddle Mirror Art, level 2 of 3.",
+    ],
+    [
+      { type: "lost", disciple: "a", mission: "explore_secret_realm" },
+      "Lin got lost on Explore a Secret Realm and hasn't come home.",
+    ],
+    [
+      { type: "returned", disciple: "a", from: "lost" },
+      "Lin found the way home after being lost.",
+    ],
+    [{ type: "recruited", disciple: "c" }, "Mei joined the sect as a new disciple."],
+    [{ type: "rank_up", rank: "rising_sect" }, "The sect is now known as a Rising Sect."],
+    [{ type: "brewed", pill: "healing_pill" }, "The Alchemy Room brewed a Healing Pill."],
+    [
+      { type: "found_item", mission: "explore_secret_realm", item: "golden_pill" },
+      "On Explore a Secret Realm, the team found a Golden Core Pill.",
+    ],
+    [
+      {
+        type: "event",
+        problem: "spirit_goose",
+        place: "misty_pond",
+        choice: "chase",
+        result: "lose",
+        disciples: ["a", "b"],
+      },
+      "Surprise: A spirit goose has claimed the misty pond and honks at anyone who comes near. " +
+      "The Sect Master's choice: Lin and Bao chase it off. Risky: they may find Herbs, or get " +
+      "bitten. It didn't go to plan.",
+    ],
   ];
   for (const [fact, sentence] of cases) assertEquals(factSentence(fact, name), sentence);
 });

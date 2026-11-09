@@ -19,6 +19,7 @@ import {
   type TokenBreakdown,
   tokenBreakdown,
 } from "../../server/supabase/functions/_shared/cost.ts";
+import { choiceIds } from "../../server/supabase/functions/_shared/events.ts";
 import { fallbackLine } from "../../server/supabase/functions/_shared/fallbacks.ts";
 import {
   buildChat,
@@ -28,8 +29,8 @@ import {
 import {
   type ChatRequest,
   EveningRequestSchema,
-  type EventInput,
-  EventInputSchema,
+  type EventRequest,
+  EventRequestSchema,
   GatewayRequestSchema,
   type Turn,
 } from "../../server/supabase/functions/_shared/schemas.ts";
@@ -251,8 +252,7 @@ export async function runChatScenario(
 
 export async function runEvent(
   client: MessagesClient,
-  input: EventInput,
-  index: number,
+  input: EventRequest,
   config: EvalConfig,
   options: RunOptions,
 ): Promise<CallRecord> {
@@ -267,7 +267,7 @@ export async function runEvent(
     note: result.ok ? undefined : result.detail,
   }];
   if (result.ok) {
-    const want = input.choices.map((c) => c.id).join(",");
+    const want = choiceIds(input.problem).join(",");
     const got = result.value.choices.map((c) => c.id).join(",");
     checks.push({
       name: "choices match the rules' choices",
@@ -278,7 +278,7 @@ export async function runEvent(
   return {
     config: config.name,
     kind: "event",
-    scenario: `event_${index + 1}_${input.locale}`,
+    scenario: `event_${input.problem}_${input.locale}`,
     locale: input.locale,
     tag: "event",
     turn: 0,
@@ -363,7 +363,7 @@ export async function pool<T>(limit: number, tasks: Array<() => Promise<T>>): Pr
 
 export interface Selection {
   chats: ChatScenario[];
-  events: EventInput[];
+  events: EventRequest[];
   evenings: EveningScenario[];
 }
 
@@ -375,7 +375,7 @@ export async function runConfig(
 ): Promise<CallRecord[]> {
   const tasks: Array<() => Promise<CallRecord[]>> = [
     ...selection.chats.map((s) => () => runChatScenario(client, s, config, options)),
-    ...selection.events.map((e, i) => async () => [await runEvent(client, e, i, config, options)]),
+    ...selection.events.map((e) => async () => [await runEvent(client, e, config, options)]),
     ...selection.evenings.map(
       (e) => async () => [await runEvening(client, e, config, options)],
     ),
@@ -401,8 +401,8 @@ export function dryRun(selection: Selection, cacheTtl: CacheTtl): string[] {
     }
   }
   for (const input of selection.events) {
-    const parsed = EventInputSchema.safeParse(input);
-    if (!parsed.success) problems.push(`event ${input.place}: ${parsed.error.message}`);
+    const parsed = EventRequestSchema.safeParse(input);
+    if (!parsed.success) problems.push(`event ${input.problem}: ${parsed.error.message}`);
     else buildEvent(parsed.data, { cacheTtl });
   }
   for (const scenario of selection.evenings) {

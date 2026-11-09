@@ -1,0 +1,121 @@
+{
+  "places": [
+    "main_gate",
+    "spirit_field",
+    "kitchen",
+    "training_yard",
+    "bamboo_grove",
+    "hot_spring",
+    "mountain_path",
+    "village_market",
+    "library",
+    "misty_pond"
+  ],
+  "problems": {
+    "beast_cub": [
+      "keep",
+      "return_cub",
+      "shoo"
+    ],
+    "broken_sword": [
+      "buy_new",
+      "glue_it",
+      "use_broom"
+    ],
+    "cloud_whale": [
+      "meditate",
+      "collect_rain",
+      "wave"
+    ],
+    "free_haircut": [
+      "accept",
+      "send_b",
+      "decline"
+    ],
+    "frog_duel": [
+      "accept",
+      "send_b",
+      "decline"
+    ],
+    "inspector": [
+      "serve_tea",
+      "honest_tour",
+      "hide_everyone"
+    ],
+    "leaky_roof": [
+      "fix",
+      "buckets",
+      "ignore"
+    ],
+    "lost_merchant": [
+      "guide",
+      "sell_tea",
+      "point_the_way"
+    ],
+    "mysterious_egg": [
+      "keep_warm",
+      "cook",
+      "return"
+    ],
+    "noodle_thief": [
+      "stake_out",
+      "buy_lock",
+      "share"
+    ],
+    "poetry_contest": [
+      "support_b",
+      "withdraw",
+      "write_together"
+    ],
+    "purple_cat": [
+      "feed",
+      "adopt",
+      "shoo"
+    ],
+    "rescue": [
+      "hire_guide",
+      "search_party",
+      "wait"
+    ],
+    "rival_prank": [
+      "clean",
+      "paint_bigger",
+      "laugh"
+    ],
+    "spirit_goose": [
+      "bribe",
+      "chase",
+      "ignore"
+    ],
+    "strange_smell": [
+      "investigate",
+      "open_windows",
+      "blame_b"
+    ],
+    "sudden_storm": [
+      "shelter",
+      "save_crops",
+      "sing"
+    ],
+    "talking_stone": [
+      "listen",
+      "sell_it",
+      "ignore"
+    ],
+    "tea_invitation": [
+      "attend",
+      "send_gift",
+      "decline"
+    ],
+    "village_festival": [
+      "perform",
+      "sell_snacks",
+      "stay_home"
+    ],
+    "wandering_master": [
+      "take_lesson",
+      "pay_lesson",
+      "decline"
+    ]
+  }
+}

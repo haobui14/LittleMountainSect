@@ -7,6 +7,7 @@ import {
   type DiscipleCard,
   type EveningRequest,
   EveningRequestSchema,
+  EventRequestSchema,
 } from "../_shared/schemas.ts";
 import { LANGUAGE_RULES, TASK_CHAT, TASK_EVENING, WORLD_RULES } from "../_shared/world.ts";
 
@@ -120,15 +121,26 @@ Deno.test("the Elder speaks under his name in the player's language and knows th
 });
 
 Deno.test("event and evening prompts reuse the world block and list the given facts", () => {
-  const event = buildEvent({
-    locale: "en",
-    place: "the Spirit Field",
-    problem: "a goose has claimed the herb patch",
-    disciples: [lin],
-    choices: [{ id: "bribe", effect_hint: "costs food" }, { id: "fight", effect_hint: "risky" }],
-  }, { cacheTtl: "5m" });
+  const event = buildEvent(
+    EventRequestSchema.parse({
+      kind: "event",
+      locale: "en",
+      game_day: 6,
+      problem: "spirit_goose",
+      place: "spirit_field",
+      disciples: [lin, { ...bao, effects: ["green_hair"], technique: 2 }],
+    }),
+    { cacheTtl: "5m" },
+  );
   assertEquals(text(event.system[0]), WORLD_RULES);
-  assertStringIncludes(event.messages[0].content as string, "- id: bribe; effect hint: costs food");
+  const message = event.messages[0].content as string;
+  // The game sends ids; the server's catalog says what they mean.
+  assertStringIncludes(message, "Place: the Spirit Field");
+  assertStringIncludes(message, "A spirit goose has claimed the Spirit Field");
+  assertStringIncludes(message, "- id: bribe; what it does: Bribe the goose with food.");
+  assertStringIncludes(message, "Lin Xiaohe and Bảo Ngọc chase it off.");
+  assertStringIncludes(message, "Right now: Bảo Ngọc has bright green hair.");
+  assertStringIncludes(message, "level 2 of 3");
 
   const request: EveningRequest = EveningRequestSchema.parse({
     kind: "evening",

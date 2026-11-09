@@ -2,6 +2,14 @@
 // for the evening prompt. The game sends ids and numbers only, so every word
 // Claude reads here comes from the server.
 
+import {
+  PILL_NAMES,
+  REALM_NAMES,
+  SIDE_EFFECT_NAMES,
+  SIDE_EFFECT_TEXT,
+  TECHNIQUE_NAMES,
+} from "./cast.ts";
+import { fill, PLACES, PROBLEMS } from "./events.ts";
 import type { EveningRequest, Fact } from "./schemas.ts";
 
 const MISSION_NAMES: Record<string, string> = {
@@ -88,6 +96,60 @@ export function factSentence(fact: Fact, name: (id: string) => string): string {
       return `The sect ate ${fact.food} Food.`;
     case "hungry":
       return `There wasn't enough Food: ${joinNames(fact.disciples.map(name))} went to bed hungry.`;
+    case "breakthrough":
+      return `${name(fact.disciple)} broke through to ${REALM_NAMES[fact.realm].en}${
+        fact.pill === "none" ? "" : `, with help from ${PILL_NAMES[fact.pill]}`
+      }.`;
+    case "breakthrough_failed":
+      return `${name(fact.disciple)} tried to break through to ${REALM_NAMES[fact.realm].en}${
+        fact.pill === "none" ? "" : ` (even with ${PILL_NAMES[fact.pill]})`
+      } and failed, losing ${fact.lost} progress. Now ${name(fact.disciple)} ${
+        SIDE_EFFECT_TEXT[fact.effect]
+      }, for ${fact.days} days.`;
+    case "effect_ended":
+      return `${name(fact.disciple)}'s ${SIDE_EFFECT_NAMES[fact.effect]} wore off.`;
+    case "studied":
+      return `${name(fact.disciple)} studied in the Library.`;
+    case "learned":
+      return `${name(fact.disciple)} learned the ${
+        TECHNIQUE_NAMES[fact.technique]
+      }, level ${fact.tier} of 3.`;
+    case "lost":
+      return `${name(fact.disciple)} got lost on ${
+        MISSION_NAMES[fact.mission]
+      } and hasn't come home.`;
+    case "left":
+      return `${name(fact.disciple)} was so unhappy after ${
+        MISSION_NAMES[fact.mission]
+      } that they left the sect, though they may come back one day.`;
+    case "returned":
+      return fact.from === "lost"
+        ? `${name(fact.disciple)} found the way home after being lost.`
+        : `${name(fact.disciple)} came back to the sect.`;
+    case "recruited":
+      return `${name(fact.disciple)} joined the sect as a new disciple.`;
+    case "rank_up":
+      return `The sect is now known as a ${rankName(fact.rank)}.`;
+    case "brewed":
+      return `The Alchemy Room brewed ${PILL_NAMES[fact.pill]}.`;
+    case "cured":
+      return `${name(fact.disciple)} took a Healing Pill and feels fine again.`;
+    case "found_item":
+      return `On ${MISSION_NAMES[fact.mission]}, the team found ${PILL_NAMES[fact.item]}.`;
+    case "event": {
+      const names = fact.disciples.map(name);
+      const place = PLACES[fact.place];
+      const problem = PROBLEMS[fact.problem];
+      const hint = (problem.choices as Record<string, string>)[fact.choice] ?? fact.choice;
+      const result = fact.result === "win"
+        ? " It worked out."
+        : fact.result === "lose"
+        ? " It didn't go to plan."
+        : "";
+      return `Surprise: ${fill(problem.setup, names, place)} The Sect Master's choice: ${
+        fill(hint, names, place)
+      }${result}`;
+    }
   }
 }
 
