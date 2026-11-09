@@ -17,7 +17,7 @@ signal energy_changed(energy: Dictionary)
 const CONFIG_PATH := "res://config/backend.json"
 const SESSION_PATH := "user://session.cfg"
 const OFFLINE_SECONDS := 30.0
-const TIMEOUT := {"rest": 10.0, "chat": 20.0, "evening": 60.0}
+const TIMEOUT := {"rest": 10.0, "chat": 20.0, "evening": 60.0, "event": 45.0}
 
 ## "offline", "signing_in" or "online".
 var status := "offline"
@@ -84,6 +84,21 @@ func evening(body: Dictionary) -> Dictionary:
 ## The evening story the server already stored for a day, or {"ok": false}.
 func stored_evening(game_day: int) -> Dictionary:
 	var result := await _call(HTTPClient.METHOD_GET, "/rest/v1/evening_stories?select=reply&game_day=eq.%d" % game_day, null, TIMEOUT["rest"])
+	if result["ok"] and result["data"] is Array and not result["data"].is_empty():
+		return {"ok": true, "data": result["data"][0]["reply"]}
+	return {"ok": false, "error": result.get("error", "none")}
+
+
+## The words of a surprise event (body from EventRules.request).
+func event(body: Dictionary) -> Dictionary:
+	var result := await _call(HTTPClient.METHOD_POST, "/functions/v1/ai-gateway", body, TIMEOUT["event"], true)
+	_note_energy(result)
+	return result
+
+
+## The event words the server already stored for a day, or {"ok": false}.
+func stored_event(game_day: int) -> Dictionary:
+	var result := await _call(HTTPClient.METHOD_GET, "/rest/v1/event_stories?select=reply&game_day=eq.%d" % game_day, null, TIMEOUT["rest"])
 	if result["ok"] and result["data"] is Array and not result["data"].is_empty():
 		return {"ok": true, "data": result["data"][0]["reply"]}
 	return {"ok": false, "error": result.get("error", "none")}

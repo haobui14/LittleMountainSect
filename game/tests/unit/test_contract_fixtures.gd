@@ -55,3 +55,12 @@ func test_the_chat_request_fixture_is_what_the_game_sends() -> void:
 
 func test_the_event_catalog_fixture_has_the_games_ids() -> void:
 	_check("event_catalog.json", EventCatalog.ids())
+
+
+func test_the_event_request_fixture_is_what_the_game_sends() -> void:
+	var sect: Sect = _fixture_sect()["sect"]
+	var a := sect.disciples[2]
+	a.add_effect("green_hair", 5)
+	a.technique = 1
+	sect.event = EventRules._start(sect, "frog_duel", "main_gate", [a.id, sect.disciples[0].id] as Array[String])
+	_check("event_request.json", EventRules.request(sect, "vi"))

@@ -17,6 +17,7 @@ import { choiceIds, PLACE_IDS, PROBLEM_IDS } from "../_shared/events.ts";
 import {
   DiscipleCardSchema,
   EveningRequestSchema,
+  EventRequestSchema,
   GatewayRequestSchema,
 } from "../_shared/schemas.ts";
 
@@ -81,4 +82,8 @@ Deno.test("the server accepts the requests the game sends", async () => {
   const evening = EveningRequestSchema.parse(await fixture("evening_request.json"));
   assertEquals(evening.kind, "evening");
   assertEquals(GatewayRequestSchema.parse(evening).kind, "evening");
+  const event = EventRequestSchema.parse(await fixture("event_request.json"));
+  assertEquals([event.kind, event.problem], ["event", "frog_duel"]);
+  assertEquals(event.disciples[0].effects, ["green_hair"]);
+  assertEquals(event.disciples[1].status, "mission");
 });

@@ -66,8 +66,18 @@ func test_a_failed_save_keeps_the_game_going() -> void:
 func test_ten_days_play_from_start_to_finish_without_ai() -> void:
 	GameState.new_game(2026)
 	assert_eq(GameState.step, "morning")
+	var events := 0
 	for day in 10:
 		assert_eq(GameState.sect.day, day + 1)
+		# A surprise event must be answered before planning.
+		if EventRules.pending(GameState.sect):
+			events += 1
+			assert_false(GameState.start_planning())
+			var choice: Dictionary = EventRules.choices(GameState.sect).filter(func(c: Dictionary) -> bool: return c["ok"])[0]
+			GameState.choose_event(choice["id"])
+			assert_false(EventRules.pending(GameState.sect))
+		if not GameState.sect.candidate.is_empty():
+			GameState.recruit(false)
 		GameState.start_planning()
 		assert_eq(GameState.step, "plan")
 		# Day 1: build the Spirit Field and send a pair to gather herbs.
@@ -92,6 +102,7 @@ func test_ten_days_play_from_start_to_finish_without_ai() -> void:
 		assert_false(ReportText.evening(report, GameState.sect, "en").is_empty())
 		GameState.next_morning()
 	assert_eq(GameState.sect.day, 11)
+	assert_gt(events, 0, "ten days bring at least one surprise event")
 	assert_true(GameState.saving_works)
 
 	# The save on disk is the game in play, and loads back into it.

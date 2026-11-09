@@ -56,6 +56,13 @@ static func happy_server(overrides: Dictionary = {}) -> Callable:
 				"user": {"id": "player-1"},
 			}}
 		if path.begins_with("/functions/v1/ai-gateway"):
+			if r["body"]["kind"] == "event":
+				var choices: Array = EventCatalog.choice_ids(r["body"]["problem"]).map(func(id: String) -> Dictionary:
+					return {"id": id, "text": "Claude's words for " + id})
+				return {"code": 200, "body": {
+					"source": "ai", "stored": false, "spirit_energy_left": 44,
+					"title": "A Surprise!", "story": "Something happened.", "choices": choices,
+				}}
 			if r["body"]["kind"] == "evening":
 				return {"code": 200, "body": {
 					"source": "ai", "stored": false, "spirit_energy_left": 46,

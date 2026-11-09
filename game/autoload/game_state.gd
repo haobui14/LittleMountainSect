@@ -3,8 +3,9 @@ extends Node
 ## day's chats and the evening story. Screens read from here and call these
 ## methods; the rules live in game/sim.
 ##
-## A day goes: morning (report) -> plan (tasks, missions, upgrades) ->
-## free_time (chat) -> results (what happened, the evening story) -> morning.
+## A day goes: morning (report, a surprise event, a hopeful at the gate,
+## pills) -> plan (tasks, missions, upgrades) -> free_time (chat) -> results
+## (what happened, the evening story) -> morning.
 ##
 ## AI is never required: when the server can't help (no Spirit Energy, the
 ## daily cap, a refusal, or no connection), chats and the evening use written
@@ -36,6 +37,8 @@ var chats: Dictionary = {}
 var waiting: Dictionary = {}
 ## "idle", "waiting" (the evening story is being written) or "done".
 var evening_state: String = "idle"
+## True while Claude writes the words of tomorrow's surprise event.
+var event_waiting: bool = false
 
 var _syncing := false
 var _sync_again := false
@@ -83,9 +86,14 @@ func load_game() -> bool:
 	return true
 
 
-func start_planning() -> void:
+## Opens the day plan. Returns false while the morning's surprise event
+## waits for the Sect Master's choice.
+func start_planning() -> bool:
+	if EventRules.pending(sect):
+		return false
 	plan = DayPlan.defaults(sect)
 	_go("plan")
+	return true
 
 
 ## Everything a disciple can be planned to do, in screen order.
@@ -94,6 +102,61 @@ func choices() -> Array[String]:
 	for mission: String in Balance.MISSIONS:
 		out.append(mission)
 	return out
+
+
+## What [param id] can be planned to do today: the home tasks they can do
+## and the missions the Mission Hall allows.
+func choices_for(id: String) -> Array[String]:
+	var d := sect.disciple(id)
+	var out: Array[String] = []
+	for task in Balance.HOME_TASKS:
+		if d and DayPlan.task_allowed(sect, d, task):
+			out.append(task)
+	if d and not d.is_injured():
+		for mission: String in Balance.MISSIONS:
+			if MissionResolver.unlocked(sect, mission):
+				out.append(mission)
+	return out
+
+
+# The morning: surprise events, hopefuls and pills -----------------------------------
+
+## Picks a choice in the morning's surprise event. Returns what changed, or {}.
+func choose_event(choice: String) -> Dictionary:
+	var applied := EventRules.choose(sect, choice)
+	if sect.event.get("resolved", false):
+		_save()
+		Events.state_changed.emit()
+	return applied
+
+
+## Takes in (or sends away) the hopeful at the gate.
+func recruit(accept: bool) -> bool:
+	var done := Recruiting.accept(sect) if accept else true
+	if not accept:
+		Recruiting.decline(sect)
+	if done:
+		_save()
+		Events.state_changed.emit()
+	return done
+
+
+func brew(pill: String) -> bool:
+	if not Alchemy.brew(sect, pill):
+		return false
+	_save()
+	Events.state_changed.emit()
+	return true
+
+
+## Gives a disciple a Healing Pill.
+func heal(id: String) -> bool:
+	var d := sect.disciple(id)
+	if d == null or not Alchemy.heal(sect, d):
+		return false
+	_save()
+	Events.state_changed.emit()
+	return true
 
 
 ## One tap on the day plan: a home task, or joining a mission's team. Going
@@ -244,6 +307,35 @@ func _fetch_evening(day_report: DayReport) -> void:
 	evening_state = "done"
 	Events.state_changed.emit()
 	evening_finished.emit()
+	_fetch_event()
+
+
+## Asks Claude for the words of tomorrow's surprise event (2 Spirit Energy).
+## Without them, the event uses the written text in strings.csv.
+func _fetch_event() -> void:
+	if backend == null or sect == null or not EventRules.pending(sect) or sect.event.get("words", {}).has("title"):
+		return
+	var day := int(sect.event["day"])
+	event_waiting = true
+	Events.state_changed.emit()
+	var reply := {}
+	var result: Dictionary = await backend.event(EventRules.request(sect, Settings.locale))
+	var data: Variant = result.get("data")
+	if result.get("ok", false) and data is Dictionary and data.get("source") == "ai":
+		reply = data
+	elif result.get("error", "") in ["timeout", "http_504"]:
+		var stored: Dictionary = await backend.stored_event(day)
+		if stored.get("ok", false) and stored["data"] is Dictionary:
+			reply = stored["data"]
+	event_waiting = false
+	if EventRules.pending(sect) and int(sect.event["day"]) == day and reply.get("title") is String:
+		var words := {"title": String(reply["title"]), "story": ChatRules.text_of(reply.get("story")), "choices": {}}
+		for choice: Variant in reply.get("choices", []):
+			if choice is Dictionary and choice.get("id") is String and choice.get("text") is String:
+				words["choices"][choice["id"]] = choice["text"]
+		sect.event["words"] = words
+		_save()
+	Events.state_changed.emit()
 
 
 func next_morning() -> void:
@@ -309,6 +401,7 @@ func _open(loaded: Sect) -> void:
 	chats = {}
 	evening_state = "done" if not sect.evening.is_empty() else "idle"
 	_go("morning")
+	_fetch_event()
 
 
 func _go(next_step: String) -> void:

@@ -202,3 +202,69 @@ func test_a_save_conflict_loads_the_newer_copy() -> void:
 	GameState.upgrade("spirit_field")
 	assert_signal_emitted(GameState, "loaded_newer_save")
 	assert_eq(GameState.sect.day, 30)
+
+
+# Surprise events, hopefuls and pills (M5) ------------------------------------------
+
+func _pending_event() -> void:
+	var sect := GameState.sect
+	sect.event = EventRules._start(sect, "spirit_goose", "main_gate", [sect.disciples[0].id, sect.disciples[1].id] as Array[String])
+
+
+func test_claude_writes_tomorrows_event_and_planning_waits_for_a_choice() -> void:
+	GameState.new_game(5)
+	_pending_event()
+	await GameState._fetch_event()
+	var sent: Dictionary = _gateway_bodies().back()
+	assert_eq([sent["kind"], sent["problem"], sent["place"]], ["event", "spirit_goose", "main_gate"])
+	var event := GameState.sect.event
+	assert_eq(ReportText.event_title(GameState.sect, event, "en"), "A Surprise!")
+	assert_eq(ReportText.event_choice(GameState.sect, event, "chase", "en"), "Claude's words for chase")
+	assert_false(GameState.start_planning(), "the event comes first")
+	assert_eq(GameState.step, "morning")
+	GameState.choose_event("ignore")
+	assert_true(GameState.start_planning())
+	assert_eq(GameState.sect.pending_facts.back()["type"], "event")
+
+
+func test_without_the_server_an_event_uses_its_written_text() -> void:
+	fake.handler = func(_r: Dictionary) -> Dictionary: return {"code": 0, "error": "network"}
+	GameState.new_game(5)
+	_pending_event()
+	await GameState._fetch_event()
+	var event := GameState.sect.event
+	assert_false(event["words"].has("title"))
+	assert_eq(ReportText.event_title(GameState.sect, event, "en"), "The Goose Who Would Be King")
+	assert_false(GameState.event_waiting)
+
+
+func test_a_timed_out_event_is_picked_up_from_the_server() -> void:
+	fake.handler = FakeTransport.happy_server({
+		"/functions/v1/ai-gateway": func(_r: Dictionary) -> Dictionary: return {"code": 0, "error": "timeout"},
+		"/rest/v1/event_stories": func(_r: Dictionary) -> Dictionary:
+			return {"code": 200, "body": [{"reply": {"title": "Late Goose", "story": "Honk.", "choices": [{"id": "bribe", "text": "Bread"}]}}]},
+	})
+	GameState.new_game(5)
+	_pending_event()
+	await GameState._fetch_event()
+	assert_eq(ReportText.event_title(GameState.sect, GameState.sect.event, "en"), "Late Goose")
+	assert_eq(ReportText.event_choice(GameState.sect, GameState.sect.event, "bribe", "en"), "Bread")
+
+
+func test_recruiting_brewing_and_healing_save_the_game() -> void:
+	GameState.new_game(5)
+	var sect := GameState.sect
+	sect.day = 3
+	Recruiting.roll(sect)
+	var revision := sect.revision
+	assert_true(GameState.recruit(true))
+	assert_eq(sect.disciples.size(), 4)
+	assert_gt(sect.revision, revision)
+	sect.buildings["alchemy_room"] = 2
+	sect.resources["herbs"] = 50
+	assert_true(GameState.brew("healing_pill"))
+	sect.disciples[0].injure(3)
+	assert_true(GameState.heal(sect.disciples[0].id))
+	assert_false(sect.disciples[0].is_injured())
+	assert_false(GameState.heal(sect.disciples[0].id), "no pills left")
+	assert_eq(GameState.choices_for(sect.disciples[1].id).has("escort_merchant"), false, "no Mission Hall yet")

@@ -1,0 +1,40 @@
+{
+  "disciples": [
+    {
+      "effects": [
+        "green_hair"
+      ],
+      "id": "d3",
+      "loyalty": 50,
+      "mood": 2,
+      "name": "Mã Hổ Văn",
+      "pronouns": "he",
+      "quirks": [
+        "secret_poet",
+        "clumsy_alchemist"
+      ],
+      "realm": "qi_refining",
+      "spirit_root": "fire",
+      "technique": 1
+    },
+    {
+      "id": "d1",
+      "loyalty": 50,
+      "mood": 2,
+      "name": "Sở Ninh",
+      "pronouns": "he",
+      "quirks": [
+        "competitive",
+        "secret_poet"
+      ],
+      "realm": "qi_refining",
+      "spirit_root": "water",
+      "status": "mission"
+    }
+  ],
+  "game_day": 2,
+  "kind": "event",
+  "locale": "vi",
+  "place": "main_gate",
+  "problem": "frog_duel"
+}
