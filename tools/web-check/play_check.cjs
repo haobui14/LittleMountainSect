@@ -149,9 +149,12 @@ async function play(browser, size) {
     if (day === 1) {
       // Build the Spirit Field, look at both tabs, and send a pair to gather herbs.
       await click("tab_mountain");
-      await waitFor((s) => s.items.upgrade_spirit_field, "the mountain");
+      await waitFor((s) => s.items.plot_spirit_field, "the mountain");
       await shot("2_mountain");
+      await click("plot_spirit_field");
       await click("upgrade_spirit_field");
+      await page.waitForTimeout(500);
+      await shot("2_mountain_upgraded");
       await click("tab_disciples");
       await page.waitForTimeout(300);
       await shot("3_disciples");

@@ -29,6 +29,10 @@ var _shown_view := ""
 var _shown_sect_id := 0
 var _shown_resources := {}
 var _resource_labels := {}
+## The building picked on the Mountain, and one that was just upgraded.
+var _selected_building := ""
+var _shown_building := ""
+var _celebrate := ""
 
 
 func _ready() -> void:
@@ -544,16 +548,73 @@ func _results(body: VBoxContainer) -> void:
 
 # Mountain: the 8 building slots --------------------------------------------
 
-func _mountain(body: VBoxContainer, _narrow: bool) -> void:
-	body.add_child(UiKit.heading(tr("RANK_" + GameState.sect.rank().to_upper())))
-	var grid := GridContainer.new()
-	grid.columns = UiKit.columns(self, 220.0, 4)
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 8)
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+func _mountain(body: VBoxContainer, narrow: bool) -> void:
+	var sect := GameState.sect
+	var rank := UiKit.heading(tr("RANK_" + sect.rank().to_upper()))
+	var hint := UiKit.label(tr("UI_TAP_BUILDING"), UiKit.SMALL_SIZE, UiKit.SOFT_INK)
+	if _selected_building == "":
+		_selected_building = _suggested_building()
+	var levels := {}
 	for building in Balance.BUILDINGS:
-		grid.add_child(_slot(building))
-	body.add_child(grid)
+		levels[building] = sect.level(building)
+	var screen := get_viewport_rect().size
+	var width := screen.x - 36.0
+	if not narrow:
+		width = clampf(minf((screen.x - 36.0) * 0.55, (screen.y - 215.0) * 4.0 / 3.0), 300.0, 640.0)
+	var view := MountainView.new(levels, width)
+	view.selected = _selected_building
+	view.brews_left = maxi(0, sect.level("alchemy_room") - sect.brews_today)
+	view.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	view.plot_pressed.connect(func(building: String) -> void:
+		_selected_building = building
+		_queue_rebuild())
+	var detail := _slot(_selected_building)
+	if narrow:
+		body.add_child(rank)
+		body.add_child(hint)
+		body.add_child(view)
+		body.add_child(detail)
+	else:
+		# Wide: the picture starts at the top, so it fits without scrolling.
+		var row := UiKit.hbox(12)
+		row.add_child(view)
+		var column := UiKit.vbox(8)
+		column.add_child(rank)
+		column.add_child(hint)
+		column.add_child(detail)
+		row.add_child(column)
+		body.add_child(row)
+	if _shown_building != _selected_building:
+		if _shown_building != "":
+			Motion.pop.call_deferred(detail)
+		_shown_building = _selected_building
+	if _celebrate != "":
+		view.celebrate.call_deferred(_celebrate)
+		_celebrate = ""
+
+
+## The building to show first: the cheapest upgrade the sect can afford, or
+## else the cheapest one left.
+func _suggested_building() -> String:
+	var sect := GameState.sect
+	var best := ""
+	var best_cost := 1 << 30
+	for affordable_only in [true, false]:
+		for building in Balance.BUILDINGS:
+			var check := BuildingRules.can_upgrade(sect, building)
+			if check["reason"] == "max_level" or (affordable_only and not check["ok"]):
+				continue
+			if int(check["cost"]) < best_cost:
+				best = building
+				best_cost = int(check["cost"])
+		if best != "":
+			return best
+	return "main_hall"
+
+
+func _upgrade(building: String) -> void:
+	if GameState.upgrade(building):
+		_celebrate = building
 
 
 func _slot(building: String) -> Control:
@@ -562,7 +623,18 @@ func _slot(building: String) -> Control:
 	card.size_flags_vertical = Control.SIZE_FILL
 	var box := UiKit.vbox(4)
 	card.add_child(box)
-	box.add_child(UiKit.label(tr("BUILDING_" + building.to_upper()), UiKit.FONT_SIZE, UiKit.JADE))
+	var header := UiKit.hbox(10)
+	var picture := TextureRect.new()
+	picture.texture = Art.texture(MountainArt.building(building, sect.level(building)), 160)
+	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	picture.custom_minimum_size = Vector2(70, 56)
+	header.add_child(picture)
+	var name := UiKit.label(tr("BUILDING_" + building.to_upper()), UiKit.FONT_SIZE + 2, UiKit.JADE)
+	name.add_theme_font_override("font", load("res://assets/fonts/nunito_title.tres"))
+	name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	header.add_child(name)
+	box.add_child(header)
 	if not BuildingRules.in_play(building):
 		box.add_child(UiKit.label(tr("BUILDING_%s_DESC" % building.to_upper()), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 		box.add_child(UiKit.label(tr("UI_LOCKED"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
@@ -581,7 +653,7 @@ func _slot(building: String) -> Control:
 		box.add_child(UiKit.label(tr("UI_MAX_LEVEL"), UiKit.SMALL_SIZE))
 	else:
 		var key := "UI_UPGRADE" if level > 0 else "UI_BUILD"
-		var b := UiKit.button(tr(key).format({"cost": check["cost"]}), "upgrade_" + building, func() -> void: GameState.upgrade(building), true)
+		var b := UiKit.primary(tr(key).format({"cost": check["cost"]}), "upgrade_" + building, _upgrade.bind(building), "stones")
 		b.disabled = not check["ok"]
 		box.add_child(b)
 	return card

@@ -143,11 +143,18 @@ func test_the_mountain_brews_pills_and_shows_every_building() -> void:
 	var sect := GameState.sect
 	var screen := await _screen()
 	await _press(screen, "tab_mountain")
+	var probes := _probes(screen)
 	for building in Balance.BUILDINGS:
+		assert_true(probes.has("plot_" + building), building)
 		assert_true(_has_text(screen, ReportText.t("BUILDING_" + building.to_upper())), building)
+	assert_true(probes.has("upgrade_disciple_huts"), "starts on the cheapest upgrade it can afford (the first of three at 100)")
+	await _press(screen, "plot_mission_hall")
 	assert_true(_has_text(screen, "Unlocks: Escort a Merchant, Explore a Secret Realm."))
+	await _press(screen, "plot_main_hall")
 	assert_true(_has_text(screen, "The next level needs 50 Reputation (the sect has 22)."))
 	assert_true(_probes(screen)["upgrade_main_hall"].disabled, "not famous enough yet")
+	assert_false(_probes(screen).has("upgrade_mission_hall"), "one building's card at a time")
+	await _press(screen, "plot_alchemy_room")
 	await _press(screen, "brew_golden_pill")
 	assert_eq(sect.item("golden_pill"), 1)
 	assert_eq(int(sect.resources["herbs"]), 15)
@@ -157,6 +164,18 @@ func test_the_mountain_brews_pills_and_shows_every_building() -> void:
 	assert_true(_probes(screen)["brew_foundation_pill"].disabled, "out of Herbs")
 	assert_true(_probes(screen)["brew_healing_pill"].disabled)
 	assert_true(_has_text(screen, "Brews 3 pills a day (1 left today)."))
+	assert_true(_probes(screen).has("brew_golden_pill"), "the Alchemy Room stays picked after a brew")
+
+
+func test_an_upgrade_from_the_mountain_raises_the_level() -> void:
+	var sect := GameState.sect
+	var screen := await _screen()
+	await _press(screen, "tab_mountain")
+	await _press(screen, "plot_kitchen")
+	await _press(screen, "upgrade_kitchen")
+	assert_eq(sect.level("kitchen"), 2)
+	assert_eq(int(sect.resources["stones"]), 40)
+	assert_true(_has_text(screen, "Kitchen · 2"), "the badge shows the new level")
 
 
 func test_the_disciples_tab_shows_techniques_study_and_effects() -> void:

@@ -215,6 +215,7 @@ static func chip(text: String, color: Color = JADE_LIGHT, icon: String = "") -> 
 	p.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var row := hbox(4)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if icon != "":
 		row.add_child(Icons.rect(icon, 16.0))
 	var l := label(text, SMALL_SIZE, color.darkened(0.45))
