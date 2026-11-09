@@ -64,10 +64,10 @@ godot --headless --path game --export-release Web ../build/web/index.html
 The balance sim plays many seeds headless and exits non-zero on a softlock or a broken limit. Every tunable number is in `game/sim/balance.gd`:
 
 ```bash
-godot --headless --path game -s res://tools/balance_sim.gd -- --seeds 100 --days 60
+godot --headless --path game -s res://tools/balance_sim.gd -- --seeds 100 --days 120
 ```
 
-Browser checks need the web build served on port 8060 (for example `python3 -m http.server 8060` in `build/web`). They click controls by name through `window.lmsUi`, which `game/autoload/ui_probe.gd` publishes in web builds. `play_check.cjs` plays 10 days at phone and desktop sizes, chatting on days 1 and 2:
+Browser checks need the web build served on port 8060 (for example `python3 -m http.server 8060` in `build/web`). They click controls by name through `window.lmsUi`, which `game/autoload/ui_probe.gd` publishes in web builds. `play_check.cjs` plays 10 days at phone and desktop sizes. It chats on days 1 and 2, answers each surprise event with the first choice it can afford, takes in or sends away hopefuls, and tries a breakthrough when one is offered:
 
 ```bash
 node tools/web-check/play_check.cjs http://127.0.0.1:8060/index.html /tmp 10 --offline
@@ -76,6 +76,9 @@ node tools/web-check/play_check.cjs http://127.0.0.1:8060/index.html /tmp 10 --o
 - `--offline` blocks Supabase, so every chat and evening must fall back to written text. CI's web-build job runs it this way on every push, with Playwright pinned as `PLAYWRIGHT_VERSION` in `ci.yml`.
 - Without `--offline`, the game talks to the hosted project and spends Spirit Energy. This container can't reach `*.supabase.co`, so run it offline here.
 - `typing_check.cjs` always blocks the server.
+- For the M5 exit check, play 30 days locally by passing `30` instead of `10`.
+
+`game/tools/state_shots.gd` saves screenshots of states a short run rarely reaches, such as an event, a hopeful, pills or a ready breakthrough, plus a portrait sheet. It needs a display, so run it under Xvfb (`xvfb-run` works in this container). The command is at the top of the file.
 
 Web export needs the 4.7.2 export templates installed.
 
@@ -97,7 +100,7 @@ deno test --allow-read=.
 
 The tests need no network and no secrets; Claude and the database are faked.
 
-The game and the server share **contract fixtures** in `game/tests/fixtures/` (a disciple card, a chat request and an evening request):
+The game and the server share **contract fixtures** in `game/tests/fixtures/`: a disciple card, chat, evening and event requests, and the event catalog's ids.
 - GUT checks that the game still builds them exactly; Deno checks that the server's schemas accept them.
 - After a deliberate change to a request, regenerate them with `LMS_UPDATE_FIXTURES=1` in front of the GUT command.
 
@@ -124,6 +127,7 @@ Live evals and the gateway smoke test run in the manual **AI live tests** workfl
 - If the project records a different version number for a migration, rename the local file to match.
 - Free projects pause after 7 days without use and have no automatic backups.
 - The `ai-gateway` Edge Function is deployed with the Supabase connector. Upload every file under `server/supabase/functions/` that it imports, named relative to that folder (`ai-gateway/index.ts`, `_shared/deps.ts` and so on), with entrypoint `ai-gateway/index.ts` and `verify_jwt` on.
+- After a deploy, read the function back (`get_edge_function`) and compare each file's SHA-256 with the repo's. A hand-copied file once dropped two lines (v5).
 
 **GitHub Pages** serves the web build at https://haobui14.github.io/LittleMountainSect/:
 - CI's `deploy-pages` job publishes it on pushes and manual runs on the default branch, after every test job passes, while the repository variable `DEPLOY_PAGES` is `true`.

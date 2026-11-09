@@ -108,6 +108,18 @@ Cultivation means training the body and spirit to gain power. Disciples move thr
 
 Each breakthrough to a new realm is a risky test. Failure costs progress and adds a funny side effect, such as green hair for 10 days.
 
+These are the starting values from M5, and every number is in `game/sim/balance.gd`:
+
+- **Training** fills progress up to 100. It slows in each higher realm (×1, ×0.7, ×0.5, ×0.35), and each level of a disciple's technique adds 10%.
+- **Breaking through** is a home task for a disciple at 100 progress.
+  - The base chance is 35%, 20% or 5%, depending on the realm being left.
+  - Each point of Talent + Spirit adds 3%, each Training Yard level 5%, and each point of Mood 1%.
+  - The best pill in stock is used up and adds its bonus: a Foundation Pill adds 15%, a Golden Core Pill 30%.
+  - The chance always stays between 5% and 95%.
+- **Success:** the next realm, with +2 Mood and +2 Loyalty.
+- **Failure:** −40 progress, −1 Mood, and one side effect for 5–10 days. The side effects are green hair, a squeaky voice, hiccups (weaker on missions), floating (half as useful at work), backwards qi (trains half as fast) and glowing at night (rests half as well).
+- **Techniques:** each spirit root has one, such as the Iron Chopsticks Palm (Metal) or the Immovable Nap Stance (Earth). Disciples learn its levels by studying in the Library. Each level adds mission power and training speed.
+
 ### Buildings and resources
 
 The sect uses 4 resources: Spirit Stones (money), Food, Herbs, and Reputation. The mountain is one screen with 8 fixed building slots, and each building has 3 levels.
@@ -123,16 +135,28 @@ The sect uses 4 resources: Spirit Stones (money), Food, Herbs, and Reputation. T
 | Library | Teaches new techniques |
 | Mission Hall | Unlocks harder missions |
 
+**Starting values (M5).** Upgrades cost Spirit Stones. The Main Hall also needs Reputation, which isn't spent.
+
+| Building | Level 1 / 2 / 3 | Effect |
+| --- | --- | --- |
+| Main Hall | Free at the start / 150 / 250, plus 15 / 50 Reputation | Unknown Mountain, Rising Sect, then Famous Sect. Room for 4, 8 or 12 disciples. A higher rank attracts more talented hopefuls |
+| Kitchen | 40 / 100 / 200 | Fed disciples get +1, +1 or +2 Mood each evening. Meals cost a little more Food |
+| Alchemy Room | 60 / 140 / 280 | One brew a day per level. Foundation Pill (level 1, 10 Herbs), Healing Pill (level 2, 8 Herbs and 10 Stones) and Golden Core Pill (level 3, 25 Herbs and 30 Stones). At most 9 of each |
+| Library | 60 / 140 / 280 | Studying gains 10 + Wit a day. At 100, the disciple learns the next level of their technique, up to the Library's level |
+| Mission Hall | 50 / 120 / 240 | Level 1 unlocks Escort a Merchant, level 2 Explore a Secret Realm. Level 3 gives +25% mission rewards |
+
+**Growth.** From day 3, a hopeful comes to the gate every 4–7 days while the sect has room, and waits for 2 days. Taking them in costs 20 Spirit Stones plus 10 per disciple.
+
 ### Missions
 
 The player sends a team of 1 to 4 disciples. Rules work out the result from stats, Mood, and a random roll. Claude then writes the story.
 
-| Mission | Days | Risk | Main reward |
-| --- | --- | --- | --- |
-| Gather Herbs | 1 to 2 | Low | Herbs and Food |
-| Hunt a Monster | 2 to 3 | Medium | Spirit Stones |
-| Escort a Merchant | 3 to 4 | Medium | Spirit Stones and Reputation |
-| Explore a Secret Realm | 4 to 5 | High | Rare items and techniques |
+| Mission | Days | Risk | Main reward | Needs |
+| --- | --- | --- | --- | --- |
+| Gather Herbs | 1 to 2 | Low | Herbs and Food | — |
+| Hunt a Monster | 2 to 3 | Medium | Spirit Stones | — |
+| Escort a Merchant | 3 to 4 | Medium | Spirit Stones and Reputation | Mission Hall 1 |
+| Explore a Secret Realm | 4 to 5 | High | Herbs, Reputation, and a random pill on a good result | Mission Hall 2 |
 
 When a mission goes very badly, a disciple gets one of these setbacks:
 
@@ -141,7 +165,16 @@ When a mission goes very badly, a disciple gets one of these setbacks:
 - **Lost:** The disciple goes missing, and a rescue event starts.
 - **Left the sect:** An unhappy disciple leaves, but may return later.
 
-Disciples never die.
+Disciples never die. A lost disciple comes home through the rescue event, and one who left returns after 5–15 days, with Mood 0 and Loyalty of at least 40.
+
+### Surprise events
+
+Small problems keep the days lively, such as a spirit goose that claims the Kitchen or a wandering master who offers a lesson.
+
+- **When:** from day 3, each night after a cooldown of 2–3 days, with a 50% chance. The event waits for the player in the morning, before the day plan.
+- **What:** the rules pick one of 20 problems (none of the last 5 again), a place the mountain has, and a pair of disciples at home. A lost disciple's rescue comes before anything else.
+- **Choices:** each problem has 3 choices, and at least one is free. The rules roll the result and change resources, Mood, a relationship, progress, side effects, injuries or pills.
+- **Words:** Claude writes the title, the story and the choices' text for 2 Spirit Energy, the night before. Without it, the game uses the written text for each problem.
 
 ### Other sects
 

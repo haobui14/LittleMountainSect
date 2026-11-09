@@ -202,23 +202,23 @@ Tester guide, hand checks and `ai_usage` queries: [docs/playtests/gate-2.md](pla
 
 **Goal:** the full breadth of the core systems for the first version.
 
-- [ ] **Cultivation.** Disciples move through 4 realms. Each breakthrough is a test based on stats, pills and buildings. Failure costs progress and adds a timed funny side effect.
-- [ ] **All 8 buildings, each with 3 levels.** This adds the Kitchen, Alchemy Room (pills), Library (techniques by spirit root) and Mission Hall.
-- [ ] **All 4 missions.** This adds Escort a Merchant and Explore a Secret Realm, plus two setbacks:
+- [x] **Cultivation.** Disciples move through 4 realms. Each breakthrough is a test based on stats, pills and buildings. Failure costs progress and adds a timed funny side effect.
+- [x] **All 8 buildings, each with 3 levels.** This adds the Kitchen, Alchemy Room (pills), Library (techniques by spirit root) and Mission Hall.
+- [x] **All 4 missions.** This adds Escort a Merchant and Explore a Secret Realm, plus two setbacks:
   - Lost, which starts a rescue event
   - Left the sect, where the disciple may return later
-- [ ] **Growth.** Recruit up to 12 disciples. The sect's rank rises from Unknown Mountain to Famous Sect.
-- [ ] **Surprise events:**
+- [x] **Growth.** Recruit up to 12 disciples. The sect's rank rises from Unknown Mountain to Famous Sect.
+- [x] **Surprise events:**
   - Rules decide triggers, cooldowns and rewards.
   - Claude writes the story and the choices, for 2 Spirit Energy.
   - About 20 written fallback events.
   - Each story gets a random place, problem and pair of disciples, so stories don't repeat.
-- [ ] Start art work with a style test.
+- [x] Start art work with a style test: [docs/art/style-brief.md](art/style-brief.md), with layered portraits drawn in code as placeholders.
 
 **Exit:**
-- [ ] Every system above is unit-tested and playable.
-- [ ] 100 seeds × 120 days run cleanly in the balance sim.
-- [ ] One 30-day playthrough by hand.
+- [x] Every system above is unit-tested and playable. GUT covers the rules and the screens, and `play_check.cjs` plays 10 days in CI (30 locally), answering events and hopefuls.
+- [x] 100 seeds × 120 days run cleanly in the balance sim ([report](balance/m5.md)). CI runs it on every push.
+- [ ] One 30-day playthrough by hand, on the live build. This one is yours.
 
 ### M6 — Rivals and history · ~20 h
 
