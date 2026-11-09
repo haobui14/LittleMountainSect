@@ -23,6 +23,12 @@ var _chat_view: ChatView
 var _memories := {}
 var _memories_day := -1
 var _loaded_newer := false
+## What the screen showed last time, so entrance animations play only when
+## the step or tab changes, and so resource changes can float up.
+var _shown_view := ""
+var _shown_sect_id := 0
+var _shown_resources := {}
+var _resource_labels := {}
 
 
 func _ready() -> void:
@@ -90,16 +96,15 @@ func _rebuild() -> void:
 		root.add_child(margin)
 		return
 
-	var tabs := _tabs()
+	var tabs := _tabs(narrow)
+	root.add_child(_hud(narrow))
 	if not narrow:
-		root.add_child(_hud(narrow))
+		# Wide: the step's action sits at the end of the tabs row.
+		tabs.add_child(_action_button())
 		root.add_child(tabs)
-	else:
-		root.add_child(_hud(narrow))
 	var scroll: Array = UiKit.scroll_column()
 	root.add_child(scroll[0])
 	_scroll = scroll[0]
-	_restore_scroll.call_deferred(_scroll, _scroll_value)
 	var body: VBoxContainer = scroll[1]
 	match _tab:
 		"mountain":
@@ -109,7 +114,20 @@ func _rebuild() -> void:
 		_:
 			_today(body)
 	if narrow:
+		root.add_child(_action_bar())
 		root.add_child(tabs)
+	else:
+		for note in _action_notes():
+			body.add_child(note)
+
+	# Cards pop in when the step or tab changes, not on every tap.
+	var view := "%s/%s/%d" % [GameState.step, _tab, GameState.sect.day]
+	if view != _shown_view:
+		_shown_view = view
+		_scroll_value = 0
+		Motion.stagger.call_deferred(body.get_children())
+	_restore_scroll.call_deferred(_scroll, _scroll_value)
+	_show_gains.call_deferred()
 
 
 func _restore_scroll(scroll: ScrollContainer, value: int) -> void:
@@ -122,30 +140,84 @@ func _restore_scroll(scroll: ScrollContainer, value: int) -> void:
 
 func _hud(narrow: bool) -> Control:
 	var panel := PanelContainer.new()
-	var box := UiKit.vbox(4)
+	var box := UiKit.vbox(6)
 	panel.add_child(box)
 	var top := UiKit.hbox()
 	# The evening belongs to the day that just ended.
 	var day := GameState.report.day if GameState.step == "results" and GameState.report else GameState.sect.day
-	var title := UiKit.label("%s · %s" % [tr("UI_DAY").format({"day": day}), tr("UI_STEP_" + GameState.step.to_upper())], UiKit.FONT_SIZE, UiKit.JADE)
+	var title := UiKit.label(tr("UI_DAY").format({"day": day}), UiKit.FONT_SIZE + 2, UiKit.JADE)
+	title.add_theme_font_override("font", load("res://assets/fonts/nunito_title.tres"))
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL if narrow else Control.SIZE_SHRINK_BEGIN
+	title.autowrap_mode = TextServer.AUTOWRAP_OFF
 	top.add_child(title)
+	var resources := UiKit.flow(12)
+	if narrow:
+		box.add_child(top)
+		box.add_child(resources)
+	else:
+		resources.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		top.add_child(resources)
+		box.add_child(top)
 	top.add_child(UiKit.button(tr("UI_MENU"), "menu", func() -> void: navigate.emit("title")))
-	box.add_child(top)
-	var resources := UiKit.flow(14)
+
+	_resource_labels = {}
 	for resource in Balance.RESOURCES:
-		resources.add_child(UiKit.label("%s %d" % [ReportText.resource_name(resource), int(GameState.sect.resources[resource])], UiKit.SMALL_SIZE))
-	for child in resources.get_children():
-		(child as Label).size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-		(child as Label).autowrap_mode = TextServer.AUTOWRAP_OFF
-	box.add_child(resources)
-	box.add_child(UiKit.label(_energy_text(), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+		var amount := int(GameState.sect.resources[resource])
+		var text := ("%s %d" % [ReportText.resource_name(resource), amount]) if not narrow else str(amount)
+		var item := UiKit.icon_label(resource, text, UiKit.FONT_SIZE, UiKit.INK, 20.0)
+		item.tooltip_text = ReportText.resource_name(resource)
+		item.mouse_filter = Control.MOUSE_FILTER_PASS
+		var label: Label = item.get_child(1)
+		label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		_resource_labels[resource] = label
+		resources.add_child(item)
+	resources.add_child(UiKit.chip(_energy_text(), Color(0.55, 0.62, 0.85), "energy"))
+	for pill in Balance.PILLS:
+		if GameState.sect.item(pill) > 0:
+			var chip := UiKit.chip("×%d" % GameState.sect.item(pill), UiKit.GOLD, pill)
+			chip.tooltip_text = ReportText.pill_name(pill)
+			chip.mouse_filter = Control.MOUSE_FILTER_PASS
+			resources.add_child(chip)
+	box.add_child(DayTracker.new(GameState.step))
 	if not GameState.saving_works:
 		box.add_child(UiKit.label(tr("UI_NOT_SAVING"), UiKit.SMALL_SIZE, UiKit.WARN))
 	if _loaded_newer:
 		box.add_child(UiKit.label(tr("UI_LOADED_NEWER"), UiKit.SMALL_SIZE, UiKit.WARN))
-	if not narrow:
-		box.add_theme_constant_override("separation", 2)
 	return panel
+
+
+## After a rebuild: resources that changed count to their new value, and the
+## change floats up from them. Not on the first look at a sect.
+func _show_gains() -> void:
+	var sect := GameState.sect
+	if sect == null:
+		return
+	var known := sect.get_instance_id() == _shown_sect_id
+	var before := _shown_resources
+	_shown_sect_id = sect.get_instance_id()
+	_shown_resources = sect.resources.duplicate()
+	if not known:
+		return
+	var narrow := UiKit.is_narrow(self)
+	var floats := {}
+	for resource in Balance.RESOURCES:
+		var label: Label = _resource_labels.get(resource)
+		var change := int(sect.resources[resource]) - int(before.get(resource, sect.resources[resource]))
+		if change == 0 or not is_instance_valid(label):
+			continue
+		var amount := int(sect.resources[resource])
+		var format := "%d" if narrow else ReportText.resource_name(resource) + " %d"
+		Motion.count(label, amount - change, amount, format)
+		floats[label] = change
+	if floats.is_empty():
+		return
+	# Wait for the layout, so the numbers float up from the right place.
+	await get_tree().process_frame
+	for label: Label in floats:
+		if is_instance_valid(label):
+			var change: int = floats[label]
+			Motion.float_text("%+d" % change, label.get_global_rect().get_center(), UiKit.JADE if change > 0 else UiKit.WARN)
 
 
 func _energy_text() -> String:
@@ -156,19 +228,69 @@ func _energy_text() -> String:
 	return tr("UI_ENERGY").format({"left": str(left) if left != null else "…"})
 
 
-func _tabs() -> Control:
+func _tabs(narrow: bool) -> HBoxContainer:
 	var row := UiKit.hbox(4)
 	for tab in TABS:
 		var b := UiKit.choice(tr("UI_TAB_" + tab.to_upper()), "tab_" + tab, _tab == tab, func() -> void:
 			_tab = tab
 			_scroll_value = 0
-			_queue_rebuild())
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			_queue_rebuild(), tab)
+		if narrow:
+			b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		else:
+			b.custom_minimum_size.x = 130
 		row.add_child(b)
 	return row
 
 
 # Today: the day's steps ----------------------------------------------------
+
+## The step's main action (the same probe id on every layout).
+func _action_button() -> Button:
+	var action: Button
+	match GameState.step:
+		"morning":
+			action = UiKit.primary(tr("UI_PLAN_DAY"), "plan_day", GameState.start_planning, "today")
+			action.disabled = EventRules.pending(GameState.sect)
+		"plan":
+			action = UiKit.primary(tr("UI_DONE_PLANNING"), "done_planning", GameState.finish_planning)
+			action.disabled = not GameState.plan_errors().is_empty()
+		"free_time":
+			action = UiKit.primary(tr("UI_END_DAY"), "end_day", _end_day, "rest")
+		_:
+			action = UiKit.primary(tr("UI_NEXT_MORNING"), "next_morning", GameState.next_morning, "today")
+	return action
+
+
+## Why the action can't be taken yet, if it can't.
+func _action_notes() -> Array[Label]:
+	var notes: Array[Label] = []
+	match GameState.step:
+		"morning":
+			if EventRules.pending(GameState.sect):
+				notes.append(UiKit.label(tr("UI_EVENT_FIRST"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+		"plan":
+			for error in GameState.plan_errors():
+				var key := "ERR_TEAM_SIZE" if error.begins_with("team_size") else "ERR_PLAN"
+				notes.append(UiKit.label(tr(key), UiKit.SMALL_SIZE, UiKit.WARN))
+	return notes
+
+
+## Phones: the step's action, always in reach above the tabs. Shown on every
+## tab, so the day can go on from the Mountain.
+func _action_bar() -> Control:
+	var bar := MarginContainer.new()
+	for side in ["left", "right"]:
+		bar.add_theme_constant_override("margin_" + side, 12)
+	bar.add_theme_constant_override("margin_top", 6)
+	bar.add_theme_constant_override("margin_bottom", 8)
+	var box := UiKit.vbox(4)
+	bar.add_child(box)
+	for note in _action_notes():
+		box.add_child(note)
+	box.add_child(_action_button())
+	return bar
+
 
 func _today(body: VBoxContainer) -> void:
 	body.add_child(UiKit.heading(tr("UI_STEP_" + GameState.step.to_upper())))
@@ -193,12 +315,6 @@ func _morning(body: VBoxContainer) -> void:
 		body.add_child(MorningCards.event_card(sect, _locale(), GameState.event_waiting))
 	if not sect.candidate.is_empty():
 		body.add_child(MorningCards.candidate_card(sect, _locale()))
-	var deciding := EventRules.pending(sect)
-	if deciding:
-		body.add_child(UiKit.label(tr("UI_EVENT_FIRST"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
-	var start := UiKit.button(tr("UI_PLAN_DAY"), "plan_day", GameState.start_planning, true)
-	start.disabled = deciding
-	body.add_child(start)
 
 
 ## Where a disciple is when they can't be planned (a mission, lost or left)
@@ -276,17 +392,17 @@ func _plan(body: VBoxContainer) -> void:
 	var cards := _card_grid()
 	body.add_child(cards)
 	for d in sect.disciples:
-		var card := UiKit.card()
+		var card := UiKit.card(Portrait.ROOT_COLORS.get(d.spirit_root, UiKit.LINE))
 		var box := UiKit.vbox(6)
 		card.add_child(box)
-		box.add_child(UiKit.label(d.display_name(_locale()), UiKit.FONT_SIZE, UiKit.JADE))
+		box.add_child(_name_row(d, 44.0))
 		var status := _status_label(d)
 		if status:
 			box.add_child(status)
 		if not sect.is_away(d.id):
 			_side_effect_labels(box, d)
 			if Alchemy.can_heal(sect, d):
-				box.add_child(UiKit.button(tr("UI_HEAL").format({"count": sect.item("healing_pill")}), "heal_" + d.id, GameState.heal.bind(d.id)))
+				box.add_child(UiKit.button(tr("UI_HEAL").format({"count": sect.item("healing_pill")}), "heal_" + d.id, GameState.heal.bind(d.id), false, "heal"))
 		if not sect.is_away(d.id) and not d.is_injured():
 			var decision := Decisions.for_today(sect, d.id)
 			if not decision.is_empty():
@@ -296,28 +412,68 @@ func _plan(body: VBoxContainer) -> void:
 				box.add_child(UiKit.label(note, UiKit.SMALL_SIZE, UiKit.WARN if decision["overruled"] else UiKit.SOFT_INK))
 			elif ChatRules.wished_task(sect, d) != "":
 				box.add_child(UiKit.label(tr("UI_WANTS").format({"action": tr("ACTION_" + d.wants.to_upper())}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
-			var row := UiKit.flow()
 			var current := GameState.choice_of(d.id)
+			var home := UiKit.flow()
+			var missions := UiKit.flow()
 			for choice in GameState.choices_for(d.id):
-				row.add_child(UiKit.choice(_choice_text(d, choice), "choose_%s_%s" % [d.id, choice], current == choice, GameState.choose.bind(d.id, choice)))
-			box.add_child(row)
+				var b := UiKit.choice(_choice_text(d, choice), "choose_%s_%s" % [d.id, choice], current == choice, GameState.choose.bind(d.id, choice), Icons.task_kind(choice))
+				if choice == "breakthrough":
+					b.theme_type_variation = "GoldButton"
+				(home if choice in Balance.HOME_TASKS else missions).add_child(b)
+			box.add_child(UiKit.label(tr("UI_AT_HOME"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+			box.add_child(home)
+			if missions.get_child_count() > 0:
+				box.add_child(UiKit.label(tr("UI_MISSIONS"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+				box.add_child(missions)
 		cards.add_child(card)
 
 	for entry in GameState.plan.missions:
-		var team: Array = entry["team"]
-		var likely := MissionResolver.expected_tier(sect, entry["mission"], team)
-		body.add_child(UiKit.label(tr("UI_TEAM").format({
-			"mission": ReportText.mission_name(entry["mission"]),
-			"names": ReportText.names(sect, team, _locale()),
-			"tier": tr("TIER_" + likely.to_upper()),
-		})))
-	var errors := GameState.plan_errors()
-	for error in errors:
-		var key := "ERR_TEAM_SIZE" if error.begins_with("team_size") else "ERR_PLAN"
-		body.add_child(UiKit.label(tr(key), UiKit.SMALL_SIZE, UiKit.WARN))
-	var done := UiKit.button(tr("UI_DONE_PLANNING"), "done_planning", GameState.finish_planning, true)
-	done.disabled = not errors.is_empty()
-	body.add_child(done)
+		body.add_child(_team_card(entry))
+
+
+## A disciple's face, name and Mood, for the top of a card.
+func _name_row(d: Disciple, face: float) -> HBoxContainer:
+	var row := UiKit.hbox(8)
+	var portrait := Portrait.of(d)
+	portrait.custom_minimum_size = Vector2(face, face)
+	portrait.expression = "happy" if d.mood >= 3 else ("sad" if d.mood <= -3 else "thinking")
+	row.add_child(portrait)
+	var name := UiKit.label(d.display_name(_locale()), UiKit.FONT_SIZE, UiKit.JADE)
+	name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(name)
+	var mood := UiKit.chip("%+d" % d.mood, UiKit.GOLD if d.mood >= 0 else UiKit.WARN, Icons.mood_kind(d.mood))
+	mood.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	mood.tooltip_text = tr("UI_MOOD")
+	row.add_child(mood)
+	return row
+
+
+## A mission's team: the mission, the faces going, and the likely result.
+func _team_card(entry: Dictionary) -> Control:
+	var sect := GameState.sect
+	var mission := String(entry["mission"])
+	var team: Array = entry["team"]
+	var likely := MissionResolver.expected_tier(sect, mission, team)
+	var card := UiKit.card(UiKit.TIER_COLORS.get(likely, UiKit.LINE))
+	var box := UiKit.vbox(6)
+	card.add_child(box)
+	var top := UiKit.hbox(8)
+	top.add_child(UiKit.icon_label(Icons.task_kind(mission), ReportText.mission_name(mission), UiKit.FONT_SIZE, UiKit.JADE, 24.0))
+	top.add_child(UiKit.chip(tr("UI_LIKELY").format({"tier": tr("TIER_" + likely.to_upper())}), UiKit.TIER_COLORS.get(likely, UiKit.LINE)))
+	box.add_child(top)
+	var faces := UiKit.hbox(4)
+	for id: String in team:
+		var d := sect.disciple(id)
+		if d:
+			var portrait := Portrait.of(d)
+			portrait.custom_minimum_size = Vector2(36, 36)
+			portrait.expression = "proud"
+			faces.add_child(portrait)
+	var names := UiKit.label(ReportText.names(sect, team, _locale()), UiKit.SMALL_SIZE, UiKit.SOFT_INK)
+	names.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	faces.add_child(names)
+	box.add_child(faces)
+	return card
 
 
 func _free_time(body: VBoxContainer) -> void:
@@ -346,7 +502,6 @@ func _free_time(body: VBoxContainer) -> void:
 			box.add_child(UiKit.label(String(lines[-1]["text"]), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 		cards.add_child(card)
 	body.add_child(UiKit.label(tr("UI_CHAT_COST"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
-	body.add_child(UiKit.button(tr("UI_END_DAY"), "end_day", _end_day, true))
 
 
 ## Disciple cards side by side when the screen is wide enough.
@@ -385,7 +540,6 @@ func _results(body: VBoxContainer) -> void:
 			body.add_child(UiKit.label(line, UiKit.SMALL_SIZE if story_ready else UiKit.FONT_SIZE))
 		var changes := ReportText.amounts(report.resource_changes)
 		body.add_child(UiKit.label(tr("UI_CHANGES").format({"changes": changes}) if changes != "" else tr("UI_NO_CHANGES"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
-	body.add_child(UiKit.button(tr("UI_NEXT_MORNING"), "next_morning", GameState.next_morning, true))
 
 
 # Mountain: the 8 building slots --------------------------------------------

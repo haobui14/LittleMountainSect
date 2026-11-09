@@ -16,6 +16,17 @@ func _ready() -> void:
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(background)
+	# Floating gains and sparkles (Motion) go on a layer above every screen,
+	# so a screen rebuilding itself doesn't cut them short.
+	var layer := CanvasLayer.new()
+	layer.layer = 10
+	var overlay := Control.new()
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.theme = theme
+	overlay.add_to_group(Motion.OVERLAY_GROUP)
+	layer.add_child(overlay)
+	add_child(layer)
 	Events.language_changed.connect(func(_locale: String) -> void: show_screen(_current))
 	show_screen("title" if Settings.age_confirmed else "first_launch")
 

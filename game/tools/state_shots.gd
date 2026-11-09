@@ -47,6 +47,8 @@ func _run() -> void:
 	game_state.backend = null
 	root.get_node("Backend").transport = FakeTransport.new()
 	TranslationServer.set_locale(_arg("--locale", "en"))
+	# Still pictures: no fades or pops half way through.
+	root.get_node("Settings").reduce_motion = true
 	var window := DisplayServer.window_get_size()
 	await _frames(3)
 	for state in STATES:

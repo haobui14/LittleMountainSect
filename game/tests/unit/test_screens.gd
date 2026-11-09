@@ -168,3 +168,27 @@ func test_the_disciples_tab_shows_techniques_study_and_effects() -> void:
 	assert_true(_has_text(screen, "Study: 40/100"))
 	assert_true(_has_text(screen, "Green hair, 4 more days."))
 	assert_true(_has_text(screen, "Has left the sect for now."))
+
+
+func test_the_hud_floats_gains_and_the_action_bar_follows_the_step() -> void:
+	var overlay := Control.new()
+	overlay.add_to_group(Motion.OVERLAY_GROUP)
+	add_child_autofree(overlay)
+	var saved_motion := Settings.reduce_motion
+	Settings.reduce_motion = false
+	var screen := await _screen()
+	assert_true(_probes(screen)["plan_day"].disabled)
+	assert_true(_has_text(screen, "Decide what to do about this before you plan the day."))
+	GameState.sect.add_resource("stones", 12)
+	await _press(screen, "event_decline")
+	await wait_process_frames(3)
+	var floats := overlay.get_children().filter(func(n: Node) -> bool: return n is Label)
+	assert_eq(floats.map(func(l: Label) -> String: return l.text), ["+12"])
+	assert_false(_probes(screen)["plan_day"].disabled)
+	GameState.start_planning()
+	await wait_process_frames(2)
+	assert_true(_probes(screen).has("done_planning"))
+	assert_false(_probes(screen).has("plan_day"))
+	await _press(screen, "tab_mountain")
+	assert_true(_probes(screen).has("done_planning"), "the day goes on from any tab")
+	Settings.reduce_motion = saved_motion

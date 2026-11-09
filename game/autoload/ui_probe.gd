@@ -76,9 +76,8 @@ func _collect(node: Node, items: Dictionary) -> void:
 	if node is Control and node.has_meta("probe"):
 		var control := node as Control
 		var rect := UiKit.window_rect(control)
-		var view := Rect2(Vector2.ZERO, Vector2(get_window().size))
 		items[String(node.get_meta("probe"))] = {
-			"on_screen": view.encloses(rect),
+			"on_screen": _visible_area(control).encloses(rect),
 			"x": rect.position.x,
 			"y": rect.position.y,
 			"w": rect.size.x,
@@ -88,3 +87,16 @@ func _collect(node: Node, items: Dictionary) -> void:
 		}
 	for child in node.get_children():
 		_collect(child, items)
+
+
+## The part of the window where [param control] can be seen: the window,
+## cut down by every ancestor that clips its children (a scrolling list).
+## A button scrolled under a fixed bar is not on screen.
+func _visible_area(control: Control) -> Rect2:
+	var area := Rect2(Vector2.ZERO, Vector2(get_window().size))
+	var parent := control.get_parent()
+	while parent:
+		if parent is Control and (parent as Control).clip_contents:
+			area = area.intersection(UiKit.window_rect(parent as Control))
+		parent = parent.get_parent()
+	return area

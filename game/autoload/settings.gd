@@ -13,6 +13,8 @@ var age_confirmed: bool = false
 ## Chat on the web uses the browser's own text box unless this is on (for
 ## comparing the two during Gate 2; see docs/playtests/typing-test.md).
 var use_godot_box: bool = false
+## "Less motion": no animations, and the mountain stands still (see Motion).
+var reduce_motion: bool = false
 
 
 func _ready() -> void:
@@ -21,6 +23,7 @@ func _ready() -> void:
 	locale = _load_locale(config if loaded else null)
 	age_confirmed = bool(config.get_value("general", "age_confirmed", false)) if loaded else false
 	use_godot_box = bool(config.get_value("general", "use_godot_box", false)) if loaded else false
+	reduce_motion = bool(config.get_value("general", "reduce_motion", false)) if loaded else false
 	TranslationServer.set_locale(locale)
 
 
@@ -52,6 +55,12 @@ func set_use_godot_box(on: bool) -> void:
 	_save()
 
 
+func set_reduce_motion(on: bool) -> void:
+	reduce_motion = on
+	_save()
+	Events.state_changed.emit()
+
+
 func _load_locale(config: ConfigFile) -> String:
 	if config:
 		var saved: String = config.get_value("general", "locale", "")
@@ -67,4 +76,5 @@ func _save() -> void:
 	config.set_value("general", "locale", locale)
 	config.set_value("general", "age_confirmed", age_confirmed)
 	config.set_value("general", "use_godot_box", use_godot_box)
+	config.set_value("general", "reduce_motion", reduce_motion)
 	config.save(_PATH)

@@ -50,7 +50,8 @@ async function play(browser, size) {
     }
     throw new Error(`${size.name}: timed out waiting for ${what}`);
   };
-  // Clicks a published control, scrolling the game's list until it is on screen.
+  // Clicks a published control, scrolling the game's list until it is on
+  // screen and waiting until it has stopped moving (cards pop in).
   const click = async (id) => {
     let state = await waitFor((s) => s.items[id], `"${id}"`);
     for (let i = 0; i < 20 && !state.items[id].on_screen; i++) {
@@ -61,6 +62,16 @@ async function play(browser, size) {
       await page.waitForTimeout(350);
       state = await ui();
     }
+    const where = (s) =>
+      s?.items[id] && ["x", "y", "w", "h"].map((k) => Math.round(s.items[id][k])).join();
+    for (let i = 0, last = where(state); i < 20; i++) {
+      await page.waitForTimeout(120);
+      state = await ui();
+      const now = where(state);
+      if (now === last) break;
+      last = now;
+    }
+    if (!state.items[id]) throw new Error(`${size.name}: "${id}" went away`);
     const item = state.items[id];
     if (item.disabled) throw new Error(`${size.name}: "${id}" is disabled`);
     await page.mouse.click(item.x + item.w / 2, item.y + item.h / 2);

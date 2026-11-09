@@ -448,3 +448,7 @@ UI_PILL_STOCK,{pill} ×{count},{pill} ×{count}
 UI_BREW,Brew · {cost},Luyện · {cost}
 UI_PILL_LOCKED,{pill}: at Alchemy Room level {level},{pill}: cần Đan phòng cấp {level}
 UI_EVENT_NOTHING,Nothing much changed.,Không có gì thay đổi mấy.
+UI_AT_HOME,At home,Ở nhà
+UI_MISSIONS,Missions,Nhiệm vụ
+UI_LIKELY,Likely: {tier},Dự đoán: {tier}
+UI_LESS_MOTION,Less motion,Giảm chuyển động
