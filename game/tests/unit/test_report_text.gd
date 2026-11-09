@@ -149,3 +149,6 @@ func test_a_resolved_event_lists_what_changed() -> void:
 	var lines := ReportText.event_result(sect, sect.event, "en")
 	assert_eq(lines[0], "-12 Spirit Stones")
 	assert_true(lines.has("Test a: Mood +1"), str(lines))
+	sect.event = EventRules._start(sect, "wandering_master", "bamboo_grove", ["a", "b"] as Array[String])
+	EventRules.choose(sect, "decline")
+	assert_eq(ReportText.event_result(sect, sect.event, "en"), ["Nothing much changed."] as Array[String])

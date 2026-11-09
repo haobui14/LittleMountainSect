@@ -417,3 +417,34 @@ UI_EVENT_CLOSER,{a} and {b} grew closer.,{a} và {b} thân nhau hơn.
 UI_EVENT_APART,{a} and {b} are a bit cross with each other.,{a} và {b} hơi giận nhau.
 UI_EVENT_PROGRESS,{name}: +{gain} cultivation progress,{name}: +{gain} tiến độ tu vi
 UI_EVENT_ITEM,Found a {pill}!,Tìm được một viên {pill}!
+UI_EVENT_AT,At {place},Tại {place}
+UI_EVENT_WRITING,The Elder is still telling this story…,Trưởng lão vẫn đang kể chuyện này…
+UI_EVENT_FIRST,Decide what to do about this before you plan the day.,Hãy quyết định chuyện này trước khi lên kế hoạch.
+UI_EVENT_CHOSE,You chose: {choice},Người đã chọn: {choice}
+UI_CHOICE_COST,{choice} · {cost},{choice} · {cost}
+UI_CANDIDATE,A hopeful at the gate,Người xin nhập môn
+UI_CANDIDATE_COST,Taking {name} in costs {cost} Spirit Stones. They wait until the evening of day {day}.,Nhận {name} tốn {cost} Linh thạch. Người này chờ đến tối ngày {day}.
+UI_RECRUIT_ACCEPT,Welcome them,Thu nhận
+UI_RECRUIT_DECLINE,Send them home,Mời về
+UI_RECRUIT_FULL,The Main Hall has no room. Upgrade it to take in more disciples.,Chính điện đã hết chỗ. Hãy nâng cấp để nhận thêm đệ tử.
+UI_RECRUIT_POOR,Not enough Spirit Stones yet.,Chưa đủ Linh thạch.
+TASK_BREAKTHROUGH_CHANCE,Break through ({percent}%),Đột phá ({percent}%)
+TASK_BREAKTHROUGH_PILL,"Break through ({percent}%, uses a {pill})","Đột phá ({percent}%, dùng {pill})"
+TASK_STUDY_PROGRESS,Study ({study}/{max}),Nghiên cứu ({study}/{max})
+UI_LOST,Lost on the mountain.,Đang bị lạc trên núi.
+UI_COMING_HOME,On the way home: back by the evening of day {day}.,Đang trên đường về: về vào tối ngày {day}.
+UI_LEFT,Has left the sect for now. They may come back one day.,Đã tạm rời tông môn. Có lẽ một ngày sẽ quay về.
+UI_HEAL,Give a Healing Pill ({count} left),Cho uống Hồi Phục Đan (còn {count})
+UI_SIDE_EFFECT,"{effect}, {days} more days. {rule}","{effect}, còn {days} ngày. {rule}"
+UI_TECHNIQUE,"Technique: {technique}, level {tier}","Công pháp: {technique}, tầng {tier}"
+UI_STUDY,Study: {study}/{max},Nghiên cứu: {study}/{max}
+UI_NEEDS_REPUTATION,The next level needs {reputation} Reputation (the sect has {have}).,Cấp sau cần {reputation} Danh vọng (tông môn đang có {have}).
+EFFECT_KITCHEN,Fed disciples get +{mood} Mood each evening. Meals cost 1 more Food for every {per} disciples at home.,Đệ tử được ăn no thêm +{mood} Tâm trạng mỗi tối. Cứ {per} đệ tử ở nhà thì bữa ăn tốn thêm 1 Lương thực.
+EFFECT_ALCHEMY,Brews {brews} pills a day ({left} left today).,Luyện được {brews} viên mỗi ngày (hôm nay còn {left}).
+EFFECT_LIBRARY,Disciples can study techniques up to level {level}.,Đệ tử có thể học công pháp đến tầng {level}.
+EFFECT_MISSION_HALL,Unlocks: {missions}.,Mở khóa: {missions}.
+EFFECT_MISSION_HALL_BONUS,Mission rewards +{percent}%.,Phần thưởng nhiệm vụ +{percent}%.
+UI_PILL_STOCK,{pill} ×{count},{pill} ×{count}
+UI_BREW,Brew · {cost},Luyện · {cost}
+UI_PILL_LOCKED,{pill}: at Alchemy Room level {level},{pill}: cần Đan phòng cấp {level}
+UI_EVENT_NOTHING,Nothing much changed.,Không có gì thay đổi mấy.

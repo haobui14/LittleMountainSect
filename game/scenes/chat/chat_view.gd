@@ -38,7 +38,7 @@ func _ready() -> void:
 	var d := _disciple()
 	var header := UiKit.hbox(10)
 	header.add_child(UiKit.button(tr("UI_BACK"), "chat_back", func() -> void: closed.emit()))
-	_portrait = Portrait.new(d.spirit_root if d else "", d == null)
+	_portrait = Portrait.of(d) if d else Portrait.new("", true)
 	header.add_child(_portrait)
 	var names := UiKit.vbox(2)
 	names.add_child(UiKit.label(_name(), UiKit.FONT_SIZE + 2, UiKit.JADE))

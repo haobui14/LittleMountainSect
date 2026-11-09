@@ -5,8 +5,11 @@ extends Node
 ## Rectangles are in CSS pixels, relative to the page.
 ##
 ##   window.lmsUi = {screen: "plan", day: 3, chat_lines: 4, waiting: 0,
-##                   evening: "done",
+##                   evening: "done", event: false, candidate: false,
 ##                   items: {"end_day": {x, y, w, h, disabled, pressed, on_screen}}}
+##
+## event is true while the morning's surprise event waits for a choice, and
+## candidate while a hopeful waits at the gate.
 
 const INTERVAL := 0.2
 
@@ -38,6 +41,8 @@ func _process(delta: float) -> void:
 		"chat_lines": lines,
 		"waiting": GameState.waiting.size(),
 		"evening": GameState.evening_state,
+		"event": in_game and EventRules.pending(GameState.sect),
+		"candidate": in_game and not GameState.sect.candidate.is_empty(),
 	})
 	JavaScriptBridge.eval("""
 		(function () {

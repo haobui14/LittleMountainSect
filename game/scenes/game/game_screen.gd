@@ -174,15 +174,100 @@ func _today(body: VBoxContainer) -> void:
 	body.add_child(UiKit.heading(tr("UI_STEP_" + GameState.step.to_upper())))
 	match GameState.step:
 		"morning":
-			for line in ReportText.morning(GameState.sect, _locale()):
-				body.add_child(UiKit.label(line))
-			body.add_child(UiKit.button(tr("UI_PLAN_DAY"), "plan_day", GameState.start_planning, true))
+			_morning(body)
 		"plan":
 			_plan(body)
 		"free_time":
 			_free_time(body)
 		"results":
 			_results(body)
+
+
+## The morning report, then today's surprise event and any hopeful at the
+## gate. The day can't be planned until the event's choice is made.
+func _morning(body: VBoxContainer) -> void:
+	var sect := GameState.sect
+	for line in ReportText.morning(sect, _locale()):
+		body.add_child(UiKit.label(line))
+	if not sect.event.is_empty() and int(sect.event["day"]) == sect.day:
+		body.add_child(MorningCards.event_card(sect, _locale(), GameState.event_waiting))
+	if not sect.candidate.is_empty():
+		body.add_child(MorningCards.candidate_card(sect, _locale()))
+	var deciding := EventRules.pending(sect)
+	if deciding:
+		body.add_child(UiKit.label(tr("UI_EVENT_FIRST"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+	var start := UiKit.button(tr("UI_PLAN_DAY"), "plan_day", GameState.start_planning, true)
+	start.disabled = deciding
+	body.add_child(start)
+
+
+## Where a disciple is when they can't be planned (a mission, lost or left)
+## or why they must rest (an injury), or null.
+func _status_label(d: Disciple) -> Label:
+	var sect := GameState.sect
+	var away := sect.mission_of(d.id)
+	if away:
+		return UiKit.label(tr("UI_AWAY").format({"mission": ReportText.mission_name(away.mission), "day": away.return_day}), UiKit.SMALL_SIZE, UiKit.SOFT_INK)
+	match d.status:
+		"lost":
+			if d.return_day > 0:
+				return UiKit.label(tr("UI_COMING_HOME").format({"day": d.return_day}), UiKit.SMALL_SIZE, UiKit.SOFT_INK)
+			return UiKit.label(tr("UI_LOST"), UiKit.SMALL_SIZE, UiKit.WARN)
+		"left":
+			return UiKit.label(tr("UI_LEFT"), UiKit.SMALL_SIZE, UiKit.WARN)
+	if d.is_injured():
+		return UiKit.label(tr("UI_INJURED").format({"days": d.injury_days()}), UiKit.SMALL_SIZE, UiKit.WARN)
+	return null
+
+
+## "Green hair, 3 more days. Only funny." for each side effect.
+func _side_effect_labels(box: VBoxContainer, d: Disciple) -> void:
+	for effect in d.side_effects():
+		box.add_child(UiKit.label(tr("UI_SIDE_EFFECT").format({
+			"effect": _first_upper(ReportText.side_effect_name(effect.kind)),
+			"days": effect.days_left,
+			"rule": tr("SIDE_%s_RULE" % effect.kind.to_upper()),
+		}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+
+
+func _first_upper(text: String) -> String:
+	return text.left(1).to_upper() + text.substr(1)
+
+
+## The pill a breakthrough by [param d] would use today: the best one left
+## after the disciples before them (who try first) have taken theirs.
+func _pill_for(d: Disciple) -> String:
+	var sect := GameState.sect
+	var stock := {}
+	for pill: String in Balance.PILL_BREAKTHROUGH:
+		stock[pill] = sect.item(pill)
+	for other in sect.disciples:
+		if other == d:
+			break
+		if GameState.plan.task_of(other.id) == "breakthrough":
+			for pill: String in stock:
+				if stock[pill] > 0:
+					stock[pill] -= 1
+					break
+	for pill: String in stock:
+		if stock[pill] > 0:
+			return pill
+	return "none"
+
+
+func _choice_text(d: Disciple, choice: String) -> String:
+	match choice:
+		"breakthrough":
+			var pill := _pill_for(d)
+			var percent := roundi(100 * CultivationRules.chance(GameState.sect, d, pill))
+			if pill == "none":
+				return tr("TASK_BREAKTHROUGH_CHANCE").format({"percent": percent})
+			return tr("TASK_BREAKTHROUGH_PILL").format({"percent": percent, "pill": ReportText.pill_name(pill)})
+		"study":
+			return tr("TASK_STUDY_PROGRESS").format({"study": d.study, "max": Balance.STUDY_MAX})
+	if choice in Balance.HOME_TASKS:
+		return tr("TASK_" + choice.to_upper())
+	return ReportText.mission_name(choice)
 
 
 func _plan(body: VBoxContainer) -> void:
@@ -195,12 +280,14 @@ func _plan(body: VBoxContainer) -> void:
 		var box := UiKit.vbox(6)
 		card.add_child(box)
 		box.add_child(UiKit.label(d.display_name(_locale()), UiKit.FONT_SIZE, UiKit.JADE))
-		var away := sect.mission_of(d.id)
-		if away:
-			box.add_child(UiKit.label(tr("UI_AWAY").format({"mission": ReportText.mission_name(away.mission), "day": away.return_day}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
-		elif d.is_injured():
-			box.add_child(UiKit.label(tr("UI_INJURED").format({"days": d.injury_days()}), UiKit.SMALL_SIZE, UiKit.WARN))
-		else:
+		var status := _status_label(d)
+		if status:
+			box.add_child(status)
+		if not sect.is_away(d.id):
+			_side_effect_labels(box, d)
+			if Alchemy.can_heal(sect, d):
+				box.add_child(UiKit.button(tr("UI_HEAL").format({"count": sect.item("healing_pill")}), "heal_" + d.id, GameState.heal.bind(d.id)))
+		if not sect.is_away(d.id) and not d.is_injured():
 			var decision := Decisions.for_today(sect, d.id)
 			if not decision.is_empty():
 				var note := tr("UI_DECIDED").format({"action": tr("ACTION_" + String(decision["action"]).to_upper())})
@@ -211,9 +298,8 @@ func _plan(body: VBoxContainer) -> void:
 				box.add_child(UiKit.label(tr("UI_WANTS").format({"action": tr("ACTION_" + d.wants.to_upper())}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 			var row := UiKit.flow()
 			var current := GameState.choice_of(d.id)
-			for choice in GameState.choices():
-				var text := tr("TASK_" + choice.to_upper()) if choice in Balance.HOME_TASKS else ReportText.mission_name(choice)
-				row.add_child(UiKit.choice(text, "choose_%s_%s" % [d.id, choice], current == choice, GameState.choose.bind(d.id, choice)))
+			for choice in GameState.choices_for(d.id):
+				row.add_child(UiKit.choice(_choice_text(d, choice), "choose_%s_%s" % [d.id, choice], current == choice, GameState.choose.bind(d.id, choice)))
 			box.add_child(row)
 		cards.add_child(card)
 
@@ -247,7 +333,7 @@ func _free_time(body: VBoxContainer) -> void:
 		var box := UiKit.vbox(6)
 		card.add_child(box)
 		var row := UiKit.hbox()
-		var portrait := Portrait.new(d.spirit_root)
+		var portrait := Portrait.of(d)
 		portrait.custom_minimum_size = Vector2(48, 48)
 		var lines: Array = GameState.chats.get(d.id, [])
 		if not lines.is_empty():
@@ -330,7 +416,13 @@ func _slot(building: String) -> Control:
 	var level := sect.level(building)
 	box.add_child(UiKit.label(tr("UI_LEVEL").format({"level": level}) if level > 0 else tr("UI_NOT_BUILT"), UiKit.SMALL_SIZE))
 	box.add_child(UiKit.label(_effect(building), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+	if building == "alchemy_room" and level > 0:
+		_pills(box)
 	var check := BuildingRules.can_upgrade(sect, building)
+	var reputation := int(check["reputation"])
+	if reputation > 0:
+		var have := int(sect.resources["reputation"])
+		box.add_child(UiKit.label(tr("UI_NEEDS_REPUTATION").format({"reputation": reputation, "have": have}), UiKit.SMALL_SIZE, UiKit.WARN if have < reputation else UiKit.SOFT_INK))
 	if check["reason"] == "max_level":
 		box.add_child(UiKit.label(tr("UI_MAX_LEVEL"), UiKit.SMALL_SIZE))
 	else:
@@ -343,6 +435,7 @@ func _slot(building: String) -> Control:
 
 func _effect(building: String) -> String:
 	var sect := GameState.sect
+	var level := sect.level(building)
 	match building:
 		"main_hall":
 			return tr("EFFECT_MAIN_HALL").format({"limit": sect.disciple_limit()})
@@ -352,14 +445,52 @@ func _effect(building: String) -> String:
 				text += " " + tr("EFFECT_HUTS_HEAL")
 			return text
 		"training_yard":
-			if sect.level(building) == 0:
+			if level == 0:
 				return tr("EFFECT_TRAINING_YARD_NONE").format({"percent": roundi(100 * Balance.TRAIN_YARD_BONUS)})
-			return tr("EFFECT_TRAINING_YARD").format({"percent": roundi(100 * Balance.TRAIN_YARD_BONUS * sect.level(building))})
+			return tr("EFFECT_TRAINING_YARD").format({"percent": roundi(100 * Balance.TRAIN_YARD_BONUS * level)})
 		"spirit_field":
-			if sect.level(building) == 0:
+			if level == 0:
 				return tr("EFFECT_FIELD_NONE").format({"food": BuildingRules.work_food(sect)})
 			return tr("EFFECT_FIELD").format({"food": BuildingRules.work_food(sect), "herbs": BuildingRules.work_herbs(sect)})
+		"kitchen":
+			if level == 0:
+				return tr("BUILDING_KITCHEN_DESC")
+			return tr("EFFECT_KITCHEN").format({"mood": BuildingRules.kitchen_mood(sect), "per": Balance.KITCHEN_FOOD_PER[level]})
+		"alchemy_room":
+			if level == 0:
+				return tr("BUILDING_ALCHEMY_ROOM_DESC")
+			return tr("EFFECT_ALCHEMY").format({"brews": level, "left": maxi(0, level - sect.brews_today)})
+		"library":
+			if level == 0:
+				return tr("BUILDING_LIBRARY_DESC")
+			return tr("EFFECT_LIBRARY").format({"level": mini(level, Balance.TECHNIQUE_MAX)})
+		"mission_hall":
+			if level == 0:
+				return tr("BUILDING_MISSION_HALL_DESC")
+			var open: Array[String] = []
+			for mission: String in Balance.MISSION_HALL_NEEDED:
+				if level >= int(Balance.MISSION_HALL_NEEDED[mission]):
+					open.append(ReportText.mission_name(mission))
+			var text := tr("EFFECT_MISSION_HALL").format({"missions": ", ".join(open)})
+			if level >= Balance.MISSION_HALL_REWARD_LEVEL:
+				text += " " + tr("EFFECT_MISSION_HALL_BONUS").format({"percent": roundi(100 * Balance.MISSION_HALL_REWARD_BONUS)})
+			return text
 	return ""
+
+
+## The Alchemy Room's pills: the stock of each and a "brew_<pill>" button,
+## or the level that unlocks it.
+func _pills(box: VBoxContainer) -> void:
+	var sect := GameState.sect
+	for pill in Balance.PILLS:
+		var recipe: Dictionary = Balance.RECIPES[pill]
+		if sect.level("alchemy_room") < int(recipe["level"]):
+			box.add_child(UiKit.label(tr("UI_PILL_LOCKED").format({"pill": ReportText.pill_name(pill), "level": recipe["level"]}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+			continue
+		box.add_child(UiKit.label(tr("UI_PILL_STOCK").format({"pill": ReportText.pill_name(pill), "count": sect.item(pill)}), UiKit.SMALL_SIZE))
+		var b := UiKit.button(tr("UI_BREW").format({"cost": ReportText.cost(recipe["cost"])}), "brew_" + pill, GameState.brew.bind(pill), true)
+		b.disabled = not Alchemy.can_brew(sect, pill)["ok"]
+		box.add_child(b)
 
 
 # Disciples ------------------------------------------------------------------
@@ -414,20 +545,17 @@ func _disciple_card(d: Disciple) -> Control:
 	box.add_child(UiKit.label("%s · %s" % [tr("ROOT_" + d.spirit_root.to_upper()), tr("REALM_" + d.realm.to_upper())], UiKit.SMALL_SIZE))
 	box.add_child(UiKit.label("%s %d/%d" % [tr("UI_PROGRESS"), d.progress, Balance.PROGRESS_MAX], UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 	box.add_child(UiKit.bar(d.progress, Balance.PROGRESS_MAX))
-	var stats: Array[String] = []
-	for stat in Balance.STATS:
-		stats.append("%s %d" % [tr("STAT_" + stat.to_upper()), d.stat(stat)])
-	box.add_child(UiKit.label(" · ".join(stats), UiKit.SMALL_SIZE))
+	box.add_child(UiKit.label(ReportText.stats_line(d), UiKit.SMALL_SIZE))
 	box.add_child(UiKit.label("%s %+d · %s %d" % [tr("UI_MOOD"), d.mood, tr("UI_LOYALTY"), d.loyalty], UiKit.SMALL_SIZE))
-	var quirks: Array[String] = []
-	for quirk in d.quirks:
-		quirks.append(tr(Quirks.text_key(quirk)))
-	box.add_child(UiKit.label(tr("UI_QUIRKS").format({"quirks": ", ".join(quirks)}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
-	var away := sect.mission_of(d.id)
-	if away:
-		box.add_child(UiKit.label(tr("UI_AWAY").format({"mission": ReportText.mission_name(away.mission), "day": away.return_day}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
-	elif d.is_injured():
-		box.add_child(UiKit.label(tr("UI_INJURED").format({"days": d.injury_days()}), UiKit.SMALL_SIZE, UiKit.WARN))
+	box.add_child(UiKit.label(ReportText.quirks_line(d), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+	if d.technique > 0:
+		box.add_child(UiKit.label(tr("UI_TECHNIQUE").format({"technique": ReportText.technique_name(CultivationRules.technique_of(d)), "tier": d.technique}), UiKit.SMALL_SIZE))
+	if sect.level("library") >= 1 or d.study > 0:
+		box.add_child(UiKit.label(tr("UI_STUDY").format({"study": d.study, "max": Balance.STUDY_MAX}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+	var status := _status_label(d)
+	if status:
+		box.add_child(status)
+	_side_effect_labels(box, d)
 	for other in sect.disciples:
 		var score := Relationships.score(sect, d.id, other.id)
 		if other != d and score != 0:

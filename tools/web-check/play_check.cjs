@@ -1,7 +1,11 @@
 // Plays the exported web build for 10 in-game days in headless Chromium,
 // at phone size (390x844) and desktop size (1280x720), by clicking the
 // controls the game publishes in window.lmsUi (see game/autoload/ui_probe.gd).
-// Takes a screenshot of each screen and fails on any page error.
+// Each morning it picks the first choice it can afford in a surprise event,
+// takes in a hopeful at the gate when it can (or sends them home), and in
+// the plan has two disciples train and sends the first one ready to break
+// through. Takes a
+// screenshot of each screen and fails on any page error.
 //
 // Usage: node tools/web-check/play_check.cjs <url> <screenshots-dir> [days] [--offline]
 // Serve build/web first, for example on port 8060. With --offline every
@@ -63,6 +67,31 @@ async function play(browser, size) {
     await page.waitForTimeout(250);
   };
   const shot = (label) => page.screenshot({ path: `${shots}/${size.name}_${label}.png` });
+  const counts = { events: 0, recruited: 0, declined: 0, breakthroughs: 0 };
+
+  // The morning's surprise event and hopeful, before the day can be planned.
+  const morning = async (day) => {
+    const state = await ui();
+    if (state.event) {
+      const choice = Object.keys(state.items).find(
+        (id) => id.startsWith("event_") && !state.items[id].disabled,
+      );
+      if (!choice) throw new Error(`${size.name}: no choice can be picked in day ${day}'s event`);
+      if (counts.events === 0) await shot(`1_event_day${day}`);
+      await click(choice);
+      await waitFor((s) => !s.event, "the event's result");
+      if (counts.events === 0) await shot(`1_event_result_day${day}`);
+      counts.events++;
+    }
+    if ((await ui()).candidate) {
+      if (counts.recruited + counts.declined === 0) await shot(`1_hopeful_day${day}`);
+      const accept = (await ui()).items.recruit_accept;
+      const welcome = accept && !accept.disabled;
+      await click(welcome ? "recruit_accept" : "recruit_decline");
+      await waitFor((s) => !s.candidate, "the hopeful's answer");
+      counts[welcome ? "recruited" : "declined"]++;
+    }
+  };
 
   // Types a chat line into the open chat and waits for the reply.
   const chat = async (message, label) => {
@@ -90,8 +119,22 @@ async function play(browser, size) {
 
   for (let day = 1; day <= DAYS; day++) {
     await waitFor((s) => s.screen === "morning" && s.day === day, `morning of day ${day}`);
+    await morning(day);
     await click("plan_day");
     await waitFor((s) => s.screen === "plan", "the day plan");
+    // From day 2, two disciples train, so someone is ready to break through
+    // within a 30-day run.
+    for (const id of day > 1 ? ["choose_d1_train", "choose_d2_train"] : []) {
+      const item = (await ui()).items[id];
+      if (item && !item.pressed) await click(id);
+    }
+    const ready = Object.keys((await ui()).items).find((id) => id.endsWith("_breakthrough"));
+    if (ready) {
+      await click(ready);
+      await waitFor((s) => s.items[ready]?.pressed, "the breakthrough choice");
+      if (counts.breakthroughs === 0) await shot(`4_breakthrough_day${day}`);
+      counts.breakthroughs++;
+    }
     if (day === 1) {
       // Build the Spirit Field, look at both tabs, and send a pair to gather herbs.
       await click("tab_mountain");
@@ -127,7 +170,7 @@ async function play(browser, size) {
   const final = await waitFor((s) => s.screen === "morning", "the last morning");
   await shot("7_after");
   await context.close();
-  return { size: size.name, reachedDay: final.day, errors };
+  return { size: size.name, reachedDay: final.day, errors, counts };
 }
 
 (async () => {
@@ -140,8 +183,11 @@ async function play(browser, size) {
       const result = await play(browser, size);
       const ok = result.reachedDay === DAYS + 1 && result.errors.length === 0;
       failed ||= !ok;
+      const c = result.counts;
       console.log(
         `${ok ? "ok  " : "FAIL"} ${size.name}: played to day ${result.reachedDay}` +
+          ` (${c.events} events, ${c.recruited} recruited, ${c.declined} sent home,` +
+          ` ${c.breakthroughs} breakthroughs tried)` +
           (result.errors.length
             ? `, page errors: ${result.errors.join(" / ")}`
             : ", no page errors"),

@@ -70,3 +70,31 @@ func test_every_id_has_text_in_both_languages() -> void:
 				missing.append("%s (%s)" % [key, locale])
 	TranslationServer.set_locale(previous)
 	assert_eq(missing, [] as Array[String])
+
+
+## Every key the screens name directly, as tr("KEY") or t("KEY").
+func _literal_keys(folder: String, found: Dictionary) -> void:
+	var pattern := RegEx.create_from_string("\\bt(?:r)?\\(\"([A-Z][A-Z0-9_]+)\"\\)")
+	for file in DirAccess.get_files_at(folder):
+		if file.ends_with(".gd"):
+			var source := FileAccess.get_file_as_string(folder.path_join(file))
+			for match in pattern.search_all(source):
+				found[match.get_string(1)] = folder.path_join(file)
+	for sub in DirAccess.get_directories_at(folder):
+		_literal_keys(folder.path_join(sub), found)
+
+
+func test_every_key_the_screens_name_has_text_in_both_languages() -> void:
+	var found := {}
+	for folder in ["res://scenes", "res://autoload"]:
+		_literal_keys(folder, found)
+	assert_gt(found.size(), 100, "the scan finds the screens' keys")
+	var previous := TranslationServer.get_locale()
+	var missing: Array[String] = []
+	for locale in ["en", "vi"]:
+		TranslationServer.set_locale(locale)
+		for key: String in found:
+			if tr(key) == key:
+				missing.append("%s (%s, %s)" % [key, locale, found[key]])
+	TranslationServer.set_locale(previous)
+	assert_eq(missing, [] as Array[String])

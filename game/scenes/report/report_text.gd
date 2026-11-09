@@ -116,6 +116,8 @@ static func event_result(sect: Sect, event: Dictionary, locale: String) -> Array
 		lines.append(t("UI_EVENT_ITEM").format({"pill": pill_name(applied["item"])}))
 	if applied.has("return_day"):
 		lines.append(t("MORNING_COMING_HOME").format({"name": name_of(sect, String(event["disciples"][0]), locale), "day": applied["return_day"]}))
+	if lines.is_empty():
+		lines.append(t("UI_EVENT_NOTHING"))
 	return lines
 
 
@@ -126,6 +128,32 @@ static func amounts(changes: Dictionary) -> String:
 		var amount := int(changes.get(resource, 0))
 		if amount != 0:
 			parts.append("%+d %s" % [amount, resource_name(resource)])
+	return ", ".join(parts)
+
+
+## "Talent 4 · Body 2 · Spirit 3 · Wit 5"
+static func stats_line(d: Disciple) -> String:
+	var stats: Array[String] = []
+	for stat in Balance.STATS:
+		stats.append("%s %d" % [t("STAT_" + stat.to_upper()), d.stat(stat)])
+	return " · ".join(stats)
+
+
+## "Quirks: loves noodles, scared of geese"
+static func quirks_line(d: Disciple) -> String:
+	var quirks: Array[String] = []
+	for quirk in d.quirks:
+		quirks.append(t(Quirks.text_key(quirk)))
+	return t("UI_QUIRKS").format({"quirks": ", ".join(quirks)})
+
+
+## A price: "8 Herbs, 10 Spirit Stones".
+static func cost(price: Dictionary) -> String:
+	var parts: Array[String] = []
+	for resource in Balance.RESOURCES:
+		var amount := int(price.get(resource, 0))
+		if amount > 0:
+			parts.append("%d %s" % [amount, resource_name(resource)])
 	return ", ".join(parts)
 
 
