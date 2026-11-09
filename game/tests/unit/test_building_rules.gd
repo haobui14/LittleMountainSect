@@ -31,17 +31,29 @@ func test_buildings_stop_at_level_three() -> void:
 	assert_eq(sect.level("disciple_huts"), 3)
 
 
-func test_later_buildings_are_locked_in_m3() -> void:
+func test_all_eight_buildings_can_be_built_to_level_three() -> void:
 	var sect := SimFixtures.sect()
-	for building in ["kitchen", "alchemy_room", "library", "mission_hall"]:
-		assert_eq(BuildingRules.can_upgrade(sect, building)["reason"], "not_in_play", building)
+	sect.resources["stones"] = 100_000
+	sect.resources["reputation"] = 100
+	for building in Balance.BUILDINGS:
+		while sect.level(building) < Balance.MAX_LEVEL:
+			assert_true(BuildingRules.upgrade(sect, building), building)
+		assert_eq(BuildingRules.can_upgrade(sect, building)["reason"], "max_level", building)
 
 
-func test_the_main_hall_sets_rank_and_disciple_limit() -> void:
+func test_the_main_hall_sets_rank_and_disciple_limit_and_needs_reputation() -> void:
 	var sect := SimFixtures.sect()
 	assert_eq([sect.rank(), sect.disciple_limit()], ["unknown_mountain", 4])
+	sect.resources["reputation"] = 14
+	var check := BuildingRules.can_upgrade(sect, "main_hall")
+	assert_eq([check["reason"], check["reputation"]], ["not_enough_reputation", 15])
+	assert_false(BuildingRules.upgrade(sect, "main_hall"))
+	sect.resources["reputation"] = 15
 	assert_true(BuildingRules.upgrade(sect, "main_hall"))
 	assert_eq([sect.rank(), sect.disciple_limit()], ["rising_sect", 8])
+	assert_eq(int(sect.resources["reputation"]), 15, "Reputation is needed, not spent")
+	assert_eq(sect.pending_facts, [{"type": "rank_up", "rank": "rising_sect"}] as Array[Dictionary])
+	assert_eq(sect.chronicle.back()["type"], "rank_up")
 
 
 func test_the_spirit_field_raises_work_output() -> void:

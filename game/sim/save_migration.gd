@@ -18,6 +18,9 @@ static func migrate(data: Variant) -> Dictionary:
 	if version == 1:
 		save = _v1_to_v2(save)
 		version = 2
+	if version == 2:
+		save = _v2_to_v3(save)
+		version = 3
 	save["version"] = version
 	return {"ok": true, "data": save}
 
@@ -33,4 +36,28 @@ static func _v1_to_v2(save: Dictionary) -> Dictionary:
 		d["chat_mood_today"] = 0
 		d["wants"] = ""
 		d["wants_day"] = 0
+	return save
+
+
+## Version 3 (M5) adds pills, surprise events, the gate candidate, morning
+## facts and the Sect Chronicle, and each disciple's status, technique and
+## study.
+static func _v2_to_v3(save: Dictionary) -> Dictionary:
+	var items := {}
+	for pill in Balance.PILLS:
+		items[pill] = 0
+	save["items"] = items
+	save["brews_today"] = 0
+	save["event"] = {}
+	save["next_event_day"] = 0
+	save["recent_problems"] = []
+	save["candidate"] = {}
+	save["next_candidate_day"] = 0
+	save["pending_facts"] = []
+	save["chronicle"] = []
+	for d: Dictionary in save["disciples"]:
+		d["status"] = "home"
+		d["return_day"] = 0
+		d["technique"] = 0
+		d["study"] = 0
 	return save

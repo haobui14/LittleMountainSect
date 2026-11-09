@@ -4,7 +4,7 @@ extends RefCounted
 ## and the random generator. [method to_dict] is the save; it carries a
 ## version number so older saves can be upgraded (see SaveMigration).
 
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 
 var day: int = 1
 var resources: Dictionary = {"stones": 0, "food": 0, "herbs": 0, "reputation": 0}
@@ -30,11 +30,31 @@ var revision: int = 0
 ## next morning can use its report: {day, source, story, morning_report,
 ## decisions, relationships}, or {}.
 var evening: Dictionary = {}
+## Pills in the Alchemy Room's store (id -> count), and how many were brewed
+## today.
+var items: Dictionary = {}
+var brews_today: int = 0
+## This morning's surprise event (EventRules), or {} when there is none.
+var event: Dictionary = {}
+## The first day the next random event may start, and the latest problems,
+## so they don't repeat too soon.
+var next_event_day: int = 0
+var recent_problems: Array[String] = []
+## A hopeful waiting at the gate (Recruiting): {disciple, until}, or {}.
+var candidate: Dictionary = {}
+var next_candidate_day: int = 0
+## Facts from the morning (events, recruits, pills) that go into today's
+## report, so the evening story can tell them.
+var pending_facts: Array[Dictionary] = []
+## Big moments for the Sect Chronicle (M6): [{day, type, ...}], newest last.
+var chronicle: Array[Dictionary] = []
 
 
 func _init() -> void:
 	for id in Balance.BUILDINGS:
 		buildings[id] = 0
+	for pill in Balance.PILLS:
+		items[pill] = 0
 
 
 func level(building: String) -> int:
@@ -56,8 +76,41 @@ func mission_of(id: String) -> ActiveMission:
 	return null
 
 
+## On a mission, lost or left: not at home today.
 func is_away(id: String) -> bool:
-	return mission_of(id) != null
+	if mission_of(id) != null:
+		return true
+	var d := disciple(id)
+	return d != null and d.status != "home"
+
+
+## "home", "mission", "lost" or "left" (Balance.STATUSES).
+func status_of(id: String) -> String:
+	if mission_of(id) != null:
+		return "mission"
+	var d := disciple(id)
+	return d.status if d else "home"
+
+
+func item(pill: String) -> int:
+	return int(items.get(pill, 0))
+
+
+## Adds (or takes) pills, kept between 0 and Balance.PILL_MAX. Returns the change.
+func add_item(pill: String, amount: int) -> int:
+	assert(pill in Balance.PILLS, "Unknown pill: %s" % pill)
+	var before := item(pill)
+	items[pill] = clampi(before + amount, 0, Balance.PILL_MAX)
+	return item(pill) - before
+
+
+## Records a big moment for the Sect Chronicle.
+func chronicle_add(type: String, fields: Dictionary = {}) -> void:
+	var entry := {"day": day, "type": type}
+	entry.merge(fields)
+	chronicle.append(entry)
+	if chronicle.size() > Balance.CHRONICLE_MAX:
+		chronicle = chronicle.slice(chronicle.size() - Balance.CHRONICLE_MAX)
 
 
 ## Disciples at home and not injured: the ones the player can plan for freely.
@@ -106,6 +159,15 @@ func to_dict() -> Dictionary:
 		"decisions": decisions.duplicate(true),
 		"revision": revision,
 		"evening": evening.duplicate(true),
+		"items": items.duplicate(),
+		"brews_today": brews_today,
+		"event": event.duplicate(true),
+		"next_event_day": next_event_day,
+		"recent_problems": recent_problems.duplicate(),
+		"candidate": candidate.duplicate(true),
+		"next_candidate_day": next_candidate_day,
+		"pending_facts": pending_facts.duplicate(true),
+		"chronicle": chronicle.duplicate(true),
 	}
 
 
@@ -142,4 +204,16 @@ static func from_dict(data: Dictionary) -> Sect:
 		}
 	s.revision = int(data["revision"])
 	s.evening = DayReport._whole_numbers(data["evening"])
+	for pill in Balance.PILLS:
+		s.items[pill] = int(data["items"].get(pill, 0))
+	s.brews_today = int(data["brews_today"])
+	s.event = DayReport._whole_numbers(data["event"])
+	s.next_event_day = int(data["next_event_day"])
+	s.recent_problems.assign(Array(data["recent_problems"]).map(func(p: Variant) -> String: return String(p)))
+	s.candidate = DayReport._whole_numbers(data["candidate"])
+	s.next_candidate_day = int(data["next_candidate_day"])
+	for fact: Dictionary in data["pending_facts"]:
+		s.pending_facts.append(DayReport._whole_numbers(fact))
+	for entry: Dictionary in data["chronicle"]:
+		s.chronicle.append(DayReport._whole_numbers(entry))
 	return s

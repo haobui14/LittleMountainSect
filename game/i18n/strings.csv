@@ -17,6 +17,8 @@ RES_HERBS,Herbs,Thảo dược
 RES_REPUTATION,Reputation,Danh vọng
 MISSION_GATHER_HERBS,Gather Herbs,Hái thảo dược
 MISSION_HUNT_MONSTER,Hunt a Monster,Săn yêu thú
+MISSION_ESCORT_MERCHANT,Escort a Merchant,Hộ tống thương nhân
+MISSION_EXPLORE_SECRET_REALM,Explore a Secret Realm,Thám hiểm Bí cảnh
 FACT_TRAINED,{name} trained: +{gain} cultivation progress.,{name} tu luyện: +{gain} tiến độ tu vi.
 FACT_TRAINED_READY,{name} trained and is ready to break through!,{name} tu luyện và đã sẵn sàng đột phá!
 FACT_WORKED_FIELD,"{names} worked the Spirit Field: +{food} Food, +{herbs} Herbs.","{names} làm việc ở Linh điền: +{food} Lương thực, +{herbs} Thảo dược."
@@ -43,7 +45,7 @@ ELDER_TIP_4,"Elder Mo Wen: ‘An unhappy disciple needs rest, not a lecture. Bet
 ELDER_TIP_5,"Elder Mo Wen: ‘Talk with each disciple in free time. Once a day, it lifts their mood. Patience the turtle agrees.’","Mạc Vấn trưởng lão: ‘Lúc rảnh hãy trò chuyện với từng đệ tử. Mỗi ngày một lần, tâm trạng họ sẽ khá hơn. Rùa Nhẫn Nại cũng đồng ý.’"
 MORNING_AWAY,On a mission ({mission}): {names}. Back by the evening of day {day}.,Đang làm nhiệm vụ ({mission}): {names}. Về vào tối ngày {day}.
 MORNING_INJURED,{name} is resting an injury: {days} more days.,{name} đang dưỡng thương: còn {days} ngày.
-MORNING_READY,{name} is ready to break through. (Breakthroughs arrive in a later update.),{name} đã sẵn sàng đột phá. (Đột phá sẽ có trong bản cập nhật sau.)
+MORNING_READY,{name} is ready to break through. Choose “Break through” in the plan.,{name} đã sẵn sàng đột phá. Hãy chọn “Đột phá” khi lên kế hoạch.
 MORNING_NO_FOOD,"The storehouse is empty. Put someone to work, or the disciples go hungry tonight.","Kho đã trống. Hãy cho ai đó đi làm việc, không thì tối nay các đệ tử sẽ đói."
 QUIRK_AFRAID_OF_CHICKENS,afraid of chickens,sợ gà
 QUIRK_CHOSEN_ONE,certain they are the chosen one,tin chắc mình là người được chọn
@@ -127,6 +129,8 @@ UI_INJURED,Injured: resting for {days} more days.,Bị thương: còn nghỉ {da
 TASK_TRAIN,Train,Tu luyện
 TASK_WORK,Work,Làm việc
 TASK_REST,Rest,Nghỉ ngơi
+TASK_STUDY,Study,Nghiên cứu
+TASK_BREAKTHROUGH,Break through,Đột phá
 UI_TEAM,{mission}: {names}. Likely result: {tier}.,{mission}: {names}. Dự đoán: {tier}.
 TIER_GREAT,great success,thành công rực rỡ
 TIER_SUCCESS,success,thành công
@@ -250,3 +254,166 @@ UI_THINKING,{name} is thinking,{name} đang nghĩ
 UI_USE_GODOT_BOX,Use the game's own text box,Dùng ô nhập của trò chơi
 UI_WRITTEN,written,viết sẵn
 UI_YOU,You,Người
+FACT_BREAKTHROUGH,{name} broke through to {realm}!,{name} đột phá thành công lên {realm}!
+FACT_PILL_USED,({pill} used.),(Đã dùng {pill}.)
+FACT_BREAKTHROUGH_FAILED,{name} tried to break through to {realm} and failed: −{lost} progress. Side effect for {days} days: {effect}.,{name} đột phá {realm} thất bại: mất {lost} tiến độ. Tác dụng phụ trong {days} ngày: {effect}.
+FACT_EFFECT_ENDED,{name}'s side effect wore off: {effect}.,Tác dụng phụ của {name} đã hết: {effect}.
+FACT_STUDIED,{name} studied in the Library: +{gain} study.,{name} nghiên cứu ở Tàng thư các: +{gain} điểm.
+FACT_LEARNED,"{name} learned {technique}, level {tier}!","{name} lĩnh ngộ {technique}, tầng {tier}!"
+FACT_LOST,{name} got lost on the way back from {mission}!,{name} bị lạc trên đường về từ nhiệm vụ {mission}!
+FACT_LEFT,{name} was so unhappy after {mission} that they left the sect. They may come back one day.,{name} buồn bực sau nhiệm vụ {mission} đến mức rời tông môn. Có lẽ một ngày sẽ quay về.
+FACT_RETURNED_LOST,{name} found the way home!,{name} đã tìm được đường về nhà!
+FACT_RETURNED_LEFT,"{name} came back to the sect, a little humbler.","{name} đã quay về tông môn, khiêm tốn hơn một chút."
+FACT_RECRUITED,{name} joined the sect!,{name} gia nhập tông môn!
+FACT_RANK_UP,The sect is now known as a {rank}!,Tông môn giờ đã được biết đến là {rank}!
+FACT_BREWED,The Alchemy Room brewed a {pill}.,Đan phòng luyện được một viên {pill}.
+FACT_CURED,{name} took a Healing Pill and feels fine again.,{name} uống Hồi Phục Đan và khỏe lại.
+FACT_FOUND_ITEM,"On {mission}, the team found a {pill}!","Trong nhiệm vụ {mission}, cả đội tìm được một viên {pill}!"
+FACT_EVENT,{title}: {choice},{title}: {choice}
+EVENT_RESULT_WIN,It worked out!,Mọi chuyện suôn sẻ!
+EVENT_RESULT_LOSE,It didn't go to plan.,Không như dự tính.
+MORNING_LOST,{name} is lost on the mountain.,{name} đang bị lạc trên núi.
+MORNING_COMING_HOME,{name} is on the way home: back by the evening of day {day}.,{name} đang trên đường về: sẽ về vào tối ngày {day}.
+MORNING_LEFT,{name} has left the sect for now.,{name} đã tạm rời tông môn.
+MORNING_EFFECT,{name}: {effect} ({days} more days).,{name}: {effect} (còn {days} ngày).
+MORNING_CANDIDATE,A hopeful waits at the gate: {name}.,Có người đang chờ ở cổng xin nhập môn: {name}.
+PILL_FOUNDATION_PILL,Foundation Pill,Trúc Cơ Đan
+PILL_HEALING_PILL,Healing Pill,Hồi Phục Đan
+PILL_GOLDEN_PILL,Golden Core Pill,Ngưng Kim Đan
+SIDE_GREEN_HAIR,green hair,tóc xanh lè
+SIDE_HICCUPS,hiccups,nấc cụt
+SIDE_FLOATING,floating,lơ lửng
+SIDE_BACKWARDS_QI,backwards qi,khí chạy ngược
+SIDE_SQUEAKY_VOICE,a squeaky voice,giọng the thé
+SIDE_GLOWING,glowing at night,phát sáng ban đêm
+SIDE_GREEN_HAIR_RULE,Only funny.,Chỉ buồn cười thôi.
+SIDE_HICCUPS_RULE,Weaker on missions.,Yếu hơn khi làm nhiệm vụ.
+SIDE_FLOATING_RULE,Half as useful at work.,Làm việc chỉ được một nửa.
+SIDE_BACKWARDS_QI_RULE,Trains half as fast.,Tu luyện chậm một nửa.
+SIDE_SQUEAKY_VOICE_RULE,Only funny.,Chỉ buồn cười thôi.
+SIDE_GLOWING_RULE,Rests half as well.,Nghỉ ngơi kém một nửa.
+TECHNIQUE_IRON_CHOPSTICKS_PALM,Iron Chopsticks Palm,Thiết Đũa Chưởng
+TECHNIQUE_SWAYING_BAMBOO_STEP,Swaying Bamboo Step,Trúc Ảnh Bộ
+TECHNIQUE_PUDDLE_MIRROR_ART,Puddle Mirror Art,Thủy Kính Thuật
+TECHNIQUE_SPICY_BREATH_FIST,Spicy Breath Fist,Hỏa Tiêu Quyền
+TECHNIQUE_IMMOVABLE_NAP_STANCE,Immovable Nap Stance,Bất Động Miên Công
+PLACE_MAIN_GATE,the mountain gate,cổng núi
+PLACE_SPIRIT_FIELD,the Spirit Field,Linh điền
+PLACE_KITCHEN,the Kitchen,Nhà bếp
+PLACE_TRAINING_YARD,the Training Yard,sân luyện võ
+PLACE_BAMBOO_GROVE,the bamboo grove,rừng trúc
+PLACE_HOT_SPRING,the hot spring,suối nước nóng
+PLACE_MOUNTAIN_PATH,the mountain path,đường núi
+PLACE_VILLAGE_MARKET,the village market,chợ làng
+PLACE_LIBRARY,the Library,Tàng thư các
+PLACE_MISTY_POND,the misty pond,hồ sương
+EVENT_SPIRIT_GOOSE_TITLE,The Goose Who Would Be King,Ngỗng Chúa Tể
+EVENT_SPIRIT_GOOSE_STORY,"A spirit goose has claimed {place}. It honks at {a}, bites {b}'s sleeve, and looks very pleased with itself.","Một con linh nga chiếm lấy {place}. Nó kêu quang quác vào {a}, cắn tay áo {b}, và trông rất đắc ý."
+EVENT_SPIRIT_GOOSE_BRIBE,Bribe it with food,Hối lộ nó bằng đồ ăn
+EVENT_SPIRIT_GOOSE_CHASE,{a} and {b} chase it off,{a} và {b} đuổi nó đi
+EVENT_SPIRIT_GOOSE_IGNORE,Let the goose rule,Để con ngỗng làm vua
+EVENT_PURPLE_CAT_TITLE,A Very Purple Cat,Con Mèo Tím Ngắt
+EVENT_PURPLE_CAT_STORY,"A purple cat sits at {place} and refuses to move. {a} has already named it. {b} is allergic, probably.",Một con mèo tím ngồi ở {place} và nhất quyết không đi. {a} đã đặt tên cho nó rồi. {b} hình như bị dị ứng.
+EVENT_PURPLE_CAT_FEED,Feed the cat,Cho mèo ăn
+EVENT_PURPLE_CAT_ADOPT,Make it the sect's cat,Nhận nó làm mèo của tông môn
+EVENT_PURPLE_CAT_SHOO,Shoo it away,Đuổi nó đi
+EVENT_FROG_DUEL_TITLE,Frogs at the Gate,Ếch Trước Cổng
+EVENT_FROG_DUEL_STORY,Three Iron Frog Sect disciples croak a challenge at {place}. They point at {a}. {b} quietly steps behind a tree.,Ba đệ tử Thiết Oa Tông kêu ộp ộp thách đấu ở {place}. Họ chỉ thẳng vào {a}. {b} lặng lẽ nấp sau gốc cây.
+EVENT_FROG_DUEL_ACCEPT,{a} accepts the duel,{a} nhận lời thách đấu
+EVENT_FROG_DUEL_SEND_B,Send {b} instead,Cử {b} đi thay
+EVENT_FROG_DUEL_DECLINE,Decline politely,Lịch sự từ chối
+EVENT_LOST_MERCHANT_TITLE,The Lost Merchant,Thương Nhân Lạc Đường
+EVENT_LOST_MERCHANT_STORY,"A merchant with a cart of turnips stumbles into {place}. He asks {a} and {b} the way, three times, to three different places.","Một thương nhân kéo xe củ cải lạc vào {place}. Ông hỏi {a} và {b} đường đi ba lần, đến ba nơi khác nhau."
+EVENT_LOST_MERCHANT_GUIDE,Guide him home,Dẫn ông về tận nhà
+EVENT_LOST_MERCHANT_SELL_TEA,Sell him tea for the road,Bán cho ông ít trà mang đi
+EVENT_LOST_MERCHANT_POINT_THE_WAY,Point the way kindly,Tận tình chỉ đường
+EVENT_MYSTERIOUS_EGG_TITLE,The Egg That Stares Back,Quả Trứng Biết Nhìn
+EVENT_MYSTERIOUS_EGG_STORY,"{a} found a large, warm egg at {place}. {b} swears it blinked.",{a} nhặt được một quả trứng to và ấm ở {place}. {b} thề là nó vừa chớp mắt.
+EVENT_MYSTERIOUS_EGG_KEEP_WARM,Keep it warm,Ủ ấm nó
+EVENT_MYSTERIOUS_EGG_COOK,Cook it,Nấu nó
+EVENT_MYSTERIOUS_EGG_RETURN,Put it back,Đặt nó về chỗ cũ
+EVENT_LEAKY_ROOF_TITLE,"Drip, Drip, Drip","Tí Tách, Tí Tách"
+EVENT_LEAKY_ROOF_STORY,"The roof above {place} has started to leak, right onto {a}'s bed. {b} is not sharing.","Mái nhà phía trên {place} bắt đầu dột, nhỏ ngay xuống giường của {a}. {b} không chịu cho ngủ chung."
+EVENT_LEAKY_ROOF_FIX,Pay to fix the roof,Bỏ tiền sửa mái nhà
+EVENT_LEAKY_ROOF_BUCKETS,{a} and {b} take bucket duty,{a} và {b} thay nhau hứng nước
+EVENT_LEAKY_ROOF_IGNORE,Ignore the drips,Mặc kệ cho dột
+EVENT_INSPECTOR_TITLE,The Inspector Calls,Quan Thanh Tra Ghé Thăm
+EVENT_INSPECTOR_STORY,An inspector from the Cultivation Bureau arrives at {place} with a clipboard and a frown. {a} hides the chickens. {b} hides {a}.,Một vị thanh tra của Tu Chân Cục đến {place} với cuốn sổ và vẻ mặt cau có. {a} giấu đàn gà. {b} giấu {a}.
+EVENT_INSPECTOR_SERVE_TEA,Serve tea and snacks,Mời trà và bánh
+EVENT_INSPECTOR_HONEST_TOUR,"Show him everything, honestly",Thành thật cho xem tất cả
+EVENT_INSPECTOR_HIDE_EVERYONE,Hide everyone until he leaves,Trốn hết cho đến khi ông ấy về
+EVENT_TALKING_STONE_TITLE,The Wise Stone,Hòn Đá Thông Thái
+EVENT_TALKING_STONE_STORY,A stone at {place} says it is an ancient master and offers {a} its wisdom. {b} thinks it is just a stone with a loud voice.,Một hòn đá ở {place} tự xưng là cao nhân thượng cổ và muốn truyền dạy cho {a}. {b} nghĩ nó chỉ là hòn đá nói to.
+EVENT_TALKING_STONE_LISTEN,{a} listens to the stone,{a} nghe hòn đá giảng
+EVENT_TALKING_STONE_SELL_IT,Sell it in the village,Đem bán ở làng
+EVENT_TALKING_STONE_IGNORE,Walk away,Bỏ đi
+EVENT_VILLAGE_FESTIVAL_TITLE,Festival Night,Đêm Hội Làng
+EVENT_VILLAGE_FESTIVAL_STORY,The festival at {place} needs performers. {a} has a routine. {b} has a drum and no rhythm.,Hội làng ở {place} đang cần người biểu diễn. {a} có sẵn tiết mục. {b} có cái trống nhưng không có nhịp.
+EVENT_VILLAGE_FESTIVAL_PERFORM,{a} and {b} perform,{a} và {b} lên biểu diễn
+EVENT_VILLAGE_FESTIVAL_SELL_SNACKS,Sell snacks at a stall,Bày quầy bán đồ ăn vặt
+EVENT_VILLAGE_FESTIVAL_STAY_HOME,Stay home,Ở nhà
+EVENT_STRANGE_SMELL_TITLE,Something Smells Odd,Mùi Gì Lạ Lắm
+EVENT_STRANGE_SMELL_STORY,A strange smell drifts from {place}. {a} insists it isn't them. {b} isn't so sure.,Một mùi lạ bay ra từ {place}. {a} khăng khăng không phải lỗi của mình. {b} thì không chắc lắm.
+EVENT_STRANGE_SMELL_INVESTIGATE,{a} investigates,{a} đi điều tra
+EVENT_STRANGE_SMELL_OPEN_WINDOWS,Open the windows and wait,Mở cửa sổ và chờ
+EVENT_STRANGE_SMELL_BLAME_B,Blame {b},Đổ lỗi cho {b}
+EVENT_RIVAL_PRANK_TITLE,The Midnight Frog,Con Ếch Lúc Nửa Đêm
+EVENT_RIVAL_PRANK_STORY,"Overnight, someone painted a giant frog on the wall at {place}. It is quite good, which makes it worse.","Đêm qua có kẻ vẽ một con ếch khổng lồ lên tường ở {place}. Vẽ khá đẹp, nên càng tức."
+EVENT_RIVAL_PRANK_CLEAN,{a} and {b} scrub it off,{a} và {b} lau sạch
+EVENT_RIVAL_PRANK_PAINT_BIGGER,Paint a bigger one on their wall,Vẽ một con to hơn lên tường bên kia
+EVENT_RIVAL_PRANK_LAUGH,Laugh it off,Cười cho qua
+EVENT_SUDDEN_STORM_TITLE,Caught in the Storm,Gặp Bão Bất Ngờ
+EVENT_SUDDEN_STORM_STORY,A sudden storm catches {a} and {b} at {place}. The thunder sounds personally offended.,Một cơn bão bất ngờ ập đến khi {a} và {b} đang ở {place}. Tiếng sấm nghe như đang giận ai đó.
+EVENT_SUDDEN_STORM_SHELTER,Shelter together,Cùng nhau trú mưa
+EVENT_SUDDEN_STORM_SAVE_CROPS,Run to save the crops,Chạy đi cứu mùa màng
+EVENT_SUDDEN_STORM_SING,Sing loudly at the storm,Hát thật to át tiếng bão
+EVENT_WANDERING_MASTER_TITLE,The Wandering Master,Cao Nhân Du Hành
+EVENT_WANDERING_MASTER_STORY,A wandering master rests at {place} and offers {a} a lesson. He also eyes {b}'s lunch.,Một vị cao nhân du hành nghỉ chân ở {place} và ngỏ ý chỉ dạy {a}. Ông cũng liếc nhìn bữa trưa của {b}.
+EVENT_WANDERING_MASTER_TAKE_LESSON,Trade a meal for a lesson,Đổi một bữa ăn lấy một buổi học
+EVENT_WANDERING_MASTER_PAY_LESSON,Pay for a full lesson,Trả tiền học trọn buổi
+EVENT_WANDERING_MASTER_DECLINE,Decline politely,Lịch sự từ chối
+EVENT_BEAST_CUB_TITLE,A Small Shadow,Cái Bóng Nhỏ
+EVENT_BEAST_CUB_STORY,A spirit beast cub followed {a} home from {place}. It has decided {b} is its mother.,Một con linh thú nhỏ theo {a} về từ {place}. Nó đã quyết định {b} là mẹ của nó.
+EVENT_BEAST_CUB_KEEP,Keep the cub,Giữ con thú lại
+EVENT_BEAST_CUB_RETURN_CUB,{a} returns it to its mother,{a} trả nó về cho mẹ
+EVENT_BEAST_CUB_SHOO,Shoo it away,Đuổi nó đi
+EVENT_POETRY_CONTEST_TITLE,A Poem Nobody Asked For,Bài Thơ Không Ai Nhờ
+EVENT_POETRY_CONTEST_STORY,{a} entered {b} in the poetry contest at {place} without asking. The contest starts in an hour.,{a} đã đăng ký cho {b} thi thơ ở {place} mà không hỏi trước. Một tiếng nữa là bắt đầu.
+EVENT_POETRY_CONTEST_SUPPORT_B,{b} competes,{b} lên thi
+EVENT_POETRY_CONTEST_WITHDRAW,Withdraw {b},Rút tên {b}
+EVENT_POETRY_CONTEST_WRITE_TOGETHER,{a} and {b} write together,{a} và {b} cùng làm thơ
+EVENT_NOODLE_THIEF_TITLE,The Noodle Thief,Kẻ Trộm Mì
+EVENT_NOODLE_THIEF_STORY,Someone keeps stealing noodles from {place}. {a} suspects {b}. {b} suspects the goose.,Có kẻ liên tục trộm mì ở {place}. {a} nghi {b}. {b} nghi con ngỗng.
+EVENT_NOODLE_THIEF_STAKE_OUT,{a} and {b} keep watch,{a} và {b} canh chừng
+EVENT_NOODLE_THIEF_BUY_LOCK,Buy a lock,Mua ổ khóa
+EVENT_NOODLE_THIEF_SHARE,Leave out a bowl to share,Để sẵn một bát cho ai cần
+EVENT_CLOUD_WHALE_TITLE,The Cloud Whale,Cá Voi Mây
+EVENT_CLOUD_WHALE_STORY,"A cloud whale drifts over {place}, raining spirit energy. {a} opens their mouth to catch some. {b} pretends not to know them.","Một con cá voi mây trôi qua {place}, mưa linh khí lất phất. {a} há miệng hứng. {b} giả vờ không quen."
+EVENT_CLOUD_WHALE_MEDITATE,{a} and {b} meditate under it,{a} và {b} ngồi thiền bên dưới
+EVENT_CLOUD_WHALE_COLLECT_RAIN,Collect the rain,Hứng nước mưa
+EVENT_CLOUD_WHALE_WAVE,Wave at the whale,Vẫy tay chào cá voi
+EVENT_BROKEN_SWORD_TITLE,Snap!,Gãy Rồi!
+EVENT_BROKEN_SWORD_STORY,{a}'s sword snapped in half at {place}. {b} is trying very hard not to laugh.,Thanh kiếm của {a} gãy làm đôi ở {place}. {b} đang cố hết sức để không bật cười.
+EVENT_BROKEN_SWORD_BUY_NEW,Buy a new sword,Mua kiếm mới
+EVENT_BROKEN_SWORD_GLUE_IT,Glue it back together,Dán lại cho liền
+EVENT_BROKEN_SWORD_USE_BROOM,{a} trains with a broom,{a} luyện kiếm bằng chổi
+EVENT_TEA_INVITATION_TITLE,An Invitation to Tea,Lời Mời Uống Trà
+EVENT_TEA_INVITATION_STORY,The Moonlit Tea Society invites {a} to tea at {place}. The invitation smells of jasmine and suspicion.,Nguyệt Trà Hội mời {a} đến {place} uống trà. Tấm thiệp thơm mùi hoa nhài và mùi âm mưu.
+EVENT_TEA_INVITATION_ATTEND,{a} attends,{a} đến dự
+EVENT_TEA_INVITATION_SEND_GIFT,Send a gift of herbs,Gửi tặng thảo dược
+EVENT_TEA_INVITATION_DECLINE,Decline politely,Lịch sự từ chối
+EVENT_FREE_HAIRCUT_TITLE,Free Haircuts!,Cắt Tóc Miễn Phí!
+EVENT_FREE_HAIRCUT_STORY,The Perfect Hair Pavilion offers free haircuts at {place}. Their scissors gleam. {a} looks tempted. {b} looks at {a}.,Mỹ Phát Các mở quầy cắt tóc miễn phí ở {place}. Kéo của họ sáng loáng. {a} có vẻ muốn thử. {b} nhìn {a}.
+EVENT_FREE_HAIRCUT_ACCEPT,{a} gets a haircut,{a} đi cắt tóc
+EVENT_FREE_HAIRCUT_SEND_B,Send {b} instead,Cử {b} đi thay
+EVENT_FREE_HAIRCUT_DECLINE,Decline,Từ chối
+EVENT_RESCUE_TITLE,Lost on the Mountain,Lạc Trên Núi
+EVENT_RESCUE_STORY,"{a} hasn't come home. Somewhere along {place}, {a} is probably arguing with a signpost.","{a} vẫn chưa về. Đâu đó trên {place}, có lẽ {a} đang cãi nhau với tấm biển chỉ đường."
+EVENT_RESCUE_HIRE_GUIDE,Hire a mountain guide,Thuê người dẫn đường
+EVENT_RESCUE_SEARCH_PARTY,Everyone searches,Cả tông môn đi tìm
+EVENT_RESCUE_WAIT,Trust {a} to find the way,Tin rằng {a} sẽ tự tìm về
+UI_EVENT_MOOD,{name}: Mood {mood},{name}: Tâm trạng {mood}
+UI_EVENT_CLOSER,{a} and {b} grew closer.,{a} và {b} thân nhau hơn.
+UI_EVENT_APART,{a} and {b} are a bit cross with each other.,{a} và {b} hơi giận nhau.
+UI_EVENT_PROGRESS,{name}: +{gain} cultivation progress,{name}: +{gain} tiến độ tu vi
+UI_EVENT_ITEM,Found a {pill}!,Tìm được một viên {pill}!

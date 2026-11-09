@@ -60,7 +60,7 @@ func test_overruling_a_decision_costs_mood_once() -> void:
 
 func test_decisions_last_one_day() -> void:
 	var sect := SimFixtures.sect()
-	_decide(sect, "a", "study")
+	_decide(sect, "a", "meditate")
 	assert_eq(Decisions.task_for_today(sect, "a"), "train")
 	DayResolver.resolve(sect, DayPlan.defaults(sect))
 	assert_false(sect.decisions.has("a"))
@@ -136,7 +136,9 @@ func test_chat_requests_match_the_gateway() -> void:
 
 func test_allowed_actions_follow_the_rules() -> void:
 	var sect := SimFixtures.sect()
-	assert_eq(EveningRules.allowed_actions(sect, sect.disciple("a")), ["train", "rest", "meditate", "cook", "tend_field", "study", "hide"])
+	assert_eq(EveningRules.allowed_actions(sect, sect.disciple("a")), ["train", "rest", "meditate", "cook", "tend_field", "hide"])
+	sect.buildings["library"] = 1
+	assert_eq(EveningRules.allowed_actions(sect, sect.disciple("a")), ["train", "rest", "meditate", "cook", "tend_field", "study", "hide"], "study needs the Library")
 	sect.disciple("b").injure(2)
 	assert_eq(EveningRules.allowed_actions(sect, sect.disciple("b")), ["rest", "hide"])
 	var away := ActiveMission.new()

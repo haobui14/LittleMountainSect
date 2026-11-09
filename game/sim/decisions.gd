@@ -14,13 +14,14 @@ static func for_today(sect: Sect, id: String) -> Dictionary:
 
 
 ## The task a decision sets for today, or "" when there is none or it can't
-## be done (the disciple is injured or away).
+## be done (the disciple is injured or away, or the task isn't possible).
 static func task_for_today(sect: Sect, id: String) -> String:
 	var decision := for_today(sect, id)
 	var d := sect.disciple(id)
 	if decision.is_empty() or d == null or d.is_injured() or sect.is_away(id):
 		return ""
-	return String(decision["task"])
+	var task := String(decision["task"])
+	return task if DayPlan.task_allowed(sect, d, task) else ""
 
 
 ## Called when the plan gives a disciple something other than their own

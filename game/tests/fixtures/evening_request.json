@@ -13,7 +13,8 @@
           "secret_poet"
         ],
         "realm": "qi_refining",
-        "spirit_root": "water"
+        "spirit_root": "water",
+        "status": "mission"
       }
     },
     {
@@ -29,7 +30,8 @@
           "overly_polite"
         ],
         "realm": "qi_refining",
-        "spirit_root": "water"
+        "spirit_root": "water",
+        "status": "mission"
       }
     },
     {
@@ -39,7 +41,6 @@
         "meditate",
         "cook",
         "tend_field",
-        "study",
         "hide"
       ],
       "card": {

@@ -1,17 +1,18 @@
 class_name DayPlan
 extends RefCounted
-## The player's plan for one day: a home task for each disciple (train, work
-## or rest) and teams sent on missions. [method validate] lists every problem,
+## The player's plan for one day: a home task for each disciple (train, work,
+## rest, study or breakthrough) and teams sent on missions. [method validate] lists every problem,
 ## so the day plan screen can show them before the day runs.
 
-## Disciple id -> "train" | "work" | "rest". Disciples left out rest.
+## Disciple id -> a Balance.HOME_TASKS id. Disciples left out rest.
 var tasks: Dictionary = {}
 ## [{"mission": id, "team": [disciple ids]}]
 var missions: Array[Dictionary] = []
 
 
 ## For disciples at home: their own decision for today if they made one,
-## otherwise yesterday's task. Injured disciples rest.
+## otherwise yesterday's task (training after a breakthrough, resting when
+## it can't be done any more). Injured disciples rest.
 static func defaults(sect: Sect) -> DayPlan:
 	var plan := DayPlan.new()
 	for d in sect.disciples:
@@ -20,8 +21,26 @@ static func defaults(sect: Sect) -> DayPlan:
 		var task := Decisions.task_for_today(sect, d.id)
 		if task == "":
 			task = String(sect.last_tasks.get(d.id, "rest"))
-		plan.tasks[d.id] = "rest" if d.is_injured() else task
+		if task == "breakthrough" and not task_allowed(sect, d, task):
+			task = "train"
+		plan.tasks[d.id] = task if task_allowed(sect, d, task) else "rest"
 	return plan
+
+
+## Whether [param d] can do a home task today: an injured disciple only
+## rests, studying needs something left to learn in the Library, and a
+## breakthrough needs full progress.
+static func task_allowed(sect: Sect, d: Disciple, task: String) -> bool:
+	if not task in Balance.HOME_TASKS or sect.is_away(d.id):
+		return false
+	if d.is_injured():
+		return task == "rest"
+	match task:
+		"study":
+			return CultivationRules.can_study(sect, d)
+		"breakthrough":
+			return CultivationRules.can_break_through(d)
+	return true
 
 
 func set_task(id: String, task: String) -> void:
@@ -63,8 +82,8 @@ func remove_from_missions(id: String) -> void:
 
 
 ## Error codes, empty when the plan is valid. Each is "code" or "code:detail":
-## unknown_disciple, away, injured_must_rest, bad_task, unknown_mission,
-## team_size, double_booked.
+## unknown_disciple, away, injured_must_rest, bad_task, not_allowed,
+## unknown_mission, locked_mission, team_size, double_booked.
 func validate(sect: Sect) -> Array[String]:
 	var errors: Array[String] = []
 	var booked := {}
@@ -79,11 +98,15 @@ func validate(sect: Sect) -> Array[String]:
 			errors.append("bad_task:" + id)
 		elif d.is_injured() and tasks[id] != "rest":
 			errors.append("injured_must_rest:" + id)
+		elif not sect.is_away(id) and not task_allowed(sect, d, String(tasks[id])):
+			errors.append("not_allowed:" + id)
 		booked[id] = true
 	for entry in missions:
 		var mission := String(entry["mission"])
 		if not Balance.MISSIONS.has(mission):
 			errors.append("unknown_mission:" + mission)
+		elif not MissionResolver.unlocked(sect, mission):
+			errors.append("locked_mission:" + mission)
 		var team: Array = entry["team"]
 		if team.size() < Balance.TEAM_MIN or team.size() > Balance.TEAM_MAX:
 			errors.append("team_size:" + mission)

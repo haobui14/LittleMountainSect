@@ -91,3 +91,61 @@ func test_every_quirk_has_a_talk_line_and_an_evening_line() -> void:
 			d.quirks.assign([quirk, quirk])
 			assert_false(_bad(ReportText.talk_line(d, 1, locale)), "%s %s" % [locale, quirk])
 			assert_false(_bad(ReportText.t(Quirks.text_key(quirk))) or ReportText.t(Quirks.text_key(quirk)).begins_with("QUIRK_"), quirk)
+
+
+## The M5 facts don't all come up in random games, so each is written out here.
+func test_every_m5_fact_reads_as_a_sentence_in_both_languages() -> void:
+	var sect := SimFixtures.sect()
+	var facts: Array[Dictionary] = [
+		{"type": "breakthrough", "disciple": "a", "realm": "foundation_building", "pill": "foundation_pill"},
+		{"type": "breakthrough", "disciple": "a", "realm": "golden_core", "pill": "none"},
+		{"type": "breakthrough_failed", "disciple": "b", "realm": "golden_core", "pill": "golden_pill", "effect": "green_hair", "days": 7, "lost": 40},
+		{"type": "effect_ended", "disciple": "b", "effect": "hiccups"},
+		{"type": "studied", "disciple": "c", "gain": 14},
+		{"type": "learned", "disciple": "c", "technique": "puddle_mirror_art", "tier": 2},
+		{"type": "lost", "disciple": "a", "mission": "explore_secret_realm"},
+		{"type": "left", "disciple": "a", "mission": "hunt_monster"},
+		{"type": "returned", "disciple": "a", "from": "lost"},
+		{"type": "returned", "disciple": "a", "from": "left"},
+		{"type": "recruited", "disciple": "c"},
+		{"type": "rank_up", "rank": "famous_sect"},
+		{"type": "brewed", "pill": "healing_pill"},
+		{"type": "cured", "disciple": "b"},
+		{"type": "found_item", "mission": "explore_secret_realm", "item": "golden_pill"},
+		{"type": "event", "problem": "frog_duel", "place": "main_gate", "choice": "send_b", "result": "lose", "disciples": ["a", "b"]},
+		{"type": "event", "problem": "rescue", "place": "mountain_path", "choice": "wait", "result": "done", "disciples": ["a"]},
+	]
+	var bad: Array[String] = []
+	for locale in ["en", "vi"]:
+		TranslationServer.set_locale(locale)
+		for fact in facts:
+			var line := ReportText.describe(fact, sect, locale)
+			if _bad(line) or line.contains("EVENT_") or line.contains("PILL_") or line.contains("SIDE_"):
+				bad.append("%s: %s -> %s" % [locale, fact["type"], line])
+	assert_eq(bad, [] as Array[String])
+
+
+func test_every_events_written_text_fills_its_names() -> void:
+	var sect := SimFixtures.sect()
+	var bad: Array[String] = []
+	for locale in ["en", "vi"]:
+		TranslationServer.set_locale(locale)
+		for problem: String in EventCatalog.PROBLEMS:
+			var event := {"problem": problem, "place": EventCatalog.PROBLEMS[problem]["places"][0], "disciples": ["a", "b"]}
+			var lines: Array[String] = [ReportText.event_title(sect, event, locale), ReportText.event_story(sect, event, locale)]
+			for choice in EventCatalog.choice_ids(problem):
+				lines.append(ReportText.event_choice(sect, event, choice, locale))
+			for line in lines:
+				if _bad(line) or line.contains("EVENT_"):
+					bad.append("%s: %s -> %s" % [locale, problem, line])
+	assert_eq(bad, [] as Array[String])
+
+
+func test_a_resolved_event_lists_what_changed() -> void:
+	TranslationServer.set_locale("en")
+	var sect := SimFixtures.sect()
+	sect.event = EventRules._start(sect, "leaky_roof", "kitchen", ["a", "b"] as Array[String])
+	EventRules.choose(sect, "fix")
+	var lines := ReportText.event_result(sect, sect.event, "en")
+	assert_eq(lines[0], "-12 Spirit Stones")
+	assert_true(lines.has("Test a: Mood +1"), str(lines))

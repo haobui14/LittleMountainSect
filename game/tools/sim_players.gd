@@ -82,7 +82,8 @@ static func random(sect: Sect, policy_rng: SimRng) -> DayPlan:
 		else:
 			plan.tasks[d.id] = "rest" if choice == "mission" else choice
 	if not team.is_empty():
-		plan.add_mission(policy_rng.pick(Balance.MISSIONS.keys()), team)
+		var open: Array = Balance.MISSIONS.keys().filter(func(m: String) -> bool: return MissionResolver.unlocked(sect, m))
+		plan.add_mission(policy_rng.pick(open), team)
 	return plan
 
 

@@ -6,9 +6,9 @@ extends RefCounted
 const MAX_FACTS := 40
 
 
-## What a disciple may decide to do tomorrow: nothing when away on a
-## mission, resting actions when injured, and otherwise every action the day
-## plan can use.
+## What a disciple may decide to do tomorrow: nothing when away (on a
+## mission, lost or left), resting actions when injured, and otherwise every
+## action whose task the day plan allows (study only with the Library).
 static func allowed_actions(sect: Sect, d: Disciple) -> Array[String]:
 	var out: Array[String] = []
 	if sect.is_away(d.id):
@@ -16,7 +16,7 @@ static func allowed_actions(sect: Sect, d: Disciple) -> Array[String]:
 	for action in Balance.ACTIONS:
 		if not Balance.ACTION_TASK.has(action):
 			continue
-		if d.is_injured() and Balance.ACTION_TASK[action] != "rest":
+		if not DayPlan.task_allowed(sect, d, String(Balance.ACTION_TASK[action])):
 			continue
 		out.append(action)
 	return out
@@ -27,7 +27,7 @@ static func allowed_actions(sect: Sect, d: Disciple) -> Array[String]:
 static func request(sect: Sect, report: DayReport, locale: String) -> Dictionary:
 	var disciples: Array[Dictionary] = []
 	for d in sect.disciples:
-		disciples.append({"card": DiscipleCard.build(d, locale), "allowed_actions": allowed_actions(sect, d)})
+		disciples.append({"card": DiscipleCard.build(d, locale, sect), "allowed_actions": allowed_actions(sect, d)})
 	var resources := {}
 	for name in Balance.RESOURCES:
 		resources[name] = int(sect.resources[name])

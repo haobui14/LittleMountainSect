@@ -43,6 +43,20 @@ func _key_families() -> Array[String]:
 		keys.append("ELDER_OFFLINE_%d" % n)
 	for action in Balance.ACTIONS:
 		keys.append("ACTION_" + action.to_upper())
+	for pill in Balance.PILLS:
+		keys.append("PILL_" + pill.to_upper())
+	for effect in Balance.SIDE_EFFECTS:
+		keys.append("SIDE_" + effect.to_upper())
+		keys.append("SIDE_%s_RULE" % effect.to_upper())
+	for technique in Balance.TECHNIQUES:
+		keys.append("TECHNIQUE_" + technique.to_upper())
+	for place: String in EventCatalog.PLACES:
+		keys.append("PLACE_" + place.to_upper())
+	for problem: String in EventCatalog.PROBLEMS:
+		keys.append("EVENT_%s_TITLE" % problem.to_upper())
+		keys.append("EVENT_%s_STORY" % problem.to_upper())
+		for choice in EventCatalog.choice_ids(problem):
+			keys.append("EVENT_%s_%s" % [problem.to_upper(), choice.to_upper()])
 	return keys
 
 

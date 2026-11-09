@@ -32,6 +32,93 @@ static func resource_name(resource: String) -> String:
 	return t("RES_" + resource.to_upper())
 
 
+static func realm_name(realm: String) -> String:
+	return t("REALM_" + realm.to_upper())
+
+
+static func pill_name(pill: String) -> String:
+	return t("PILL_" + pill.to_upper())
+
+
+static func side_effect_name(effect: String) -> String:
+	return t("SIDE_" + effect.to_upper())
+
+
+static func technique_name(technique: String) -> String:
+	return t("TECHNIQUE_" + technique.to_upper())
+
+
+static func place_name(place: String) -> String:
+	return t("PLACE_" + place.to_upper())
+
+
+# Surprise events ---------------------------------------------------------------
+# Claude's words when it wrote them (sect.event["words"]), the written text
+# from strings.csv otherwise. Written text names the disciples {a} and {b}.
+
+static func _event_names(sect: Sect, event: Dictionary, locale: String) -> Dictionary:
+	var ids: Array = event.get("disciples", [])
+	return {
+		"a": name_of(sect, String(ids[0]), locale) if ids.size() > 0 else "",
+		"b": name_of(sect, String(ids[1]), locale) if ids.size() > 1 else "",
+		"place": place_name(String(event.get("place", ""))),
+	}
+
+
+static func event_title(sect: Sect, event: Dictionary, locale: String) -> String:
+	var words: Dictionary = event.get("words", {})
+	if words.has("title"):
+		return String(words["title"])
+	return t("EVENT_%s_TITLE" % String(event["problem"]).to_upper())
+
+
+static func event_story(sect: Sect, event: Dictionary, locale: String) -> String:
+	var words: Dictionary = event.get("words", {})
+	if words.has("story"):
+		return String(words["story"])
+	return t("EVENT_%s_STORY" % String(event["problem"]).to_upper()).format(_event_names(sect, event, locale))
+
+
+static func event_choice(sect: Sect, event: Dictionary, choice: String, locale: String) -> String:
+	var written: Dictionary = event.get("words", {}).get("choices", {})
+	if written.has(choice):
+		return String(written[choice])
+	return t("EVENT_%s_%s" % [String(event["problem"]).to_upper(), choice.to_upper()]).format(_event_names(sect, event, locale))
+
+
+## What a resolved event changed, as short lines: "It worked out!",
+## "+12 Spirit Stones", "Lin: Mood +1", ...
+static func event_result(sect: Sect, event: Dictionary, locale: String) -> Array[String]:
+	var lines: Array[String] = []
+	match String(event.get("result", "")):
+		"win":
+			lines.append(t("EVENT_RESULT_WIN"))
+		"lose":
+			lines.append(t("EVENT_RESULT_LOSE"))
+	var applied: Dictionary = event.get("applied", {})
+	var gained := amounts(applied.get("res", {}))
+	if gained != "":
+		lines.append(gained)
+	for id: String in applied.get("mood", {}):
+		lines.append(t("UI_EVENT_MOOD").format({"name": name_of(sect, id, locale), "mood": "%+d" % int(applied["mood"][id])}))
+	if int(applied.get("rel", 0)) != 0:
+		var ids: Array = event["disciples"]
+		var key := "UI_EVENT_CLOSER" if int(applied["rel"]) > 0 else "UI_EVENT_APART"
+		lines.append(t(key).format({"a": name_of(sect, String(ids[0]), locale), "b": name_of(sect, String(ids[1]), locale)}))
+	for id: String in applied.get("progress", {}):
+		lines.append(t("UI_EVENT_PROGRESS").format({"name": name_of(sect, id, locale), "gain": applied["progress"][id]}))
+	for id: String in applied.get("effect", {}):
+		var effect: Dictionary = applied["effect"][id]
+		lines.append(t("MORNING_EFFECT").format({"name": name_of(sect, id, locale), "effect": side_effect_name(effect["effect"]), "days": effect["days"]}))
+	for id: String in applied.get("injure", {}):
+		lines.append(t("FACT_INJURED").format({"name": name_of(sect, id, locale), "days": applied["injure"][id]}))
+	if applied.has("item"):
+		lines.append(t("UI_EVENT_ITEM").format({"pill": pill_name(applied["item"])}))
+	if applied.has("return_day"):
+		lines.append(t("MORNING_COMING_HOME").format({"name": name_of(sect, String(event["disciples"][0]), locale), "day": applied["return_day"]}))
+	return lines
+
+
 ## "+30 Spirit Stones, +2 Reputation", or "" when nothing was gained.
 static func amounts(changes: Dictionary) -> String:
 	var parts: Array[String] = []
@@ -81,6 +168,53 @@ static func describe(fact: Dictionary, sect: Sect, locale: String) -> String:
 			return t("FACT_ATE").format({"food": fact["food"]})
 		"hungry":
 			return t("FACT_HUNGRY").format({"names": names(sect, fact["disciples"], locale)})
+		"breakthrough":
+			var line := t("FACT_BREAKTHROUGH").format({"name": who, "realm": realm_name(fact["realm"])})
+			if fact["pill"] != "none":
+				line += " " + t("FACT_PILL_USED").format({"pill": pill_name(fact["pill"])})
+			return line
+		"breakthrough_failed":
+			var line := t("FACT_BREAKTHROUGH_FAILED").format({
+				"name": who,
+				"realm": realm_name(fact["realm"]),
+				"lost": fact["lost"],
+				"days": fact["days"],
+				"effect": side_effect_name(fact["effect"]),
+			})
+			if fact["pill"] != "none":
+				line += " " + t("FACT_PILL_USED").format({"pill": pill_name(fact["pill"])})
+			return line
+		"effect_ended":
+			return t("FACT_EFFECT_ENDED").format({"name": who, "effect": side_effect_name(fact["effect"])})
+		"studied":
+			return t("FACT_STUDIED").format({"name": who, "gain": fact["gain"]})
+		"learned":
+			return t("FACT_LEARNED").format({"name": who, "technique": technique_name(fact["technique"]), "tier": fact["tier"]})
+		"lost":
+			return t("FACT_LOST").format({"name": who, "mission": mission_name(fact["mission"])})
+		"left":
+			return t("FACT_LEFT").format({"name": who, "mission": mission_name(fact["mission"])})
+		"returned":
+			return t("FACT_RETURNED_" + String(fact["from"]).to_upper()).format({"name": who})
+		"recruited":
+			return t("FACT_RECRUITED").format({"name": who})
+		"rank_up":
+			return t("FACT_RANK_UP").format({"rank": t("RANK_" + String(fact["rank"]).to_upper())})
+		"brewed":
+			return t("FACT_BREWED").format({"pill": pill_name(fact["pill"])})
+		"cured":
+			return t("FACT_CURED").format({"name": who})
+		"found_item":
+			return t("FACT_FOUND_ITEM").format({"mission": mission_name(fact["mission"]), "pill": pill_name(fact["item"])})
+		"event":
+			var event := {"problem": fact["problem"], "place": fact["place"], "disciples": fact["disciples"]}
+			var line := t("FACT_EVENT").format({
+				"title": t("EVENT_%s_TITLE" % String(fact["problem"]).to_upper()),
+				"choice": event_choice(sect, event, String(fact["choice"]), locale),
+			})
+			if fact["result"] != "done":
+				line += " " + t("EVENT_RESULT_" + String(fact["result"]).to_upper())
+			return line
 	push_warning("No template for fact type %s" % fact["type"])
 	return ""
 
@@ -118,10 +252,25 @@ static func morning(sect: Sect, locale: String) -> Array[String]:
 			"day": m.return_day,
 		}))
 	for d in sect.disciples:
+		var who := d.display_name(locale)
+		if d.status == "lost":
+			if d.return_day > 0:
+				lines.append(t("MORNING_COMING_HOME").format({"name": who, "day": d.return_day}))
+			else:
+				lines.append(t("MORNING_LOST").format({"name": who}))
+			continue
+		if d.status == "left":
+			lines.append(t("MORNING_LEFT").format({"name": who}))
+			continue
 		if d.is_injured():
-			lines.append(t("MORNING_INJURED").format({"name": d.display_name(locale), "days": d.injury_days()}))
-		elif d.progress >= Balance.PROGRESS_MAX:
-			lines.append(t("MORNING_READY").format({"name": d.display_name(locale)}))
+			lines.append(t("MORNING_INJURED").format({"name": who, "days": d.injury_days()}))
+		elif CultivationRules.can_break_through(d):
+			lines.append(t("MORNING_READY").format({"name": who}))
+		for effect in d.side_effects():
+			lines.append(t("MORNING_EFFECT").format({"name": who, "effect": side_effect_name(effect.kind), "days": effect.days_left}))
+	var hopeful := Recruiting.candidate(sect)
+	if hopeful:
+		lines.append(t("MORNING_CANDIDATE").format({"name": hopeful.display_name(locale)}))
 	if int(sect.resources["food"]) == 0:
 		lines.append(t("MORNING_NO_FOOD"))
 	# Last night's AI story leaves a morning report and the disciples' decisions.
