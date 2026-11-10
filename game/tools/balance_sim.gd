@@ -4,8 +4,14 @@ extends SceneTree
 ## any run breaks a rule of the game:
 ##   - a resource is negative or a disciple's value is out of range;
 ##   - a day plan is rejected;
-##   - more disciples than the Main Hall holds, or pills out of range;
-##   - a lost or departed disciple stays away more than AWAY_LIMIT days;
+##   - more disciples than the Main Hall holds, more Elders than its level,
+##     or pills out of range;
+##   - a rival's Attitude or Trust, or the sect's land, out of range (M6);
+##   - a lost or departed disciple stays away more than AWAY_LIMIT days, or
+##     a traveller more than TRAVEL_LIMIT days;
+##   - a war lasts more than WAR_LIMIT days after it is declared, a season
+##     ends without its tournament, or a player leaves a morning decision
+##     open (the day plan would wait for it forever);
 ##   - with the sensible player, Food stays at 0 for 5 days in a row, no
 ##     disciple can be planned for 5 days in a row (a softlock), or someone
 ##     stays ready to break through for READY_LIMIT days.
@@ -17,11 +23,18 @@ extends SceneTree
 
 const STREAK_LIMIT := 5
 const AWAY_LIMIT := 20
+const TRAVEL_LIMIT := 40
+const WAR_LIMIT := 5
 const READY_LIMIT := 45
 const REPORT_DAYS: Array[int] = [1, 5, 10, 20, 30, 45, 60, 90, 120]
 ## Facts counted across all seeds, for the report.
 const COUNTED: Array[String] = [
 	"breakthrough", "breakthrough_failed", "learned", "recruited", "event", "lost", "left", "found_item", "rank_up",
+]
+## The world's facts (M6), counted for their own table.
+const WORLD_COUNTED: Array[String] = [
+	"tournament", "tournament_skipped", "gift", "trade", "alliance", "alliance_ended", "betrayal",
+	"war_declared", "war_result", "peace", "promoted", "ascended", "ascension_failed", "travel_left", "letter",
 ]
 
 
@@ -71,6 +84,8 @@ func _run_player(player: String, options: Dictionary) -> Dictionary:
 	var tiers := {}  # mission -> tier -> count
 	var first_build := {}  # "building:level" -> Array[int] days
 	var counts := {}  # fact type -> count
+	var places := {}  # season number -> Array[int] of places (0: sat out)
+	var wars_won := 0
 	var failures: Array[String] = []
 	for n in options["seeds"]:
 		var seed_value: int = options["first_seed"] + n
@@ -81,8 +96,13 @@ func _run_player(player: String, options: Dictionary) -> Dictionary:
 		var away := {}  # disciple id -> days lost or left in a row
 		var ready := {}  # disciple id -> days ready at home in a row
 		var reached := {}  # "building:level" -> first day, for this seed
+		var tournaments := 0
 		for day in days:
 			var plan := SimPlayers.sensible(sect, policy_rng) if player == "sensible" else SimPlayers.random(sect, policy_rng)
+			var open := World.pending(sect).filter(func(p: String) -> bool: return p != "event")
+			if not open.is_empty():
+				failures.append("seed %d day %d: left open %s" % [seed_value, sect.day, open])
+				break
 			_note_buildings(sect, reached)
 			var report := DayResolver.resolve(sect, plan)
 			if report == null:
@@ -92,8 +112,14 @@ func _run_player(player: String, options: Dictionary) -> Dictionary:
 				var by_tier: Dictionary = tiers.get_or_add(fact["mission"], {})
 				by_tier[fact["tier"]] = int(by_tier.get(fact["tier"], 0)) + 1
 			for fact in report.facts:
-				if fact["type"] in COUNTED:
+				if fact["type"] in COUNTED or fact["type"] in WORLD_COUNTED:
 					counts[fact["type"]] = int(counts.get(fact["type"], 0)) + 1
+				if fact["type"] in ["tournament", "tournament_skipped"]:
+					tournaments += 1
+					var list: Array = places.get_or_add(Seasons.number(report.day), [])
+					list.append(int(fact.get("place", 0)))
+				if fact["type"] == "war_result" and fact["won"]:
+					wars_won += 1
 			if player == "random":
 				SimPlayers.random_ai(sect, policy_rng)
 			var broken := _broken_values(sect)
@@ -113,20 +139,28 @@ func _run_player(player: String, options: Dictionary) -> Dictionary:
 				failures.append("seed %d day %d: %s" % [seed_value, report.day, stuck])
 				break
 			_record(series, sect, report.day)
+		@warning_ignore("integer_division")
+		var seasons: int = days / Balance.SEASON_DAYS
+		if failures.is_empty() and tournaments != seasons:
+			failures.append("seed %d: %d tournaments in %d seasons" % [seed_value, tournaments, seasons])
 		for key: String in reached:
 			var list: Array = first_build.get_or_add(key, [])
 			list.append(reached[key])
-	return {"series": series, "tiers": tiers, "first_build": first_build, "counts": counts, "failures": failures}
+	return {
+		"series": series, "tiers": tiers, "first_build": first_build, "counts": counts, "failures": failures,
+		"places": places, "wars_won": wars_won,
+	}
 
 
 ## Disciples away too long, or (for the sensible player) ready to break
 ## through for too long without trying.
 func _stuck(sect: Sect, away: Dictionary, ready: Dictionary, sensible: bool) -> String:
 	for d in sect.disciples:
-		away[d.id] = int(away.get(d.id, 0)) + 1 if d.status != "home" else 0
-		if int(away[d.id]) > AWAY_LIMIT:
+		away[d.id] = int(away.get(d.id, 0)) + 1 if d.status in ["lost", "left", "travel"] else 0
+		var limit := TRAVEL_LIMIT if d.status == "travel" else AWAY_LIMIT
+		if int(away[d.id]) > limit:
 			return "%s %s for %d days" % [d.id, d.status, away[d.id]]
-		var waiting := CultivationRules.can_break_through(d) and not sect.is_away(d.id)
+		var waiting := CultivationRules.can_break_through(d) and not sect.is_away(d.id) and not d.is_elder()
 		ready[d.id] = int(ready.get(d.id, 0)) + 1 if waiting else 0
 		if sensible and int(ready[d.id]) > READY_LIMIT:
 			return "%s ready to break through for %d days" % [d.id, ready[d.id]]
@@ -137,8 +171,19 @@ func _broken_values(sect: Sect) -> String:
 	for name in Balance.RESOURCES:
 		if int(sect.resources[name]) < 0:
 			return "%s is negative" % name
-	if sect.disciples.size() > sect.disciple_limit():
-		return "%d disciples, the Main Hall holds %d" % [sect.disciples.size(), sect.disciple_limit()]
+	if sect.member_count() > sect.disciple_limit():
+		return "%d disciples, the Main Hall holds %d" % [sect.member_count(), sect.disciple_limit()]
+	if sect.elder_count() > Generations.max_elders(sect):
+		return "%d Elders with Main Hall level %d" % [sect.elder_count(), sect.level("main_hall")]
+	for rival in RivalCatalog.ids():
+		var a := Rivals.attitude(sect, rival)
+		var t := Rivals.trust(sect, rival)
+		if a < Balance.ATTITUDE_MIN or a > Balance.ATTITUDE_MAX or t < Balance.TRUST_MIN or t > Balance.TRUST_MAX:
+			return "%s attitude %d trust %d" % [rival, a, t]
+	if sect.land < Balance.LAND_MIN or sect.land > Balance.LAND_MAX:
+		return "%d hills" % sect.land
+	if not sect.war.is_empty() and sect.day - int(sect.war["declared_day"]) > WAR_LIMIT:
+		return "a war with %s declared on day %d" % [sect.war["rival"], sect.war["declared_day"]]
 	for pill in Balance.PILLS:
 		if sect.item(pill) < 0 or sect.item(pill) > Balance.PILL_MAX:
 			return "%d %s" % [sect.item(pill), pill]
@@ -186,6 +231,8 @@ func _record(series: Dictionary, sect: Sect, day: int) -> void:
 		"realm": realm / n,
 		"disciples": n,
 		"rank": sect.level("main_hall"),
+		"land": sect.land,
+		"elders": sect.elder_count(),
 	}
 	for metric: String in values:
 		var by_day: Dictionary = series.get_or_add(metric, {})
@@ -250,6 +297,8 @@ func _report(player: String, result: Dictionary, options: Dictionary) -> Array[S
 		parts.append("%s %d (%.1f)" % [type, int(counts.get(type, 0)), float(counts.get(type, 0)) / seeds])
 	lines.append(", ".join(parts) + ".")
 	lines.append("")
+	lines.append_array(_world_report(result, options))
+	lines.append("")
 	lines.append("Mission results:")
 	lines.append("")
 	lines.append("| Mission | " + " | ".join(Balance.TIERS) + " |")
@@ -278,6 +327,46 @@ func _report(player: String, result: Dictionary, options: Dictionary) -> Array[S
 			else:
 				cells.append("%d%%, day %d" % [roundi(100.0 * days.size() / int(options["seeds"])), roundi(_percentile(days, 50))])
 		lines.append("| " + " | ".join(cells) + " |")
+	return lines
+
+
+## The world (M6): tournament places by season, the world's events, and the
+## land and Elders at the end.
+func _world_report(result: Dictionary, options: Dictionary) -> Array[String]:
+	var seeds := maxi(1, int(options["seeds"]))
+	var lines: Array[String] = ["The world (M6):", ""]
+	lines.append("| Season | 1st | 2nd | 3rd | 4th | Sat out |")
+	lines.append("|---|---|---|---|---|---|")
+	var places: Dictionary = result["places"]
+	var numbers := places.keys()
+	numbers.sort()
+	for number: int in numbers:
+		var list: Array = places[number]
+		var cells: Array[String] = [str(number)]
+		for place in [1, 2, 3, 4, 0]:
+			cells.append("%d%%" % roundi(100.0 * list.count(place) / maxi(1, list.size())))
+		lines.append("| " + " | ".join(cells) + " |")
+	lines.append("")
+	var counts: Dictionary = result["counts"]
+	var parts: Array[String] = []
+	for type in WORLD_COUNTED:
+		parts.append("%s %d (%.2f)" % [type, int(counts.get(type, 0)), float(counts.get(type, 0)) / seeds])
+	lines.append("World events across all seeds (per seed in brackets): " + ", ".join(parts) + ".")
+	var battles := int(counts.get("war_result", 0))
+	lines.append("")
+	lines.append("Battles won: %d of %d." % [int(result["wars_won"]), battles])
+	var series: Dictionary = result["series"]
+	var last := int(options["days"])
+	if series.has("land") and series["land"].has(last):
+		lines.append("")
+		lines.append("On day %d: land %s hills (10th–90th %s–%s), Elders %s (90th %s)." % [
+			last,
+			String.num(_percentile(series["land"][last], 50), 0),
+			String.num(_percentile(series["land"][last], 10), 0),
+			String.num(_percentile(series["land"][last], 90), 0),
+			String.num(_percentile(series["elders"][last], 50), 0),
+			String.num(_percentile(series["elders"][last], 90), 0),
+		])
 	return lines
 
 

@@ -160,3 +160,18 @@ func test_a_good_secret_realm_trip_brings_back_a_pill() -> void:
 			continue
 		assert_eq(found.size(), 1, tier)
 		assert_eq(sect.item(String(found[0]["item"])), 1)
+
+
+func test_a_short_handed_sect_gets_a_free_hopeful_without_waiting() -> void:
+	var elder := SimFixtures.disciple("e")
+	elder.role = "elder"
+	var sect := SimFixtures.sect([SimFixtures.disciple("a"), SimFixtures.disciple("b"), elder])
+	sect.day = 3
+	sect.next_candidate_day = 50
+	Recruiting.roll(sect)
+	assert_false(sect.candidate.is_empty(), "two disciples (and an Elder) are too few to wait")
+	assert_eq(Recruiting.cost(sect), 0)
+	sect.resources["stones"] = 0
+	assert_true(Recruiting.accept(sect))
+	assert_eq(Recruiting.cost(sect), Balance.RECRUIT_COST_BASE + Balance.RECRUIT_COST_PER * 3, "Elders don't count")
+	assert_eq(sect.disciples.back().joined_day, 3)

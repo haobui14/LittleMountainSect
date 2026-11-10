@@ -149,6 +149,10 @@ static func enter(sect: Sect, ids: Array) -> Dictionary:
 			Rivals.change_attitude(sect, rival, Balance.TOURNAMENT_BEAT_ALLY_ATTITUDE if Rivals.is_ally(sect, rival) else Balance.TOURNAMENT_BEAT_ATTITUDE)
 		else:
 			Rivals.change_attitude(sect, rival, Balance.TOURNAMENT_LOST_ATTITUDE)
+	if place == 1:
+		for rival in RivalCatalog.ids():
+			if not Rivals.is_ally(sect, rival):
+				Rivals.change_attitude(sect, rival, Balance.TOURNAMENT_ENVY_ATTITUDE)
 
 	var t := sect.tournament
 	t["resolved"] = true

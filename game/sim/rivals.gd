@@ -183,7 +183,7 @@ static func night(sect: Sect) -> void:
 	for rival in RivalCatalog.ids():
 		var home := int(RivalCatalog.RIVALS[rival]["attitude"])
 		var now := attitude(sect, rival)
-		if now != home:
+		if now != home and sect.day % Balance.ATTITUDE_DRIFT_EVERY == 0:
 			var step := mini(Balance.ATTITUDE_DRIFT, absi(home - now))
 			change_attitude(sect, rival, step if home > now else -step)
 		if not is_ally(sect, rival):

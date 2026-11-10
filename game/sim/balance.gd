@@ -311,13 +311,15 @@ const ATTITUDE_MAX := 100
 const TRUST_MIN := 0
 const TRUST_MAX := 100
 const START_TRUST := 30
+## Attitude moves this much toward home every ATTITUDE_DRIFT_EVERY days.
 const ATTITUDE_DRIFT := 1
+const ATTITUDE_DRIFT_EVERY := 3
 ## Attitude marks for the words on the World tab: hostile at or below
 ## HOSTILE, cold at or below COLD, wary below WARY, neutral up to FRIENDLY,
 ## friendly below WARM, then warm (allied when in an alliance).
-const ATTITUDE_HOSTILE := -60
-const ATTITUDE_COLD := -30
-const ATTITUDE_WARY := -10
+const ATTITUDE_HOSTILE := -35
+const ATTITUDE_COLD := -20
+const ATTITUDE_WARY := -5
 const ATTITUDE_FRIENDLY := 10
 const ATTITUDE_WARM := 30
 ## A gift: what each resource costs, what it does, and one per rival per
@@ -361,11 +363,15 @@ const TOURNAMENT_SKIP_REPUTATION := -2
 const TOURNAMENT_PODIUM_MOOD := 2
 const TOURNAMENT_LAST_MOOD := -1
 ## Beating a rival costs Attitude (less with an ally); losing to one pleases it.
-const TOURNAMENT_BEAT_ATTITUDE := -4
+const TOURNAMENT_BEAT_ATTITUDE := -6
 const TOURNAMENT_BEAT_ALLY_ATTITUDE := -1
 const TOURNAMENT_LOST_ATTITUDE := 2
+## Winning the tournament makes every rival that isn't an ally envious, and
+## so does each new rank of the sect.
+const TOURNAMENT_ENVY_ATTITUDE := -5
+const RANK_UP_ATTITUDE := -10
 ## A rival's strength grows by this every season.
-const RIVAL_GROWTH := 3.0
+const RIVAL_GROWTH := 4.5
 ## A match is won with 1 / (1 + e^(-(ours - theirs) / MATCH_SCALE)), kept
 ## between MATCH_MIN and MATCH_MAX.
 const MATCH_SCALE := 4.0
@@ -381,8 +387,8 @@ const LAND_HERBS := 1
 ## Wars: a hostile rival (not an ally) may declare war at night, at most
 ## once every WAR_COOLDOWN days; the battle comes WAR_WARNING_DAYS later,
 ## unless gifts lift its Attitude above WAR_CALL_OFF_ATTITUDE first.
-const WAR_ATTITUDE := -60
-const WAR_CHANCE := 0.25
+const WAR_ATTITUDE := ATTITUDE_HOSTILE
+const WAR_CHANCE := 0.15
 const WAR_COOLDOWN := 20
 const WAR_WARNING_DAYS := 3
 const WAR_CALL_OFF_ATTITUDE := -30
@@ -394,7 +400,7 @@ const ALLY_WAR_SHARE := 0.5
 ## Peace costs Spirit Stones and leaves the rival cold.
 const PEACE_BASE := 30
 const PEACE_PER_HILL := 10
-const PEACE_ATTITUDE := -30
+const PEACE_ATTITUDE := -25
 const WAR_WIN_REPUTATION := 10
 const WAR_WIN_STONES := 30
 const WAR_WIN_ATTITUDE := -20

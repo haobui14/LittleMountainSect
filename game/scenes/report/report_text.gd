@@ -10,8 +10,7 @@ static func t(key: String) -> String:
 
 
 static func name_of(sect: Sect, id: String, locale: String) -> String:
-	var d := sect.disciple(id)
-	return d.display_name(locale) if d else id
+	return sect.name_of(id, locale)
 
 
 ## "Lin", "Lin and Bao", "Lin, Bao and Mei" (or "và" in Vietnamese).
@@ -50,6 +49,29 @@ static func technique_name(technique: String) -> String:
 
 static func place_name(place: String) -> String:
 	return t("PLACE_" + place.to_upper())
+
+
+static func rival_name(rival: String) -> String:
+	return t("RIVAL_" + rival.to_upper())
+
+
+static func season_name(season: String) -> String:
+	return t("SEASON_" + season.to_upper())
+
+
+static func travel_place_name(place: String) -> String:
+	return t("TRAVEL_" + place.to_upper())
+
+
+## A gift or a haul: amounts and a pill, or "" when there is nothing.
+static func gift_text(resources: Dictionary, item: String) -> String:
+	var parts: Array[String] = []
+	var listed := quantities(resources)
+	if listed != "":
+		parts.append(listed)
+	if item != "" and item != "none":
+		parts.append(pill_name(item))
+	return t("UI_AND").join(parts)
 
 
 # Surprise events ---------------------------------------------------------------
@@ -128,6 +150,16 @@ static func amounts(changes: Dictionary) -> String:
 		var amount := int(changes.get(resource, 0))
 		if amount != 0:
 			parts.append("%+d %s" % [amount, resource_name(resource)])
+	return ", ".join(parts)
+
+
+## Amounts without signs, for gifts and trades: "10 Food, 5 Herbs".
+static func quantities(changes: Dictionary) -> String:
+	var parts: Array[String] = []
+	for resource in Balance.RESOURCES:
+		var amount := absi(int(changes.get(resource, 0)))
+		if amount != 0:
+			parts.append("%d %s" % [amount, resource_name(resource)])
 	return ", ".join(parts)
 
 
@@ -243,6 +275,77 @@ static func describe(fact: Dictionary, sect: Sect, locale: String) -> String:
 			if fact["result"] != "done":
 				line += " " + t("EVENT_RESULT_" + String(fact["result"]).to_upper())
 			return line
+	return _describe_world(fact, sect, locale, who)
+
+
+## The world's facts (M6): seasons, rivals, wars and generations.
+static func _describe_world(fact: Dictionary, sect: Sect, locale: String, who: String) -> String:
+	var rival := rival_name(String(fact.get("rival", "")))
+	match String(fact["type"]):
+		"season":
+			return t("FACT_SEASON").format({"season": season_name(fact["season"]), "year": fact["year"]})
+		"tournament":
+			var matches: Array[String] = []
+			for m: Dictionary in fact["matches"]:
+				matches.append(t("MATCH_WON" if m["won"] else "MATCH_LOST").format({"rival": rival_name(m["rival"])}))
+			var line := t("FACT_TOURNAMENT").format({
+				"names": names(sect, fact["champions"], locale),
+				"matches": t("MATCH_THEN").join(matches),
+				"place": t("PLACE_WORD_%d" % int(fact["place"])),
+			})
+			var won := amounts(fact["rewards"])
+			if won != "":
+				line += " " + t("FACT_REWARDS").format({"rewards": won})
+			return line
+		"tournament_skipped":
+			return t("FACT_TOURNAMENT_SKIPPED")
+		"gift":
+			return t("FACT_GIFT").format({"rival": rival, "gift": quantities({fact["resource"]: fact["amount"]})})
+		"trade":
+			return t("FACT_TRADE").format({"rival": rival, "gave": quantities(fact["gave"]), "got": quantities(fact["got"])})
+		"alliance":
+			return t("FACT_ALLIANCE").format({"rival": rival})
+		"alliance_ended":
+			return t("FACT_ALLIANCE_ENDED_" + String(fact["by"]).to_upper()).format({"rival": rival})
+		"betrayal":
+			var taken := gift_text({"stones": fact["stones"]}, String(fact["item"]))
+			if taken == "":
+				return t("FACT_BETRAYAL_EMPTY").format({"rival": rival})
+			return t("FACT_BETRAYAL").format({"rival": rival, "taken": taken})
+		"ally_gift":
+			return t("FACT_ALLY_GIFT").format({"rival": rival, "stones": fact["stones"]})
+		"war_declared":
+			return t("FACT_WAR_DECLARED").format({"rival": rival, "day": fact["battle_day"]})
+		"war_result":
+			var defenders: Array = fact["defenders"]
+			var key := ("FACT_WAR_WON" if fact["won"] else "FACT_WAR_LOST") if not defenders.is_empty() \
+				else ("FACT_WAR_ALLIES_WON" if fact["won"] else "FACT_WAR_UNDEFENDED")
+			return t(key).format({"names": names(sect, defenders, locale), "rival": rival, "land": fact["land"]})
+		"peace":
+			if int(fact["paid"]) > 0:
+				return t("FACT_PEACE_PAID").format({"rival": rival, "stones": fact["paid"]})
+			return t("FACT_PEACE_FREE").format({"rival": rival})
+		"promoted":
+			return t("FACT_PROMOTED").format({"name": who})
+		"ascended":
+			return t("FACT_ASCENDED").format({"name": who})
+		"ascension_failed":
+			return t("FACT_ASCENSION_FAILED").format({
+				"name": who, "lost": fact["lost"], "days": fact["days"], "effect": side_effect_name(fact["effect"]),
+			})
+		"travel_left":
+			return t("FACT_TRAVEL_LEFT").format({"name": who, "place": travel_place_name(fact["place"]), "day": fact["return_day"]})
+		"travel_returned":
+			var line := t("FACT_TRAVEL_RETURNED").format({"name": who, "place": travel_place_name(fact["place"])})
+			if fact["souvenir"] != "none":
+				line += " " + t("FACT_SOUVENIR").format({"pill": pill_name(fact["souvenir"])})
+			return line
+		"letter":
+			var line := t("FACT_LETTER").format({"name": who, "place": travel_place_name(fact["place"])})
+			var gift := gift_text(fact["gift"], String(fact["item"]))
+			if gift != "":
+				line += " " + t("FACT_LETTER_GIFT").format({"gift": gift})
+			return line
 	push_warning("No template for fact type %s" % fact["type"])
 	return ""
 
@@ -308,6 +411,22 @@ static func fact_icon(fact: Dictionary) -> String:
 			return String(fact.get("item", "golden_pill"))
 		"event":
 			return "event"
+		"season":
+			return "today"
+		"tournament", "tournament_skipped":
+			return "reputation"
+		"gift", "trade", "ally_gift":
+			return "stones"
+		"alliance", "alliance_ended", "betrayal":
+			return "gate"
+		"war_declared", "war_result", "peace", "travel_left", "travel_returned":
+			return "mountain"
+		"promoted":
+			return "elder"
+		"ascended", "ascension_failed":
+			return "breakthrough"
+		"letter":
+			return "chat"
 	return "sparkle"
 
 
@@ -334,6 +453,13 @@ static func morning(sect: Sect, locale: String) -> Array[String]:
 			continue
 		if d.status == "left":
 			lines.append(t("MORNING_LEFT").format({"name": who}))
+			continue
+		if d.status == "travel":
+			lines.append(t("MORNING_TRAVELLING").format({
+				"name": who, "place": travel_place_name(String(d.travel.get("place", ""))), "day": d.return_day,
+			}))
+			continue
+		if d.status == "ascended":
 			continue
 		if d.is_injured():
 			lines.append(t("MORNING_INJURED").format({"name": who, "days": d.injury_days()}))

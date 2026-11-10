@@ -107,6 +107,8 @@ func test_beating_a_rival_cools_it_and_an_ally_minds_less() -> void:
 			var expected := Balance.TOURNAMENT_LOST_ATTITUDE
 			if m["won"]:
 				expected = Balance.TOURNAMENT_BEAT_ALLY_ATTITUDE if rival == "moonlit_tea" else Balance.TOURNAMENT_BEAT_ATTITUDE
+			if int(result["place"]) == 1 and rival != "moonlit_tea":
+				expected += Balance.TOURNAMENT_ENVY_ATTITUDE
 			assert_eq(Rivals.attitude(sect, rival) - int(before[rival]), expected, rival)
 			cooled[rival] = true
 	assert_eq(cooled.size(), 3)

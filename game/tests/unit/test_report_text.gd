@@ -152,3 +152,54 @@ func test_a_resolved_event_lists_what_changed() -> void:
 	sect.event = EventRules._start(sect, "wandering_master", "bamboo_grove", ["a", "b"] as Array[String])
 	EventRules.choose(sect, "decline")
 	assert_eq(ReportText.event_result(sect, sect.event, "en"), ["Nothing much changed."] as Array[String])
+
+
+## Every fact the world (M6) can produce, with sample values.
+func _world_facts() -> Array[Dictionary]:
+	return [
+		{"type": "season", "season": "summer", "year": 1},
+		{"type": "tournament", "place": 2, "champions": ["a", "b"], "matches": [{"rival": "moonlit_tea", "won": true}, {"rival": "iron_frog", "won": false}], "rewards": {"reputation": 8, "stones": 20}},
+		{"type": "tournament", "place": 4, "champions": ["c"], "matches": [{"rival": "perfect_hair", "won": false}, {"rival": "iron_frog", "won": false}], "rewards": {}},
+		{"type": "tournament_skipped"},
+		{"type": "gift", "rival": "iron_frog", "resource": "food", "amount": 10},
+		{"type": "trade", "rival": "moonlit_tea", "gave": {"herbs": 15}, "got": {"stones": 30}},
+		{"type": "alliance", "rival": "perfect_hair"},
+		{"type": "alliance_ended", "rival": "perfect_hair", "by": "player"},
+		{"type": "alliance_ended", "rival": "perfect_hair", "by": "rival"},
+		{"type": "betrayal", "rival": "moonlit_tea", "stones": 24, "item": "none"},
+		{"type": "betrayal", "rival": "moonlit_tea", "stones": 0, "item": "healing_pill"},
+		{"type": "betrayal", "rival": "moonlit_tea", "stones": 0, "item": "none"},
+		{"type": "ally_gift", "rival": "iron_frog", "stones": 20},
+		{"type": "war_declared", "rival": "iron_frog", "battle_day": 33},
+		{"type": "war_result", "rival": "iron_frog", "won": true, "defenders": ["a", "b"], "land": 3},
+		{"type": "war_result", "rival": "iron_frog", "won": false, "defenders": ["a"], "land": 1},
+		{"type": "war_result", "rival": "iron_frog", "won": true, "defenders": [], "land": 3},
+		{"type": "war_result", "rival": "iron_frog", "won": false, "defenders": [], "land": 1},
+		{"type": "peace", "rival": "iron_frog", "paid": 50},
+		{"type": "peace", "rival": "iron_frog", "paid": 0},
+		{"type": "promoted", "disciple": "a"},
+		{"type": "ascended", "disciple": "a"},
+		{"type": "ascension_failed", "disciple": "a", "effect": "green_hair", "days": 4, "lost": 40},
+		{"type": "travel_left", "disciple": "b", "place": "noodle_town", "return_day": 60},
+		{"type": "travel_returned", "disciple": "b", "place": "snow_peaks", "souvenir": "golden_pill"},
+		{"type": "travel_returned", "disciple": "b", "place": "frog_swamp", "souvenir": "none"},
+		{"type": "letter", "disciple": "b", "place": "eastern_sea", "gift": {"herbs": 6}, "item": "none"},
+		{"type": "letter", "disciple": "b", "place": "cloud_temple", "gift": {}, "item": "foundation_pill"},
+	]
+
+
+func test_every_world_fact_reads_as_a_sentence_in_both_languages() -> void:
+	var sect := SimFixtures.sect()
+	var bad: Array[String] = []
+	for locale in ["en", "vi"]:
+		TranslationServer.set_locale(locale)
+		for fact in _world_facts():
+			var line := ReportText.describe(fact, sect, locale)
+			if _bad(line) or line.contains("RIVAL_") or line.contains("TRAVEL_") or line.contains("SEASON_") or line.contains("PLACE_WORD"):
+				bad.append("%s %s: %s" % [locale, fact["type"], line])
+			assert_ne(ReportText.fact_icon(fact), "sparkle", fact["type"])
+	assert_eq(bad, [] as Array[String])
+	TranslationServer.set_locale("en")
+	assert_eq(ReportText.describe(_world_facts()[1], sect, "en"),
+		"Tournament day! Test a and Test b beat the Moonlit Tea Society, then lost to the Iron Frog Sect. The sect came second. Gained +20 Spirit Stones, +8 Reputation.")
+	assert_eq(ReportText.describe(_world_facts()[5], sect, "en"), "Traded with the Moonlit Tea Society: gave 15 Herbs, got 30 Spirit Stones.")

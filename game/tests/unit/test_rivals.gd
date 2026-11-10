@@ -12,21 +12,25 @@ func _sect() -> Sect:
 
 func test_rivals_start_at_their_own_attitude_and_drift_back_to_it() -> void:
 	var sect := _sect()
-	assert_eq(Rivals.attitude(sect, "iron_frog"), -10)
+	assert_eq(Rivals.attitude(sect, "iron_frog"), -20)
 	assert_eq(Rivals.attitude(sect, "moonlit_tea"), 10)
 	assert_eq(Rivals.trust(sect, "perfect_hair"), Balance.START_TRUST)
-	sect.rival("iron_frog")["attitude"] = -13
+	sect.rival("iron_frog")["attitude"] = -23
 	sect.rival("moonlit_tea")["attitude"] = 12
+	sect.day = Balance.ATTITUDE_DRIFT_EVERY * 4
 	Rivals.night(sect)
-	assert_eq(Rivals.attitude(sect, "iron_frog"), -12)
+	assert_eq(Rivals.attitude(sect, "iron_frog"), -22)
 	assert_eq(Rivals.attitude(sect, "moonlit_tea"), 11)
+	sect.day += 1
+	Rivals.night(sect)
+	assert_eq(Rivals.attitude(sect, "moonlit_tea"), 11, "only every few days")
 	assert_eq(Rivals.attitude(sect, "perfect_hair"), 0, "already home")
 
 
 func test_attitude_reads_as_words() -> void:
 	var sect := _sect()
 	var words := []
-	for a in [-80, -40, -20, 0, 20, 40]:
+	for a in [-80, -25, -10, 0, 20, 40]:
 		sect.rival("iron_frog")["attitude"] = a
 		words.append(Rivals.mood_word(sect, "iron_frog"))
 	assert_eq(words, ["hostile", "cold", "wary", "neutral", "friendly", "warm"])

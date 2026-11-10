@@ -6,9 +6,17 @@ extends RefCounted
 ## attracts more talented candidates. Runs after the day number goes up.
 
 
-## Spirit Stones to take the candidate in: more as the sect grows.
+## Spirit Stones to take the candidate in: more as the sect grows (Elders
+## aside). A sect down to fewer than Balance.START_DISCIPLES disciples takes
+## hopefuls in for free, so it can never run out of hands.
 static func cost(sect: Sect) -> int:
-	return Balance.RECRUIT_COST_BASE + Balance.RECRUIT_COST_PER * sect.disciples.size()
+	if short_handed(sect):
+		return 0
+	return Balance.RECRUIT_COST_BASE + Balance.RECRUIT_COST_PER * sect.member_count()
+
+
+static func short_handed(sect: Sect) -> bool:
+	return sect.member_count() < Balance.START_DISCIPLES
 
 
 ## Ends a candidate's wait when it's over and maybe sends a new one.
@@ -17,7 +25,7 @@ static func roll(sect: Sect) -> void:
 		sect.candidate = {}
 	if not sect.candidate.is_empty():
 		return
-	if sect.day < maxi(Balance.RECRUIT_FIRST_DAY, sect.next_candidate_day):
+	if sect.day < maxi(Balance.RECRUIT_FIRST_DAY, sect.next_candidate_day) and not short_handed(sect):
 		return
 	if sect.member_count() >= sect.disciple_limit():
 		return

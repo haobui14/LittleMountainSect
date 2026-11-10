@@ -35,8 +35,16 @@ const SENSIBLE_BUILD_ORDER: Array[String] = [
 const STONE_RESERVE := 15
 ## Days of food the sensible player keeps in store.
 const FOOD_DAYS := 3
-## The sensible player breaks through at this chance or better.
+## The sensible player breaks through (and ascends) at this chance or better.
 const BREAKTHROUGH_AT := 0.45
+## It makes peace when its best defenders would win less often than this.
+const PEACE_BELOW := 0.35
+## It promotes Elders once the sect has this many disciples.
+const ELDERS_FROM := 5
+## Herbs it keeps before giving or trading them away.
+const HERB_RESERVE := 40
+## The longest mission, so teams are home for the tournament.
+const MISSION_DAYS_MAX := 5
 
 
 ## Plays the way the Elder will advise: keep food up, rest unhappy disciples,
@@ -45,14 +53,18 @@ const BREAKTHROUGH_AT := 0.45
 ## team can win.
 static func sensible(sect: Sect, policy_rng: SimRng) -> DayPlan:
 	_sensible_morning(sect)
+	_sensible_world(sect)
 	_build_next(sect)
 	var plan := DayPlan.new()
 	var free: Array[Disciple] = sect.available_disciples()
 
-	# Ready disciples with good odds try to break through.
+	# Ready disciples with good odds try to break through, or to ascend.
 	for d in free.duplicate():
 		if CultivationRules.can_break_through(d) and CultivationRules.chance(sect, d) >= BREAKTHROUGH_AT:
 			plan.tasks[d.id] = "breakthrough"
+			free.erase(d)
+		elif Generations.can_ascend(d) and Generations.ascend_chance(sect, d) >= BREAKTHROUGH_AT:
+			plan.tasks[d.id] = "ascend"
 			free.erase(d)
 
 	# Unhappy disciples rest.
@@ -73,8 +85,9 @@ static func sensible(sect: Sect, policy_rng: SimRng) -> DayPlan:
 			var d: Disciple = free.pop_front()
 			plan.tasks[d.id] = "work"
 
-	# One team at a time, on the best mission it can win.
-	if sect.missions.is_empty() and free.size() >= 2:
+	# One team at a time, on the best mission it can win, and home in time
+	# for the season's tournament.
+	if sect.missions.is_empty() and free.size() >= 2 and Seasons.days_to_tournament(sect.day) > MISSION_DAYS_MAX:
 		var team := _team_for(sect, free, _mission_wanted(sect))
 		if not team.is_empty():
 			plan.add_mission(team["mission"], team["ids"])
@@ -109,7 +122,7 @@ static func _sensible_morning(sect: Sect) -> void:
 	if not sect.candidate.is_empty():
 		var fed := int(sect.resources["food"]) >= (sect.disciples.size() + 1) * FOOD_DAYS
 		var spare := int(sect.resources["stones"]) >= Recruiting.cost(sect) + STONE_RESERVE
-		if fed and spare and Recruiting.can_accept(sect)["ok"]:
+		if (Recruiting.short_handed(sect) or (fed and spare)) and Recruiting.can_accept(sect)["ok"]:
 			Recruiting.accept(sect)
 		else:
 			Recruiting.decline(sect)
@@ -122,6 +135,94 @@ static func _sensible_morning(sect: Sect) -> void:
 			break
 	if sect.item("healing_pill") == 0:
 		Alchemy.brew(sect, "healing_pill")
+
+
+## The world (M6), sensibly: the best three in every tournament; peace when
+## a war looks lost and it can pay, otherwise the best four defend; travel
+## while at least TRAVEL_MIN_MEMBERS stay home; Elders once the sect is big
+## enough; alliances whenever offered; trades that only spend what it has
+## plenty of; and a gift for the coldest rival (or a doubtful ally) from
+## its surplus.
+static func _sensible_world(sect: Sect) -> void:
+	if Tournament.pending(sect):
+		var best := _strongest(Tournament.eligible(sect), Balance.CHAMPIONS_MAX)
+		if best.is_empty():
+			Tournament.skip(sect)
+		else:
+			Tournament.enter(sect, best)
+	if Wars.active(sect):
+		var defenders := _strongest(Wars.eligible(sect), Balance.DEFENDERS_MAX)
+		if Wars.win_chance(sect, defenders) < PEACE_BELOW and Wars.can_make_peace(sect):
+			Wars.make_peace(sect)
+		elif Wars.pending(sect):
+			Wars.defend(sect, defenders)
+	if Generations.travel_pending(sect):
+		var who := String(sect.travel_request["disciple"])
+		var staying := sect.disciples.filter(func(d: Disciple) -> bool:
+			return d.id != who and not d.is_elder() and d.status == "home").size()
+		if staying >= Balance.TRAVEL_MIN_MEMBERS:
+			Generations.let_go(sect)
+		else:
+			Generations.ask_to_stay(sect)
+	for d in sect.disciples:
+		if sect.member_count() >= ELDERS_FROM and Generations.can_promote(sect, d)["ok"]:
+			Generations.promote(sect, d.id)
+	for rival in RivalCatalog.ids():
+		if Rivals.can_ally(sect, rival)["ok"]:
+			Rivals.ally(sect, rival)
+		if Rivals.can_trade(sect, rival)["ok"] and _spare_all(sect, Rivals.offer(sect, rival)["give"]):
+			Rivals.trade(sect, rival)
+	# Gifts: a doubtful ally first, then a rival cold enough to start a war,
+	# then the warmest rival on the way to an alliance.
+	var wanted: Array[String] = []
+	var others: Array[String] = []
+	for rival in RivalCatalog.ids():
+		if Rivals.is_ally(sect, rival):
+			if Rivals.trust(sect, rival) < Balance.BETRAYAL_TRUST + 10:
+				wanted.append(rival)
+		elif Rivals.attitude(sect, rival) <= Balance.ATTITUDE_COLD:
+			wanted.append(rival)
+		else:
+			others.append(rival)
+	others.sort_custom(func(a: String, b: String) -> bool: return Rivals.attitude(sect, a) > Rivals.attitude(sect, b))
+	wanted.append_array(others)
+	for rival in wanted:
+		var resources: Array = [RivalCatalog.RIVALS[rival]["favourite"], "herbs", "food", "stones"]
+		for resource: String in resources:
+			if Rivals.can_gift(sect, rival, resource)["ok"] and _spare(sect, resource, int(Balance.GIFT_COST[resource])):
+				Rivals.gift(sect, rival, resource)
+				return
+
+
+## The strongest of [param pool] in a contest, as ids: up to [param count].
+static func _strongest(pool: Array[Disciple], count: int) -> Array[String]:
+	var sorted := pool.duplicate()
+	sorted.sort_custom(func(a: Disciple, b: Disciple) -> bool: return Tournament.champion_power(a) > Tournament.champion_power(b))
+	var out: Array[String] = []
+	for d: Disciple in sorted.slice(0, count):
+		out.append(d.id)
+	return out
+
+
+## Whether the sensible player can spare [param amount] of a resource.
+static func _spare(sect: Sect, resource: String, amount: int) -> bool:
+	var have := int(sect.resources[resource])
+	match resource:
+		"stones":
+			return have >= _next_cost(sect) + amount + 20
+		"food":
+			var home := sect.disciples.filter(func(d: Disciple) -> bool: return not sect.is_away(d.id)).size()
+			return have >= (home + 2) * FOOD_DAYS * 2 + amount
+		"herbs":
+			return have >= HERB_RESERVE + amount
+	return false
+
+
+static func _spare_all(sect: Sect, cost: Dictionary) -> bool:
+	for resource: String in cost:
+		if not _spare(sect, resource, int(cost[resource])):
+			return false
+	return true
 
 
 ## The mission the sensible player wants today: Stones when the next upgrade
@@ -171,6 +272,7 @@ static func random(sect: Sect, policy_rng: SimRng) -> DayPlan:
 	if EventRules.pending(sect):
 		var options := EventRules.choices(sect).filter(func(c: Dictionary) -> bool: return c["ok"])
 		EventRules.choose(sect, policy_rng.pick(options)["id"])
+	_random_world(sect, policy_rng)
 	if not sect.candidate.is_empty():
 		if policy_rng.chance(0.5):
 			Recruiting.accept(sect)
@@ -198,6 +300,53 @@ static func random(sect: Sect, policy_rng: SimRng) -> DayPlan:
 		var open: Array = Balance.MISSIONS.keys().filter(func(m: String) -> bool: return MissionResolver.unlocked(sect, m))
 		plan.add_mission(policy_rng.pick(open), team)
 	return plan
+
+
+## The world (M6) at random: every morning decision is still made, so the
+## balance sim can check none blocks the day.
+static func _random_world(sect: Sect, policy_rng: SimRng) -> void:
+	if Tournament.pending(sect):
+		var champions := _random_ids(Tournament.eligible(sect), policy_rng, Balance.CHAMPIONS_MAX)
+		if champions.is_empty() or policy_rng.chance(0.3):
+			Tournament.skip(sect)
+		else:
+			Tournament.enter(sect, champions)
+	if Wars.pending(sect):
+		if policy_rng.chance(0.3) and Wars.can_make_peace(sect):
+			Wars.make_peace(sect)
+		else:
+			var defenders := _random_ids(Wars.eligible(sect), policy_rng, Balance.DEFENDERS_MAX)
+			Wars.defend(sect, defenders.slice(0, policy_rng.randi_range(0, defenders.size())))
+	elif Wars.active(sect) and policy_rng.chance(0.1):
+		Wars.make_peace(sect)
+	if Generations.travel_pending(sect):
+		if policy_rng.chance(0.5):
+			Generations.let_go(sect)
+		else:
+			Generations.ask_to_stay(sect)
+	var rival: String = policy_rng.pick(RivalCatalog.ids())
+	if policy_rng.chance(0.03):
+		Rivals.gift(sect, rival, policy_rng.pick(Balance.GIFT_COST.keys()))
+	if policy_rng.chance(0.03):
+		Rivals.trade(sect, rival)
+	if policy_rng.chance(0.2):
+		Rivals.ally(sect, rival)
+	if policy_rng.chance(0.02):
+		Rivals.end_alliance(sect, rival)
+	if policy_rng.chance(0.1):
+		Generations.promote(sect, policy_rng.pick(sect.disciples).id)
+
+
+## Up to [param count] random ids from [param pool], at least one when it
+## has any.
+static func _random_ids(pool: Array[Disciple], policy_rng: SimRng, count: int) -> Array[String]:
+	var left := pool.duplicate()
+	var out: Array[String] = []
+	var want := policy_rng.randi_range(1, maxi(1, mini(count, left.size())))
+	while not left.is_empty() and out.size() < want:
+		var d: Disciple = left.pop_at(policy_rng.randi_range(0, left.size() - 1))
+		out.append(d.id)
+	return out
 
 
 ## The next building in SENSIBLE_BUILD_ORDER that isn't built yet and isn't

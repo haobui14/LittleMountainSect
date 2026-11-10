@@ -269,6 +269,55 @@ FACT_BREWED,The Alchemy Room brewed a {pill}.,Đan phòng luyện được một
 FACT_CURED,{name} took a Healing Pill and feels fine again.,{name} uống Hồi Phục Đan và khỏe lại.
 FACT_FOUND_ITEM,"On {mission}, the team found a {pill}!","Trong nhiệm vụ {mission}, cả đội tìm được một viên {pill}!"
 FACT_EVENT,{title}: {choice},{title}: {choice}
+RIVAL_IRON_FROG,Iron Frog Sect,Thiết Oa Tông
+RIVAL_MOONLIT_TEA,Moonlit Tea Society,Nguyệt Trà Hội
+RIVAL_PERFECT_HAIR,Perfect Hair Pavilion,Mỹ Phát Các
+SEASON_SPRING,Spring,Xuân
+SEASON_SUMMER,Summer,Hạ
+SEASON_AUTUMN,Autumn,Thu
+SEASON_WINTER,Winter,Đông
+TRAVEL_EASTERN_SEA,the Eastern Sea,Đông Hải
+TRAVEL_NOODLE_TOWN,"Longtang, the noodle town",trấn mì Long Đường
+TRAVEL_SINGING_SANDS,the Singing Sands,sa mạc Cát Hát
+TRAVEL_SNOW_PEAKS,the Snowy Peaks,Tuyết Sơn
+TRAVEL_CAPITAL_MARKET,the capital's night market,chợ đêm kinh thành
+TRAVEL_BAMBOO_SEA,the Southern Bamboo Sea,Nam Trúc Hải
+TRAVEL_CLOUD_TEMPLE,the Temple Above the Clouds,Vân Thượng Tự
+TRAVEL_FROG_SWAMP,the Frog Swamp,đầm Ếch
+PLACE_WORD_1,first,hạng nhất
+PLACE_WORD_2,second,hạng nhì
+PLACE_WORD_3,third,hạng ba
+PLACE_WORD_4,last,hạng chót
+MATCH_WON,beat the {rival},thắng {rival}
+MATCH_LOST,lost to the {rival},thua {rival}
+MATCH_THEN,", then ",", rồi "
+FACT_SEASON,"A new season begins: {season}, year {year}.","Mùa mới bắt đầu: mùa {season}, năm {year}."
+FACT_TOURNAMENT,Tournament day! {names} {matches}. The sect came {place}.,Đại hội tỷ võ! {names} {matches}. Tông môn đạt {place}.
+FACT_TOURNAMENT_SKIPPED,The sect sat out the season's tournament. The other sects noticed.,Tông môn không tham gia đại hội tỷ võ mùa này. Các tông môn khác đều để ý.
+FACT_GIFT,The Sect Master sent the {rival} a gift: {gift}.,Chưởng môn gửi tặng {rival}: {gift}.
+FACT_TRADE,"Traded with the {rival}: gave {gave}, got {got}.","Giao thương với {rival}: đưa {gave}, nhận {got}."
+FACT_ALLIANCE,The sect is now allied with the {rival}!,Tông môn đã kết Liên minh với {rival}!
+FACT_ALLIANCE_ENDED_PLAYER,The Sect Master ended the alliance with the {rival}.,Chưởng môn chấm dứt Liên minh với {rival}.
+FACT_ALLIANCE_ENDED_RIVAL,The {rival} ended its alliance with the sect.,{rival} đã cắt đứt Liên minh với tông môn.
+FACT_BETRAYAL,Betrayal! The {rival} broke the alliance and made off with {taken}.,Phản bội! {rival} xé bỏ Liên minh và cuỗm mất {taken}.
+FACT_BETRAYAL_EMPTY,Betrayal! The {rival} broke the alliance.,Phản bội! {rival} xé bỏ Liên minh.
+FACT_ALLY_GIFT,"Our ally, the {rival}, sent {stones} Spirit Stones for the new season.",Đồng minh {rival} gửi {stones} Linh thạch mừng mùa mới.
+FACT_WAR_DECLARED,War! The {rival} declared war on the sect. The battle comes on day {day}.,Chiến tranh! {rival} tuyên chiến với tông môn. Trận chiến sẽ diễn ra vào ngày {day}.
+FACT_WAR_WON,{names} defended the sect against the {rival} and won! Hills held: {land}.,{names} bảo vệ tông môn trước {rival} và chiến thắng! Số đồi: {land}.
+FACT_WAR_LOST,{names} defended the sect against the {rival} but lost. Nobody was badly hurt. Hills held: {land}.,{names} bảo vệ tông môn trước {rival} nhưng thua. Không ai bị thương nặng. Số đồi: {land}.
+FACT_WAR_ALLIES_WON,"Nobody was home to defend the sect against the {rival}, but its allies won the day! Hills held: {land}.","Không ai ở nhà để bảo vệ tông môn trước {rival}, nhưng các đồng minh đã thắng! Số đồi: {land}."
+FACT_WAR_UNDEFENDED,"Nobody was home to defend the sect against the {rival}, and it lost. Hills held: {land}.","Không ai ở nhà để bảo vệ tông môn trước {rival}, và tông môn đã thua. Số đồi: {land}."
+FACT_PEACE_PAID,The sect paid {stones} Spirit Stones for peace with the {rival}.,Tông môn trả {stones} Linh thạch để giảng hòa với {rival}.
+FACT_PEACE_FREE,The {rival} called off its war. Gifts do wonders.,{rival} đã hủy bỏ chiến tranh. Quà cáp quả là có tác dụng.
+FACT_PROMOTED,{name} was promoted to Elder!,{name} được thăng làm Trưởng lão!
+FACT_ASCENDED,{name} ascended to the heavens in a column of light! The whole region is talking about it.,{name} phi thăng lên tiên giới trong một cột sáng! Cả vùng đều bàn tán.
+FACT_ASCENSION_FAILED,{name} tried to ascend and fell back: −{lost} progress. Side effect for {days} days: {effect}.,{name} phi thăng thất bại và rơi trở lại: mất {lost} tiến độ. Tác dụng phụ trong {days} ngày: {effect}.
+FACT_TRAVEL_LEFT,{name} set off to see {place}. Back around day {day}.,{name} lên đường đến {place}. Về vào khoảng ngày {day}.
+FACT_TRAVEL_RETURNED,"{name} came home from {place}, full of stories!","{name} đã trở về từ {place}, mang theo cả bụng chuyện!"
+FACT_SOUVENIR,Souvenir: a {pill}.,Quà lưu niệm: một viên {pill}.
+FACT_LETTER,"A letter arrived from {name}, away at {place}.",Có thư của {name} gửi về từ {place}.
+FACT_LETTER_GIFT,Enclosed: {gift}.,Kèm theo: {gift}.
+MORNING_TRAVELLING,"{name} is travelling at {place}, back around day {day}.","{name} đang du ngoạn ở {place}, về vào khoảng ngày {day}."
 EVENT_RESULT_WIN,It worked out!,Mọi chuyện suôn sẻ!
 EVENT_RESULT_LOSE,It didn't go to plan.,Không như dự tính.
 MORNING_LOST,{name} is lost on the mountain.,{name} đang bị lạc trên núi.

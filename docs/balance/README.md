@@ -7,13 +7,16 @@
   - It sends one team at a time on the best mission it can win: Spirit Stones when the next upgrade needs them, Herbs when the Alchemy Room is short.
   - It breaks through at 45% odds or better, keeps a small stock of pills, keeps one disciple studying, and takes in hopefuls when there is Food and spare Spirit Stones.
   - In a surprise event, it picks the first choice that costs no Spirit Stones.
-- **random:** makes any valid choice: plans, missions, upgrades, pills, hopefuls and event choices. It stress-tests the rules' limits, along with random chat and evening replies.
+  - The world (M6): it enters every tournament with its best 3 and keeps teams home for the week before it. In a war it makes peace when its best 4 would win less than 35% of the time and it can pay; otherwise they defend. It takes any alliance offered and trades only what it has plenty of. With its surplus it gives a gift each time it can: first to a doubtful ally, then to a rival cold enough to start a war, then to the warmest rival on the way to an alliance. It lets travellers go while 3 disciples stay home, promotes Elders once it has 5 disciples, and tries to ascend at 45% odds or better.
+- **random:** makes any valid choice: plans, missions, upgrades, pills, hopefuls, event choices, and every M6 decision (tournaments, battles and peace, travel, gifts, trades, alliances, Elders). It stress-tests the rules' limits, along with random chat and evening replies.
 
 A run fails if any of these happen:
 - a resource goes negative, or a disciple's value leaves its range;
 - a plan is rejected;
-- the sect holds more disciples than the Main Hall allows, or a pill stock leaves 0–9;
-- a lost or departed disciple stays away more than 20 days;
+- the sect holds more disciples than the Main Hall allows (Elders aside), more Elders than the Main Hall's level, or a pill stock leaves 0–9;
+- a rival's Attitude (−100 to 100) or Trust (0 to 100), or the sect's land (1 to 5 hills), leaves its range;
+- a lost or departed disciple stays away more than 20 days, or a traveller more than 40;
+- a war lasts more than 5 days after it is declared, a season ends without its tournament, or a player leaves a morning decision open (the day plan would wait forever);
 - with the sensible player, Food stays at 0 for 5 days in a row, no disciple is free for 5 days in a row (a softlock), or someone stays ready to break through for 45 days.
 
 CI runs 100 seeds × 120 days on every push and adds the report to the job summary. Every tunable number lives in `game/sim/balance.gd`. To save a report, run from the repo root:
@@ -21,6 +24,19 @@ CI runs 100 seeds × 120 days on every push and adds the report to the job summa
 ```bash
 godot --headless --path game -s res://tools/balance_sim.gd -- --seeds 100 --days 120 --out "$PWD/docs/balance/<label>.md"
 ```
+
+## M6 ([m6.md](m6.md))
+
+Both players pass 100 × 120. They also pass 300 seeds × 240 days (8 seasons) each.
+
+What the world looks like for the sensible player:
+
+- **Tournaments get better with time:** in the first season the sect comes 1st 23% of the time and 2nd to 4th the rest; from the second season it wins 52–62% of the time. Rivals grow 4.5 a season, so a sect that stops growing falls back: in the 8th season of the long run it wins 32%.
+- **Diplomacy works when you keep at it:** about 21 gifts and 8 trades per seed, three in four seeds form an alliance by day 120, and no ally betrays a sect that keeps its Trust up.
+- **Wars are rare:** 4 in 100 seeds (2 battles, both won, and 2 peaces). They come to a sect that rises in rank and wins tournaments, which makes the proud Iron Frog Sect (home Attitude −20) envious. The random player never rises enough to provoke one, so the war rules lean on their GUT tests; the 300 × 240 run sees 24 wars.
+- **Generations:** about 3 travels and 6 letters per seed, 1.9 Elders promoted (2 by day 120), and no ascension within 120 days. In 240 days, about 3 disciples per seed ascend.
+- **The hills' harvest** (2 Food and 2 Herbs a day) is spent: Herbs hold at 40–50 from day 20, as gifts and trades use them.
+- **Safety net:** a sect with fewer than 3 disciples (Elders aside) gets a free hopeful at the gate every day. The long run found a sect left with only Elders and a traveller, with no way to earn Spirit Stones; this rule fixes that soft lock.
 
 ## M5 ([m5.md](m5.md))
 

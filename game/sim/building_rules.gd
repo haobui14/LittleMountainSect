@@ -52,6 +52,10 @@ static func upgrade(sect: Sect, building: String) -> bool:
 		# The Main Hall sets the rank: the evening story hears about it.
 		sect.pending_facts.append({"type": "rank_up", "rank": sect.rank()})
 		sect.chronicle_add("rank_up", {"rank": sect.rank()})
+		# A rising sect makes its rivals nervous (M6).
+		for rival in RivalCatalog.ids():
+			if not Rivals.is_ally(sect, rival):
+				Rivals.change_attitude(sect, rival, Balance.RANK_UP_ATTITUDE)
 	return true
 
 

@@ -12,7 +12,7 @@ extends RefCounted
 
 const RIVALS := {
 	"iron_frog": {
-		"attitude": -10,
+		"attitude": -20,
 		"favourite": "food",
 		"strength": 16.0,
 		"trades": [
