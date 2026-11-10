@@ -27,9 +27,9 @@ on:
         type: string
         default: all
       kinds:
-        description: "Request kinds (chat, event, evening)"
+        description: "Request kinds (chat, event, evening, letter)"
         type: string
-        default: chat,event,evening
+        default: chat,event,evening,letter
       cache_ttl:
         description: Cache TTL for the shared prompt blocks
         type: choice
