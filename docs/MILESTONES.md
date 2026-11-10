@@ -224,16 +224,17 @@ Tester guide, hand checks and `ai_usage` queries: [docs/playtests/gate-2.md](pla
 
 **Goal:** the world outside the mountain and the long-term story. **If time runs short, cut here first** (see the cut list).
 
-- [ ] **3 rival sects:** Iron Frog Sect, Moonlit Tea Society and Perfect Hair Pavilion.
-  - Each has an Attitude score from −100 to 100.
-  - Players can trade, send gifts and form alliances.
+- [x] **3 rival sects:** Iron Frog Sect, Moonlit Tea Society and Perfect Hair Pavilion.
+  - Each has an Attitude score from −100 to 100, and a Trust score.
+  - Players can trade, send gifts and form alliances, on the new World tab.
   - A friendly sect with low trust can betray the player.
-- [ ] **Seasons of 30 days.** Each season ends in a tournament. The rules decide results and Claude tells the story.
-- [ ] **Wars.** A simple contest for land and Reputation.
-- [ ] **Generations.**
+  - Seven surprise events belong to a rival and change its Attitude.
+- [x] **Seasons of 30 days.** Each season ends in a tournament with up to 3 champions. The rules decide results and Claude tells the story.
+- [x] **Wars.** A simple contest for land (1 to 5 hills, each giving Food and Herbs) and Reputation. Gifts can call a war off, and peace can be bought.
+- [x] **Generations.**
   - Senior disciples can become Elders.
-  - Others ascend or leave to travel, and send letters home.
-- [ ] **Sect Chronicle** screen.
+  - Others ascend or leave to travel, and send letters home (Claude writes them for 1 Spirit Energy; 16 written letters without it).
+- [x] **Sect Chronicle,** on the World tab, grouped by season.
 - [ ] **Nightly jobs.** Supabase Cron calls an Edge Function that sends work to the Batch API:
   - Merge old memories into shorter notes.
   - Summarize the Chronicle.
@@ -241,9 +242,11 @@ Tester guide, hand checks and `ai_usage` queries: [docs/playtests/gate-2.md](pla
 
   A second job collects the results.
 
+Rivals, wars, generations and the Chronicle shipped together. Their numbers are in [the GDD](GDD.md#other-sects) and [the balance report](balance/m6.md). The nightly jobs are still to do.
+
 #### Gate 3 — Content complete
-- [ ] All in-scope systems are playable.
-- [ ] 100 seeds × 2 seasons run cleanly.
+- [ ] All in-scope systems are playable. Everything but the nightly jobs is.
+- [x] 100 seeds × 2 seasons run cleanly. CI runs 100 seeds × 120 days (4 seasons); 300 seeds × 240 days also pass.
 - [ ] Nightly jobs succeed 3 nights in a row, with batch costs logged.
 - [ ] Scope is frozen. Anything unfinished is cut or moved to after the beta.
 

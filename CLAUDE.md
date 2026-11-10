@@ -67,7 +67,7 @@ The balance sim plays many seeds headless and exits non-zero on a softlock or a 
 godot --headless --path game -s res://tools/balance_sim.gd -- --seeds 100 --days 120
 ```
 
-Browser checks need the web build served on port 8060 (for example `python3 -m http.server 8060` in `build/web`). They click controls by name through `window.lmsUi`, which `game/autoload/ui_probe.gd` publishes in web builds. `play_check.cjs` plays 10 days at phone and desktop sizes. It chats on days 1 and 2, answers each surprise event with the first choice it can afford, takes in or sends away hopefuls, and tries a breakthrough when one is offered:
+Browser checks need the web build served on port 8060 (for example `python3 -m http.server 8060` in `build/web`). They click controls by name through `window.lmsUi`, which `game/autoload/ui_probe.gd` publishes in web builds. `play_check.cjs` plays 10 days at phone and desktop sizes. It chats on days 1 and 2, answers each surprise event with the first choice it can afford, takes in or sends away hopefuls, and tries a breakthrough when one is offered. On day 2 it sends a gift on the World tab. On a season's last day it enters the tournament; it also defends any battle and lets travellers go:
 
 ```bash
 node tools/web-check/play_check.cjs http://127.0.0.1:8060/index.html /tmp 10 --offline
@@ -76,14 +76,18 @@ node tools/web-check/play_check.cjs http://127.0.0.1:8060/index.html /tmp 10 --o
 - `--offline` blocks Supabase, so every chat and evening must fall back to written text. CI's web-build job runs it this way on every push, with Playwright pinned as `PLAYWRIGHT_VERSION` in `ci.yml`.
 - Without `--offline`, the game talks to the hosted project and spends Spirit Energy. This container can't reach `*.supabase.co`, so run it offline here.
 - `typing_check.cjs` always blocks the server.
-- For the M5 exit check, play 30 days locally by passing `30` instead of `10`.
+- For the M5 exit check, play 30 days locally by passing `30` instead of `10`. A 30-day run reaches the first tournament (day 30).
+- `--phone` or `--desktop` runs one size only. When a wait times out, the error lists the page errors seen so far.
 
-`game/tools/state_shots.gd` saves screenshots of every main screen in states a short run rarely reaches (an event, a hopeful, pills, a breakthrough evening, a chat), plus a portrait sheet. It needs a display, so run it under Xvfb (`xvfb-run` works in this container). The command is at the top of the file. It turns on Less motion so nothing is caught half way through an animation.
+`game/tools/state_shots.gd` saves screenshots of every main screen in states a short run rarely reaches (an event, a hopeful, pills, a breakthrough evening, a chat), plus a portrait sheet. From `Showcase.world_sect()` (M6) it also shoots the World tab, the tournament before and after, a battle morning, the Disciples tab with an Elder, and an evening with a tournament and a battle. It needs a display, so run it under Xvfb (`xvfb-run` works in this container). The command is at the top of the file. It turns on Less motion so nothing is caught half way through an animation.
 
 Browser checks and animation:
 - `play_check.cjs` waits until a control stops moving before it clicks it.
 - UiProbe reports a control as `on_screen` only when no scrolling list clips it. The action bar is fixed over the list's bottom edge, so a control hidden under it doesn't count.
 - On the Mountain, a check taps `plot_<building>` first, then `upgrade_<building>` or `brew_<pill>`.
+- The World tab's probes are `gift_<rival>_<resource>`, `trade_<rival>`, `ally_<rival>`, `end_<rival>`, `war_peace` and `chronicle_more`.
+- The morning's world cards use `champion_<id>`, `tournament_enter`, `tournament_skip`, `defender_<id>`, `battle_defend`, `battle_peace`, `travel_go` and `travel_stay`.
+- `window.lmsUi` also reports `tournament`, `battle`, `travel` and `letter`.
 
 Web export needs the 4.7.2 export templates installed.
 
@@ -147,7 +151,7 @@ Live evals and the gateway smoke test run in the manual **AI live tests** workfl
 | `game/autoload/` | `GameState` (the game loop, chats, the evening story, saves), `Backend` (anonymous sign-in, the session, retries, server saves; HTTP goes through `HttpTransport`, which tests replace with `tests/helpers/fake_transport.gd`), `SaveStore` (local saves), `Settings`, `Events` and `UiProbe` |
 | `game/scenes/` | Screens built in code from `ui/ui_kit.gd`. The canvas is 480×480 with `expand`, so every screen must work narrow (an upright phone) and wide. Tag clickable controls with `UiKit.probe()` so browser checks can click them |
 | `game/scenes/ui/` | `UiKit`, plus three helpers. `Art` turns SVG written in code into cached textures. `Icons` holds the icon set as SVG. `Motion` has the animations, which become no-ops when `Settings.reduce_motion` ("Less motion") is on. Floating text and sparkles go on the overlay layer that `app.gd` adds, which screen rebuilds don't clear. Inside containers, animate only `modulate` and `scale`, because containers reset `position` |
-| `game/scenes/game/` | `GameScreen` rebuilds itself on every state change; cards pop in only when the step, tab or day changes. The illustrated Mountain is `mountain_art.gd` (SVG) and `mountain_view.gd` (plots, selection, animation). Also the day tracker and the morning cards |
+| `game/scenes/game/` | `GameScreen` (tabs: Today, Mountain, Disciples, World) rebuilds itself on every state change; cards pop in only when the step, tab or day changes. The illustrated Mountain is `mountain_art.gd` (SVG) and `mountain_view.gd` (plots, selection, animation). The World tab is `world_view.gd` (rivals, land, the Chronicle). Also the day tracker and the morning cards (events, hopefuls, the tournament, battles, travel requests and letters) |
 | `game/config/` | `backend.json`: the public Supabase URL and publishable key |
 | `server/supabase/` | `config.toml`, `migrations/` and `tests/database/` (pgTAP) |
 | `server/supabase/functions/` | `_shared/` (prompts, schemas, the Claude call path, validation, costs), `ai-gateway/`, and `tests/` (Deno) |

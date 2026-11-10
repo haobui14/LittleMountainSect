@@ -188,6 +188,34 @@ The player can trade, send gifts, and form alliances. A tournament runs every se
 
 Wars are big contests for land and Reputation. Losing costs resources and land, but nobody dies.
 
+**How it works (M6).** Every number is in `game/sim/balance.gd` and `game/sim/data/rivals.gd`, tuned with the balance sim ([report](balance/m6.md)).
+
+- **Attitude and Trust:**
+  - Each sect has an Attitude (−100 to 100) that drifts back toward its own starting point every 3 days. The Iron Frog Sect starts at −20, the Moonlit Tea Society at +10 and the Perfect Hair Pavilion at 0.
+  - Each sect also has a Trust (0 to 100, starting at 30).
+  - The World tab shows Attitude as a word: hostile, cold, wary, neutral, friendly, warm, or allied.
+- **Gifts:**
+  - Cost 20 Spirit Stones, 10 Food or 10 Herbs; one per sect every 5 days.
+  - Give +6 Attitude (+10 for the sect's favourite) and +3 Trust.
+- **Trades:** one deal per sect every 10 days, such as 15 Herbs for 30 Spirit Stones. Each gives +3 Attitude and +4 Trust, and needs Attitude of at least −30.
+- **Alliances:**
+  - Offered at Attitude 50 and Trust 50.
+  - An ally sends 20 Spirit Stones each season, fights beside the sect in a war, and minds less when beaten in a tournament.
+  - An ally loses 1 Trust every 3 days unless gifts and trades keep it up. Below 35 Trust it may betray the sect (4% a night): it takes 15% of the Spirit Stones (at most 40) or a pill, and the alliance ends.
+- **Envy:** beating a sect in a tournament (−6 Attitude), winning the tournament (−5 for every sect that isn't an ally) and each new rank (−10) make the other sects envious. A rising sect needs diplomacy.
+- **Tournaments:**
+  - On each season's last day, up to 3 champions play a bracket against the three rivals: a semi-final, then the final or the match for third.
+  - Rivals start at a strength of 15 to 17 and grow 4.5 each season.
+  - Prizes: 1st 15 Reputation and 40 Spirit Stones; 2nd 8 and 20; 3rd 4 Reputation. Sitting out costs 2 Reputation.
+- **Wars and land:**
+  - The sect holds 1 to 5 hills (starting with 2). Each gives 1 Food and 1 Herb a day.
+  - A sect at −35 Attitude or below that isn't an ally may declare war, at most once every 20 days. The battle comes 3 days later.
+  - A gift that lifts it above −30 calls the war off; peace costs 30 Spirit Stones plus 10 per hill.
+  - Up to 4 defenders, plus half of each ally's strength, face 1.2 times the rival's strength.
+  - Winning gives +10 Reputation, 30 Spirit Stones and a hill. Losing costs 8 Reputation, a quarter of the Spirit Stones (at most 60), a hill, and maybe a light injury.
+
+In the balance sim, a sensible player comes 1st in about a quarter of the first season's tournaments and in more than half after that, forms an alliance in most games, and meets a war in about 4 games of 100.
+
 ### Generations
 
 The story has no fixed ending, and generations change without death:
@@ -195,6 +223,22 @@ The story has no fixed ending, and generations change without death:
 - Senior disciples can become Elders who teach and give advice.
 - Others can ascend to heaven or leave to travel, and they may send funny letters home.
 - The Sect Chronicle records big events in a history book the player can read.
+
+**How it works (M6).**
+
+- **Elders:**
+  - A disciple at Golden Core or higher, with Loyalty of at least 70 and 60 days in the sect, can be promoted, up to one Elder per Main Hall level.
+  - Elders take no tasks and don't count toward the disciple limit.
+  - Each Elder adds 10% to everyone's training and 3 to each day of study.
+- **Ascension:**
+  - A Nascent Soul disciple at full progress can try to ascend: a 30% chance, plus 2% per point of Talent and Spirit, plus pills.
+  - On success they leave for the heavens and the sect gains 25 Reputation; they stay in the Chronicle.
+  - On failure they lose 40 progress and get a funny side effect.
+- **Travel:**
+  - A disciple at Foundation Building or higher, with 45 days in the sect, may ask to travel for 15 to 30 days while at least 3 others stay home. Asking them to stay costs 2 Mood.
+  - Away, they write home every 6 to 9 days with a small gift. Claude writes each letter for 1 Spirit Energy, or the game uses one of 16 written letters.
+  - They come home with 30 progress, 10 Loyalty and maybe a pill.
+- **Safety net:** a sect left with fewer than 3 disciples (Elders aside) gets a free hopeful at the gate every day.
 
 ### After the first version
 
@@ -270,6 +314,7 @@ Spirit Energy is the daily AI limit, shown as a resource from the mountain. Each
 | Send a message to a disciple or the Elder | 1 |
 | Surprise event written by Claude | 2 |
 | Evening story written by Claude | 3 |
+| Letter home from a travelling disciple, written by Claude | 1 |
 
 For example, 50 points covers 20 messages, 8 evening stories, and 3 events. The server tracks these points, because the game itself can be changed by players.
 
