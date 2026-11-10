@@ -240,7 +240,11 @@ Deno.test("a letter prompt names the place, the time away and the gift, without 
   assertStringIncludes(message, "Locale: vi");
   assertStringIncludes(message, "Singing Sands");
   assertStringIncludes(message, "Days away from the sect: 9");
-  assertStringIncludes(message, "Enclosed gift: 6 Herbs and a Healing Pill");
+  assertStringIncludes(message, "Enclosed gift: Herbs and a Healing Pill");
+  assert(
+    !/\d/.test(message.split("# The disciple")[0].replace(/Day \d+|away from the sect: \d+/g, "")),
+    "the gift's amount is never in the letter prompt",
+  );
   assertStringIncludes(message, "Name: Bảo Ngọc");
 });
 

@@ -146,15 +146,17 @@ decided where they are, how long they have been away and the small gift that com
 letter. Write it as one JSON object:
 - letter: the letter, in the Locale's language and the disciple's own voice, 40 to 90 words. \
 Greet the Sect Master, tell one funny, specific thing that happened where they are, mention the \
-enclosed gift without any numbers, and sign off with their name. Stay true to their quirks.`;
+enclosed gift without saying how much (the game shows that), and sign off with their name. Stay \
+true to their quirks.`;
 
 export const TASK_EVENING = `# This request: the evening story
 The day is over. The game's rules already decided everything that happened; the facts are \
 below. Write it up as one JSON object, in the Locale's language:
 - story: a short, warm, funny story of the day, 100 to 180 words, built only from the given \
 facts. Small invented details are welcome; new results, rewards or numbers are not. Let each \
-disciple's quirks and memories color what they do. When a fact starts in capitals (TOURNAMENT \
-DAY, THE BATTLE, WAR, BETRAYAL), make it the heart of the story.
+disciple's quirks and memories color what they do. A fact that starts in capitals (TOURNAMENT \
+DAY, THE BATTLE, WAR, BETRAYAL) is the day's big news: never leave it out, make it the heart of \
+the story, and write it in ordinary letters.
 - morning_report: two or three sentences the Sect Master will read tomorrow morning, teasing \
 what might happen next without promising any result.
 - decisions: for one or two of the given disciples, what they choose to do tomorrow, picked \

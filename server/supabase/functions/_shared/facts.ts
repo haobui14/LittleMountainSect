@@ -29,7 +29,7 @@ const TIER_WORDS: Record<string, string> = {
   disaster: "a disaster, though everyone came home",
 };
 
-const RESOURCE_NAMES: Record<string, string> = {
+export const RESOURCE_NAMES: Record<string, string> = {
   stones: "Spirit Stones",
   food: "Food",
   herbs: "Herbs",

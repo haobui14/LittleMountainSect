@@ -15,7 +15,13 @@ import {
 import { type CacheTtl, MAX_TOKENS, type RequestKind } from "./config.ts";
 import { fill, PLACES, PROBLEMS } from "./events.ts";
 import { TRAVEL_PLACES } from "./travel.ts";
-import { factSentences, rankName, relationshipWords, resourceList } from "./facts.ts";
+import {
+  factSentences,
+  rankName,
+  relationshipWords,
+  RESOURCE_NAMES,
+  resourceList,
+} from "./facts.ts";
 import {
   type ChatReply,
   ChatReplySchema,
@@ -217,8 +223,9 @@ export function buildLetter(
   request: LetterRequest,
   options: PromptOptions,
 ): BuiltPrompt<LetterReply> {
+  // Names only: the game shows the amounts, so Claude never repeats a number.
   const gift = [
-    resourceList(request.gift),
+    ...Object.entries(request.gift).filter(([, n]) => (n ?? 0) > 0).map(([r]) => RESOURCE_NAMES[r]),
     request.item !== "none" ? PILL_NAMES[request.item] : "",
   ].filter((t) => t).join(" and ");
   return {
