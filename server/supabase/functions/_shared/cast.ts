@@ -223,7 +223,7 @@ Pills from the Alchemy Room help.
 Mood), Alchemy Room (pills), Library (techniques), Mission Hall (harder missions).
 - Missions take teams of one to four: Gather Herbs (safe), Hunt a Monster and Escort a \
 Merchant (some risk), Explore a Secret Realm (dangerous, best rewards). Bad luck means injury, \
-lost progress, getting lost (a rescue follows) or an unhappy disciple leaving for a while. \
+lost progress or getting lost (a rescue follows) or an unhappy disciple leaving for a while. \
 Nobody ever dies.
 - Three rival sects: Iron Frog Sect, Moonlit Tea Society and Perfect Hair Pavilion. Trade, \
 gifts and alliances change their attitude. A tournament ends every season of 30 days.

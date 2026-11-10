@@ -5,10 +5,10 @@
 // → record usage → save memory → reply. Any failure after the spend refunds
 // the Spirit Energy and answers with a written line, so the game never breaks.
 //
-// Evening stories and surprise events (kinds "evening" and "event") answer
-// with the reply already stored for that game day when there is one, so
-// asking twice never pays twice; on a failure they answer
-// {source: "fallback"} and the game writes its own.
+// Evening stories, surprise events and letters home (kinds "evening",
+// "event" and "letter") answer with the reply already stored for that game
+// day when there is one, so asking twice never pays twice; on a failure they
+// answer {source: "fallback"} and the game writes its own.
 
 import { type CallSettings, callStructured, type MessagesClient } from "../_shared/claude.ts";
 import type { CacheTtl } from "../_shared/config.ts";
@@ -245,7 +245,7 @@ interface StoryKind<Raw, Clean> {
 }
 
 /**
- * The flow both stored kinds share: return the stored reply for that game
+ * The flow the stored kinds share: return the stored reply for that game
  * day for free; otherwise spend, call Claude, check, record usage, keep and
  * store. Any failure refunds and answers {source: "fallback"}, and the game
  * writes its own text.
