@@ -1,0 +1,775 @@
+{
+  "meta": {
+    "label": "m6-v8",
+    "date": "2026-11-10T20:15:10.357Z",
+    "model": "claude-haiku-5-5",
+    "cacheTtl": "5m"
+  },
+  "summary": [
+    {
+      "config": "low-nothink",
+      "calls": 12,
+      "ok": 12,
+      "refusals": 0,
+      "invalid": 0,
+      "errors": 0,
+      "chatLatencyP50": 0,
+      "chatLatencyP95": 0,
+      "storyLatencyP95": 7738,
+      "totalCost": 0.007262200000000001,
+      "byKind": {
+        "evening": {
+          "calls": 8,
+          "ok": 8,
+          "avgTokens": {
+            "input": 772.75,
+            "cacheRead": 1612.5,
+            "cacheWrite5m": 1625.5,
+            "cacheWrite1h": 0,
+            "output": 871.375
+          },
+          "avgCost": 0.0007322750000000001,
+          "avgCostNoCache": 0.0008367625000000001
+        },
+        "letter": {
+          "calls": 4,
+          "ok": 4,
+          "avgTokens": {
+            "input": 246.25,
+            "cacheRead": 900,
+            "cacheWrite5m": 1522,
+            "cacheWrite1h": 0,
+            "output": 254.25
+          },
+          "avgCost": 0.00035099999999999997,
+          "avgCostNoCache": 0.00039395
+        }
+      },
+      "fullUse": null,
+      "fullUseNoCache": null,
+      "failedChecks": []
+    }
+  ],
+  "records": [
+    {
+      "config": "low-nothink",
+      "kind": "evening",
+      "scenario": "evening_day3_en",
+      "locale": "en",
+      "tag": "evening",
+      "turn": 0,
+      "player": null,
+      "ok": true,
+      "reason": null,
+      "detail": null,
+      "output": {
+        "story": "Day three on the leaky mountain began with a bucket under the roof and a chicken glaring at the door. Lin Xiaohe trained until her water spirit root hummed, gaining a solid dose of progress, and only flinched once when a hen wandered past. Bao Tian and Mei Shu came back from gathering herbs with a heavy sack: nine Herbs and four Food, plus a story about a mountain goat that Bao insists was a spirit beast. Mei Shu, who cannot tell a lie even to be kind, admitted the goat was just a goat. Bao declared it a 'humble spirit beast' anyway. At dinner the sect ate three Food, and Bao, of course, kept glancing at the leftovers. Lin Xiaohe slipped a folded scrap of paper into her sleeve when she thought no one was looking. It was another terrible poem, and Bao may have read the first line over her shoulder.",
+        "morning_report": "The leaky roof is still leaky, and the chicken is still watching. Someone should really check whether Bao's chosen-one theory holds up, or whether it's just the hunger talking.",
+        "decisions": [
+          {
+            "disciple_id": "bao",
+            "action": "cook",
+            "reason": "A chosen one must feed himself first, and the Food stores are looking very interesting today."
+          },
+          {
+            "disciple_id": "mei",
+            "action": "study",
+            "reason": "If I'm going to keep my pills from exploding, I need to read more before I try again, even if it's boring."
+          }
+        ],
+        "memories": [
+          {
+            "disciple_id": "lin",
+            "text": "Trained hard today and gained real progress. The chicken came close, but I stood my ground. Mostly."
+          },
+          {
+            "disciple_id": "bao",
+            "text": "Found a goat that Mei swears is not a spirit beast. I still think it is a humble one. Ate well at dinner."
+          },
+          {
+            "disciple_id": "mei",
+            "text": "Gathered herbs with Bao. Had to admit the goat was just a goat, and Bao did not like that."
+          }
+        ],
+        "relationship_changes": [
+          {
+            "from": "lin",
+            "to": "bao",
+            "change": 1,
+            "reason": "Bao shared his dinner portion without complaint, which Lin noticed and appreciated."
+          }
+        ]
+      },
+      "tokens": {
+        "input": 694,
+        "cacheRead": 0,
+        "cacheWrite5m": 2953,
+        "cacheWrite1h": 0,
+        "output": 707
+      },
+      "costUsd": 0.000792025,
+      "latencyMs": 5413,
+      "checks": [
+        {
+          "name": "valid reply",
+          "pass": true
+        },
+        {
+          "name": "decisions use allowed actions",
+          "pass": true
+        },
+        {
+          "name": "relationship changes in range",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "config": "low-nothink",
+      "kind": "evening",
+      "scenario": "evening_day9_en",
+      "locale": "en",
+      "tag": "evening",
+      "turn": 0,
+      "player": null,
+      "ok": true,
+      "reason": null,
+      "detail": null,
+      "output": {
+        "story": "Day nine began with Bao Tian marching off to Hunt a Monster, announcing that the mountain's wild boars had been waiting for their chosen one. The boars were not impressed. Bao Tian came limping home with bruises, empty hands and a loud claim that the monster had simply been too modest to fight. Lin Xiaohe spent the afternoon in the Spirit Field, keeping a wary eye on every feather within sight, while Mei Shu worked beside her in stiff silence. Their quarrel was all sharp glances and careful distance, yet the field did not care: by sunset they had grown eight Food and two Herbs, which is more than a sulking pair deserves. Mei Shu nearly set a pill cauldron on fire at dinner, but only a little. The sect ate three Food and went to bed full, if a bit smoky.",
+        "morning_report": "Bao Tian is resting on orders, and has already declared that healing herbs are beneath a chosen one. Lin Xiaohe and Mei Shu may need a reason to stand closer together over the next few days.",
+        "decisions": [
+          {
+            "disciple_id": "bao",
+            "action": "rest",
+            "reason": "The chosen one must conserve strength for greatness, and also for the bowl of porridge I plan to eat while resting."
+          },
+          {
+            "disciple_id": "lin",
+            "action": "tend_field",
+            "reason": "The Spirit Field is calm and full of plants, and plants have never once chased me."
+          }
+        ],
+        "memories": [
+          {
+            "disciple_id": "bao",
+            "text": "Hunt a Monster: the boars chose not to be hunted, and I was made to rest for three days."
+          },
+          {
+            "disciple_id": "lin",
+            "text": "We grew eight Food and two Herbs together, Mei and I. The field did not care that we were not speaking."
+          },
+          {
+            "disciple_id": "mei",
+            "text": "Lin's silence was louder than any bad pill I have ever made, and I could not tell her a single lie about it."
+          }
+        ],
+        "relationship_changes": [
+          {
+            "from": "lin",
+            "to": "mei",
+            "change": 1,
+            "reason": "Working side by side in the Spirit Field softened the chill between them, if only a little."
+          }
+        ]
+      },
+      "tokens": {
+        "input": 744,
+        "cacheRead": 0,
+        "cacheWrite5m": 2953,
+        "cacheWrite1h": 0,
+        "output": 686
+      },
+      "costUsd": 0.0007865249999999999,
+      "latencyMs": 4723,
+      "checks": [
+        {
+          "name": "valid reply",
+          "pass": true
+        },
+        {
+          "name": "decisions use allowed actions",
+          "pass": true
+        },
+        {
+          "name": "relationship changes in range",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "config": "low-nothink",
+      "kind": "evening",
+      "scenario": "evening_day15_en",
+      "locale": "en",
+      "tag": "evening",
+      "turn": 0,
+      "player": null,
+      "ok": true,
+      "reason": null,
+      "detail": null,
+      "output": {
+        "story": "Day fifteen at the Little Mountain Sect began with a leak in the roof dripping precisely onto the Sect Master's teacup. Mei Shu trained harder than ever, sweat running down their nose, and by evening they stood ready to break through to the next realm, though nobody could tell whether the wobbling aura around them was a breakthrough or just a hungry hiccup. Lin Xiaohe and Bao Tian set out on Hunt a Monster before dawn, Lin peeking nervously at every rooster they passed and Bao Tian muttering that he, the chosen one, would surely return with a legendary beast for dinner. Dinner, unfortunately, was one measly bowl of Food shared among the whole sect, and Mei Shu, who cannot tell even a kind lie, admitted they were quite hungry and went to bed with a small, honest frown. The mountain creaked, the leak kept dripping, and the sect carried on, one stubborn step at a time.",
+        "morning_report": "Mei Shu may be close to a breakthrough, though the kitchen smoke might have something to say about it. Lin and Bao return on day sixteen, hopefully with a monster or at least a good story.",
+        "decisions": [
+          {
+            "disciple_id": "mei",
+            "action": "meditate",
+            "reason": "Calm breathing first, then the breakthrough, and I'll try not to think about the empty pot while I do it, honestly."
+          }
+        ],
+        "memories": [
+          {
+            "disciple_id": "mei",
+            "text": "Day 15: I trained until my bones hummed and my stomach growled. Too hungry to lie about it."
+          },
+          {
+            "disciple_id": "bao",
+            "text": "Day 15: Set out to hunt a monster with Xiaohe. The chosen one is always hungry, so I packed extra."
+          }
+        ],
+        "relationship_changes": [
+          {
+            "from": "bao",
+            "to": "lin",
+            "change": 1,
+            "reason": "Bao kept chattering about his destiny all the way down the path and Lin laughed in spite of herself."
+          }
+        ]
+      },
+      "tokens": {
+        "input": 731,
+        "cacheRead": 0,
+        "cacheWrite5m": 2953,
+        "cacheWrite1h": 0,
+        "output": 644
+      },
+      "costUsd": 0.000764225,
+      "latencyMs": 4174,
+      "checks": [
+        {
+          "name": "valid reply",
+          "pass": true
+        },
+        {
+          "name": "decisions use allowed actions",
+          "pass": true
+        },
+        {
+          "name": "relationship changes in range",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "config": "low-nothink",
+      "kind": "evening",
+      "scenario": "evening_day30_en",
+      "locale": "en",
+      "tag": "evening",
+      "turn": 0,
+      "player": null,
+      "ok": true,
+      "reason": null,
+      "detail": null,
+      "output": {
+        "story": "Day thirty brought TOURNAMENT DAY, and the whole mountain shook with nerves. Lin Xiaohe and Bao Tian marched into the ring like true champions. Their water and fire tangled beautifully, and the Moonlit Tea Society went down in a cloud of polite sighs. Then came the Iron Frog Sect, who roared like a pond full of angry drums. Lin Xiaohe fought bravely, but she flinched at the frog-shaped banner, and Bao Tian declared afterward that his defeat was a clever plan to be humble. The sect finished second, a result the Master said was fine, if slightly soggy. Prize in hand, the mountain celebrated by eating 3 Food, most of it Bao Tian's. Later Mei Shu was named an Elder and immediately tried to explain their new title with a pill, which went off with a small, cheerful pop. Mei Shu also cannot lie, so when asked if they were proud, they said, 'Yes, but also my eyebrows are gone.' Then word came that the Perfect Hair Pavilion has declared war, and the battle is set for day thirty-three. Nobody slept well, though Bao Tian slept quite loudly.",
+        "morning_report": "Three days until the Perfect Hair Pavilion arrives, and their banners are already dressed in suspicious amounts of gold. Lin Xiaohe has started practicing her flinching-and-stabbing technique, which may or may not work on hairdressers.",
+        "decisions": [
+          {
+            "disciple_id": "bao",
+            "action": "train",
+            "reason": "If I am the chosen one, the Pavilion will need a very impressive chosen one to defeat, so I must train extra hard, and maybe eat afterwards."
+          },
+          {
+            "disciple_id": "lin",
+            "action": "train",
+            "reason": "The Pavilion has warned us about war, and a water cultivator who fears chickens must at least be able to fear the enemy properly."
+          }
+        ],
+        "memories": [
+          {
+            "disciple_id": "lin",
+            "text": "Day 30: I fought the Iron Frog Sect and forgot every move except the one where I cried a little. Still, second place!"
+          },
+          {
+            "disciple_id": "bao",
+            "text": "Day 30: I was defeated by frogs, but in a very strategic way. Master says I might be the chosen one. Probably."
+          },
+          {
+            "disciple_id": "mei",
+            "text": "Day 30: I became an Elder today. I still cannot lie, so I told the Master that I am proud, which is true. My eyebrows are gone, which is also true."
+          }
+        ],
+        "relationship_changes": [
+          {
+            "from": "lin",
+            "to": "bao",
+            "change": 1,
+            "reason": "They fought side by side in the ring and Bao Tian shared his last bun with her after the loss."
+          }
+        ]
+      },
+      "tokens": {
+        "input": 799,
+        "cacheRead": 0,
+        "cacheWrite5m": 2953,
+        "cacheWrite1h": 0,
+        "output": 888
+      },
+      "costUsd": 0.000893025,
+      "latencyMs": 5954,
+      "checks": [
+        {
+          "name": "valid reply",
+          "pass": true
+        },
+        {
+          "name": "decisions use allowed actions",
+          "pass": true
+        },
+        {
+          "name": "relationship changes in range",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "config": "low-nothink",
+      "kind": "evening",
+      "scenario": "evening_day3_vi",
+      "locale": "vi",
+      "tag": "evening",
+      "turn": 0,
+      "player": null,
+      "ok": true,
+      "reason": null,
+      "detail": null,
+      "output": {
+        "story": "Sáng nay, Lâm Tiểu Hà lên sân tập từ sớm, vung kiếm gỗ đến khi mồ hôi nhễ nhại. Mười hai điểm tu vi nhích lên, cô bé cười toe toét, rồi giật mình vì một con gà rừng chạy ngang qua và suýt làm rơi cả kiếm. Bảo Thiên thì không hề luyện công: vừa ngồi thiền được nửa nén hương đã sờ bụng than đói, rồi quả quyết rằng thiên mệnh đang gọi mình xuống bếp. Hai người vẫn ồn ào như mọi khi, nhưng Bảo Thiên còn kịp chia cho Tiểu Hà nửa cái bánh bao, nên tình bạn của họ vẫn bền chặt.\n\nBuổi chiều, Bảo Thiên và Mai Thư trở về từ chuyến hái thuốc với chín cây thảo dược và bốn phần lương thực. Mai Thư đem về cả một rổ dược liệu và vẫn thật thà kể rằng đường về có một cú trượt chân xuống dốc. Cả sư môn quây quần ăn tối, tiêu hao ba phần lương thực, rồi ai nấy đi nghỉ sớm.",
+        "morning_report": "Sáng mai, sư phụ nên để ý đến cái bếp, vì Bảo Thiên đang nhìn chằm chằm vào lương thực với vẻ đầy quyết tâm. Mai Thư có lẽ sẽ lại thử luyện đan, và chắc chắn sẽ có một tiếng nổ nhỏ.",
+        "decisions": [
+          {
+            "disciple_id": "bao",
+            "action": "cook",
+            "reason": "Thiên mệnh bảo đệ tử phải nấu một bữa thật to, chứ đói thế này thì không thiền nổi đâu!"
+          },
+          {
+            "disciple_id": "lin",
+            "action": "train",
+            "reason": "Hôm qua đã tiến bộ, hôm nay con phải tiếp tục để không thua mấy con gà rừng ngoài kia."
+          }
+        ],
+        "memories": [
+          {
+            "disciple_id": "lin",
+            "text": "Hôm nay luyện kiếm đến đổ mồ hôi, tăng được 12 điểm tu vi. Một con gà rừng suýt làm con rơi kiếm."
+          },
+          {
+            "disciple_id": "bao",
+            "text": "Ngồi thiền chưa đầy nửa nén hương đã đói, nhưng Tiểu Hà chia bánh bao cho đệ, đúng là bạn tốt."
+          },
+          {
+            "disciple_id": "mei",
+            "text": "Hái thuốc thành công, mang về chín cây thảo dược. Trên đường về con có trượt chân xuống dốc, nhưng vẫn kịp giữ rổ thuốc."
+          }
+        ],
+        "relationship_changes": [
+          {
+            "from": "lin",
+            "to": "bao",
+            "change": 1,
+            "reason": "Bảo Thiên chia bánh bao cho Tiểu Hà khi cô bé đói sau buổi luyện kiếm."
+          }
+        ]
+      },
+      "tokens": {
+        "input": 755,
+        "cacheRead": 2331,
+        "cacheWrite5m": 1192,
+        "cacheWrite1h": 0,
+        "output": 1064
+      },
+      "costUsd": 0.0007798099999999999,
+      "latencyMs": 6339,
+      "checks": [
+        {
+          "name": "valid reply",
+          "pass": true
+        },
+        {
+          "name": "decisions use allowed actions",
+          "pass": true
+        },
+        {
+          "name": "relationship changes in range",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "config": "low-nothink",
+      "kind": "evening",
+      "scenario": "evening_day9_vi",
+      "locale": "vi",
+      "tag": "evening",
+      "turn": 0,
+      "player": null,
+      "ok": true,
+      "reason": null,
+      "detail": null,
+      "output": {
+        "story": "Hôm nay ở Tiểu Sơn Tông trời đẹp nhưng mái nhà vẫn dột như thường lệ. Bảo Thiên đi săn yêu thú về tay không, toàn thân lấm bùn, miệng vẫn tuyên bố rằng con yêu thú kia chắc chắn sẽ tự nguyện đầu hàng vào lần sau. Đến khi bước vào, huynh ấy lăn ra ngủ ngay trên bậc thềm vì bị thương, bụng còn réo ầm ĩ như trống trận. Lâm Tiểu Hà và Mai Thư cùng chăm linh điền, lần này thu hoạch được tám phần lương thực và hai bó thảo dược, nhờ đó cả tông môn được ăn một bữa no. Tiểu Hà vẫn liếc Mai Thư đầy ngờ vực, còn Mai Thư thì thật thà nói rằng mình chỉ khen cây lúa mọc thẳng, đâu có khen bài thơ. Không khí giữa hai người hơi gượng gạo, nhưng cánh đồng thì vẫn xanh mướt.",
+        "morning_report": "Sư phụ nhớ dặn Bảo Thiên nghỉ cho khỏe, kẻo huynh ấy lại đòi đi săn khi chưa lành vết thương. Lâm Tiểu Hà có vẻ đang ấp ủ một bài thơ mới để trả đũa, còn Mai Thư thì e là sẽ lại nổ một lò đan nữa.",
+        "decisions": [
+          {
+            "disciple_id": "bao",
+            "action": "rest",
+            "reason": "Vết thương chưa lành hẳn, mà đệ tử thì đã đói đến mức chỉ mơ thấy đùi gà, nên nghỉ ngơi là lựa chọn duy nhất hợp lý, dù đệ tử vẫn tin mình sẽ là người được chọn vào ngày mai."
+          },
+          {
+            "disciple_id": "mei",
+            "action": "study",
+            "reason": "Đệ tử muốn học thêm về cách điều hòa hỏa hầu để lần sau luyện đan khỏi nổ tung, dù đệ tử chưa chắc mình sẽ thành công."
+          }
+        ],
+        "memories": [
+          {
+            "disciple_id": "bao",
+            "text": "Hôm nay bị thương khi săn yêu thú, nhưng đệ tử vẫn tin mình là người được chọn. Đói quá."
+          },
+          {
+            "disciple_id": "lin",
+            "text": "Cùng Mai Thư chăm linh điền, thu được 8 lương thực và 2 thảo dược. Mai Thư vẫn chưa xin lỗi chuyện bài thơ."
+          },
+          {
+            "disciple_id": "mei",
+            "text": "Lại khen cây lúa mọc thẳng mà không hiểu vì sao Tiểu Hà giận. Đệ tử không biết nói dối nên đành thật thà."
+          }
+        ],
+        "relationship_changes": [
+          {
+            "from": "lin",
+            "to": "mei",
+            "change": -1,
+            "reason": "Vẫn còn giận chuyện bài thơ, nhưng hai người cùng làm việc ngoài đồng đã dịu đi đôi chút."
+          },
+          {
+            "from": "mei",
+            "to": "lin",
+            "change": 1,
+            "reason": "Mai Thư thấy áy náy vì đã vô tình làm Tiểu Hà buồn và muốn làm hòa."
+          }
+        ]
+      },
+      "tokens": {
+        "input": 805,
+        "cacheRead": 3523,
+        "cacheWrite5m": 0,
+        "cacheWrite1h": 0,
+        "output": 1174
+      },
+      "costUsd": 0.00070273,
+      "latencyMs": 7738,
+      "checks": [
+        {
+          "name": "valid reply",
+          "pass": true
+        },
+        {
+          "name": "decisions use allowed actions",
+          "pass": true
+        },
+        {
+          "name": "relationship changes in range",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "config": "low-nothink",
+      "kind": "evening",
+      "scenario": "evening_day15_vi",
+      "locale": "vi",
+      "tag": "evening",
+      "turn": 0,
+      "player": null,
+      "ok": true,
+      "reason": null,
+      "detail": null,
+      "output": {
+        "story": "Ngày thứ mười lăm ở Tiểu Sơn Tông trôi qua khá yên bình, chỉ có một chút ồn ào quen thuộc. Mai Thư tu luyện suốt cả ngày, mặt mũi lấm lem tro bụi, và đến chiều thì đã chạm đến ngưỡng đột phá. Tối đến, cả sư môn chỉ ăn được một phần cơm nhỏ, và Mai Thư đành đi ngủ với cái bụng đói meo, vừa ngáp vừa thầm nhủ rằng đột phá xong nhất định phải xin sư phụ một bữa thịnh soạn. Ở đầu núi, Lâm Tiểu Hà và Bảo Thiên lên đường đi săn yêu thú, dự kiến ngày mai mới về. Bảo Thiên vừa đi vừa than đói, còn Tiểu Hà thì lén nhìn quanh xem có con gà nào đi lạc không, vì nàng vẫn sợ gà lắm.",
+        "morning_report": "Mai Thư có vẻ sắp đột phá lên Kim Đan kỳ, nhưng bụng đói thì không đợi được ai. Lâm Tiểu Hà và Bảo Thiên sẽ về vào ngày mai, mang theo kết quả săn bắt hay chuyện cười gì đó cũng nên.",
+        "decisions": [
+          {
+            "disciple_id": "mei",
+            "action": "meditate",
+            "reason": "Đệ tử sắp đột phá rồi, phải tĩnh tâm mới được, còn ăn uống để sau cũng không sao ạ!"
+          }
+        ],
+        "memories": [
+          {
+            "disciple_id": "mei",
+            "text": "Đêm nay đi ngủ mà bụng réo ầm ầm, nhưng cảm giác sắp đột phá thì rất gần rồi."
+          }
+        ],
+        "relationship_changes": [
+          {
+            "from": "bao",
+            "to": "mei",
+            "change": 1,
+            "reason": "Bảo Thiên thương Mai Thư bụng đói, nên cố ý nhường cho một miếng bánh nhỏ trước khi đi săn."
+          }
+        ]
+      },
+      "tokens": {
+        "input": 794,
+        "cacheRead": 3523,
+        "cacheWrite5m": 0,
+        "cacheWrite1h": 0,
+        "output": 736
+      },
+      "costUsd": 0.00048263,
+      "latencyMs": 4192,
+      "checks": [
+        {
+          "name": "valid reply",
+          "pass": true
+        },
+        {
+          "name": "decisions use allowed actions",
+          "pass": true
+        },
+        {
+          "name": "relationship changes in range",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "config": "low-nothink",
+      "kind": "evening",
+      "scenario": "evening_day30_vi",
+      "locale": "vi",
+      "tag": "evening",
+      "turn": 0,
+      "player": null,
+      "ok": true,
+      "reason": null,
+      "detail": null,
+      "output": {
+        "story": "Ngày thi đấu đã đến! Lâm Tiểu Hà và Bảo Thiên bước lên đài đại hội tỷ võ với tất cả sự tự tin của mình. Hai người đánh bại Nguyệt Trà Hội một cách ngoạn mục, khiến các trưởng lão của họ phải gật gù. Nhưng đến trận cuối, Thiết Oa Tông hò hét ầm ĩ như một đàn ếch, và Tiểu Hà suýt ngất vì tiếng kêu ấy, nhất là khi nghe thấy có cả một con gà bị mang lên sân. Sư tỷ đành thua, nhưng vẫn ôm được vị trí á quân cho tông môn. Bảo Thiên đói meo cả buổi, vừa ăn vừa tuyên bố mình chắc chắn là người được chọn, cho đến khi nhận ra bát cơm đầu tiên đã hết. Mai Thư chính thức được thăng làm Trưởng lão, và đã tuyên bố sẽ dạy dỗ các sư đệ từ nay, dù viên đan đầu tiên của họ lại nổ một tiếng 'bụp' nhỏ ngay trên bàn. Tin xấu đến cuối ngày: Mỹ Phát Các đã tuyên chiến, và trận đánh diễn ra vào ngày 33. Cả tông môn lặng đi một lúc, rồi Bảo Thiên bảo mình sẽ tập luyện thật chăm.",
+        "morning_report": "Sư phụ ơi, Mỹ Phát Các đã tuyên chiến, còn ba ngày nữa là đến trận đánh. Có lẽ hôm nay ta nên bàn lại cách phòng thủ cho thật kỹ.",
+        "decisions": [
+          {
+            "disciple_id": "lin",
+            "action": "train",
+            "reason": "Đệ tử phải luyện tập thật chăm để không thua trong trận chiến sắp tới, dù gà có kêu to thế nào cũng không được sợ!"
+          },
+          {
+            "disciple_id": "bao",
+            "action": "train",
+            "reason": "Người được chọn thì phải tập luyện nhiều hơn người thường, nhất là khi trận chiến đang đến gần!"
+          }
+        ],
+        "memories": [
+          {
+            "disciple_id": "lin",
+            "text": "Hôm nay đứng trên đài thi đấu, nghe Thiết Oa Tông kêu ầm ĩ mà suýt ngất, may mà không ai thấy."
+          },
+          {
+            "disciple_id": "bao",
+            "text": "Ngày thi đấu, ta suýt thắng cả trận, chỉ tiếc là bát cơm lại hết sớm."
+          },
+          {
+            "disciple_id": "mei",
+            "text": "Hôm nay được thăng làm Trưởng lão, dù viên đan đầu tiên lại nổ ngay trước mặt sư phụ."
+          }
+        ],
+        "relationship_changes": [
+          {
+            "from": "lin",
+            "to": "bao",
+            "change": 1,
+            "reason": "Cả hai cùng nhau chiến đấu trên đài thi đấu, tình bạn thêm gắn bó."
+          }
+        ]
+      },
+      "tokens": {
+        "input": 860,
+        "cacheRead": 3523,
+        "cacheWrite5m": 0,
+        "cacheWrite1h": 0,
+        "output": 1072
+      },
+      "costUsd": 0.00065723,
+      "latencyMs": 6909,
+      "checks": [
+        {
+          "name": "valid reply",
+          "pass": true
+        },
+        {
+          "name": "decisions use allowed actions",
+          "pass": true
+        },
+        {
+          "name": "relationship changes in range",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "config": "low-nothink",
+      "kind": "letter",
+      "scenario": "letter_noodle_town_en",
+      "locale": "en",
+      "tag": "letter",
+      "turn": 0,
+      "player": null,
+      "ok": true,
+      "reason": null,
+      "detail": null,
+      "output": {
+        "letter": "Dear Sect Master,\n\nGreetings from Longtang, the noodle capital of the known world! On day three I was ambushed by a noodle chef who swore I was the Chosen One of the Broth. I accepted this destiny immediately and ate nine bowls in his honor. My Fire root has never been so well fed. He says the Heavens approve. I believe him.\n\nI am sending a small gift of food so you won't starve while I'm out chasing greatness. Please do not eat it all before I return.\n\nYour devoted disciple,\nBao Tian, Chosen One of the Broth"
+      },
+      "tokens": {
+        "input": 227,
+        "cacheRead": 0,
+        "cacheWrite5m": 2137,
+        "cacheWrite1h": 0,
+        "output": 203
+      },
+      "costUsd": 0.000391325,
+      "latencyMs": 2835,
+      "checks": [
+        {
+          "name": "valid reply",
+          "pass": true
+        },
+        {
+          "name": "signed with the disciple's name",
+          "pass": true
+        },
+        {
+          "name": "no numbers",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "config": "low-nothink",
+      "kind": "letter",
+      "scenario": "letter_frog_swamp_en",
+      "locale": "en",
+      "tag": "letter",
+      "turn": 0,
+      "player": null,
+      "ok": true,
+      "reason": null,
+      "detail": null,
+      "output": {
+        "letter": "Dear Sect Master,\n\nI am writing from the swamp next to the Iron Frog Sect, where I arrived by accident after following a glowing bird that turned out to be a very confident duck. The frogs here shouted at me for fourteen days straight. I could not tell them the truth about their singing, so I told them their lily pads were lovely, which is the only lie I have ever managed, and it nearly cost me my eyebrows.\n\nI am sending a Foundation Pill as a gift. It exploded a little on the way, so please hold it with both hands and maybe a bucket.\n\nYour disciple,\nMei Shu"
+      },
+      "tokens": {
+        "input": 239,
+        "cacheRead": 0,
+        "cacheWrite5m": 2137,
+        "cacheWrite1h": 0,
+        "output": 214
+      },
+      "costUsd": 0.000398025,
+      "latencyMs": 2505,
+      "checks": [
+        {
+          "name": "valid reply",
+          "pass": true
+        },
+        {
+          "name": "signed with the disciple's name",
+          "pass": true
+        },
+        {
+          "name": "no numbers",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "config": "low-nothink",
+      "kind": "letter",
+      "scenario": "letter_noodle_town_vi",
+      "locale": "vi",
+      "tag": "letter",
+      "turn": 0,
+      "player": null,
+      "ok": true,
+      "reason": null,
+      "detail": null,
+      "output": {
+        "letter": "Kính gửi sư phụ kính yêu,\n\nĐệ tử đã đến Longtang được bảy ngày rồi. Thị trấn này nổi tiếng với mì kéo tay, và đệ tử chắc chắn rằng ông trời đã chọn nơi đây để thử thách đạo tâm của con: đệ tử ngồi thiền ngoài quán mì mà bụng cứ réo ầm lên đến mức lão bá bán mì phải cho thêm một tô. Đó là bằng chứng cho thấy đệ tử là người được chọn, đúng không ạ?\n\nKèm theo thư này là một gói đồ ăn nhỏ, sư phụ nhớ chia cho các sư huynh nhé, nhưng nhớ để phần đệ tử một chút.\n\nĐệ tử của sư phụ,\nBảo Thiên"
+      },
+      "tokens": {
+        "input": 255,
+        "cacheRead": 1800,
+        "cacheWrite5m": 907,
+        "cacheWrite1h": 0,
+        "output": 311
+      },
+      "costUsd": 0.000312375,
+      "latencyMs": 2413,
+      "checks": [
+        {
+          "name": "valid reply",
+          "pass": true
+        },
+        {
+          "name": "signed with the disciple's name",
+          "pass": true
+        },
+        {
+          "name": "no numbers",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "config": "low-nothink",
+      "kind": "letter",
+      "scenario": "letter_frog_swamp_vi",
+      "locale": "vi",
+      "tag": "letter",
+      "turn": 0,
+      "player": null,
+      "ok": true,
+      "reason": null,
+      "detail": null,
+      "output": {
+        "letter": "Gửi sư phụ kính mến, con đã lạc vào đầm lầy sát Thiết Oa Tông được mười bốn ngày rồi. Đừng hỏi làm sao lạc, con cũng chưa rõ, chỉ biết con đi theo một con ếch to đến mức nó còn có cả bảng hiệu. Ở đây muỗi bằng chim sẻ, và con đã cãi nhau với một cây sen một canh giờ, thua. Con gửi kèm một viên Trúc Cơ Đan, con luyện nó trong lúc chờ mưa tạnh, nên có hơi nổ nhẹ, xin sư phụ thông cảm. Con nhớ sư phụ và nhớ cái mái nhà dột của mình. Đệ tử Mai Thư kính bái."
+      },
+      "tokens": {
+        "input": 264,
+        "cacheRead": 1800,
+        "cacheWrite5m": 907,
+        "cacheWrite1h": 0,
+        "output": 289
+      },
+      "costUsd": 0.00030227499999999996,
+      "latencyMs": 2734,
+      "checks": [
+        {
+          "name": "valid reply",
+          "pass": true
+        },
+        {
+          "name": "signed with the disciple's name",
+          "pass": true
+        },
+        {
+          "name": "no numbers",
+          "pass": true
+        }
+      ]
+    }
+  ]
+}
