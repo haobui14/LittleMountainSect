@@ -2,12 +2,14 @@
 // at phone size (390x844) and desktop size (1280x720), by clicking the
 // controls the game publishes in window.lmsUi (see game/autoload/ui_probe.gd).
 // Each morning it picks the first choice it can afford in a surprise event,
-// takes in a hopeful at the gate when it can (or sends them home), and in
-// the plan has two disciples train and sends the first one ready to break
-// through. Takes a
-// screenshot of each screen and fails on any page error.
+// takes in a hopeful at the gate when it can (or sends them home), enters
+// the season's tournament with the picked champions, defends a battle, lets
+// a traveller go, and in the plan has two disciples train and sends the
+// first one ready to break through. On the World tab once, it sends a gift.
+// Takes a screenshot of each screen and fails on any page error.
 //
 // Usage: node tools/web-check/play_check.cjs <url> <screenshots-dir> [days] [--offline]
+//        [--phone | --desktop] (one size only)
 // Serve build/web first, for example on port 8060. With --offline every
 // request to Supabase fails, so the whole game must run on written text
 // (Gate 2: playable with the server off). Without it the game talks to the
@@ -22,7 +24,10 @@ const DAYS = Number(daysArg || 10);
 const SIZES = [
   { name: "phone", viewport: { width: 390, height: 844 } },
   { name: "desktop", viewport: { width: 1280, height: 720 } },
-];
+].filter((size) =>
+  !process.argv.includes("--phone") && !process.argv.includes("--desktop") ||
+  process.argv.includes(`--${size.name}`)
+);
 
 async function play(browser, size) {
   const context = await browser.newContext({ viewport: size.viewport, deviceScaleFactor: 1 });
@@ -48,7 +53,8 @@ async function play(browser, size) {
       if (state && check(state)) return state;
       await page.waitForTimeout(100);
     }
-    throw new Error(`${size.name}: timed out waiting for ${what}`);
+    const seen = errors.length ? ` (page errors: ${errors.join(" / ")})` : "";
+    throw new Error(`${size.name}: timed out waiting for ${what}${seen}`);
   };
   // Clicks a published control, scrolling the game's list until it is on
   // screen and waiting until it has stopped moving (cards pop in).
@@ -77,8 +83,29 @@ async function play(browser, size) {
     await page.mouse.click(item.x + item.w / 2, item.y + item.h / 2);
     await page.waitForTimeout(250);
   };
+  // Clicks, and clicks once more if the screen hasn't moved on within 5 s
+  // (a tap can land while the screen is being rebuilt).
+  const clickUntil = async (id, check, what) => {
+    await click(id);
+    try {
+      await waitFor(check, what, 5000);
+    } catch {
+      await click(id);
+      await waitFor(check, what);
+    }
+  };
   const shot = (label) => page.screenshot({ path: `${shots}/${size.name}_${label}.png` });
-  const counts = { events: 0, recruited: 0, declined: 0, breakthroughs: 0 };
+  const counts = {
+    events: 0,
+    recruited: 0,
+    declined: 0,
+    breakthroughs: 0,
+    tournaments: 0,
+    battles: 0,
+    travels: 0,
+    letters: 0,
+    gifts: 0,
+  };
 
   // The morning's surprise event and hopeful, before the day can be planned.
   const morning = async (day) => {
@@ -93,6 +120,29 @@ async function play(browser, size) {
       await waitFor((s) => !s.event, "the event's result");
       if (counts.events === 0) await shot(`1_event_result_day${day}`);
       counts.events++;
+    }
+    const world = await ui();
+    if (world.letter && counts.letters === 0) await shot(`1_letter_day${day}`);
+    if (world.letter) counts.letters++;
+    if (world.tournament) {
+      await shot(`1_tournament_day${day}`);
+      const enter = (await ui()).items.tournament_enter;
+      await click(enter && !enter.disabled ? "tournament_enter" : "tournament_skip");
+      await waitFor((s) => !s.tournament, "the tournament's result");
+      await shot(`1_tournament_result_day${day}`);
+      counts.tournaments++;
+    }
+    if ((await ui()).battle) {
+      await shot(`1_battle_day${day}`);
+      await click("battle_defend");
+      await waitFor((s) => !s.battle, "the battle's result");
+      counts.battles++;
+    }
+    if ((await ui()).travel) {
+      if (counts.travels === 0) await shot(`1_travel_day${day}`);
+      await click("travel_go");
+      await waitFor((s) => !s.travel, "the traveller's answer");
+      counts.travels++;
     }
     if ((await ui()).candidate) {
       if (counts.recruited + counts.declined === 0) await shot(`1_hopeful_day${day}`);
@@ -131,8 +181,7 @@ async function play(browser, size) {
   for (let day = 1; day <= DAYS; day++) {
     await waitFor((s) => s.screen === "morning" && s.day === day, `morning of day ${day}`);
     await morning(day);
-    await click("plan_day");
-    await waitFor((s) => s.screen === "plan", "the day plan");
+    await clickUntil("plan_day", (s) => s.screen === "plan", "the day plan");
     // From day 2, two disciples train, so someone is ready to break through
     // within a 30-day run.
     for (const id of day > 1 ? ["choose_d1_train", "choose_d2_train"] : []) {
@@ -164,6 +213,20 @@ async function play(browser, size) {
       await click("choose_d3_work");
       await waitFor((s) => s.items.choose_d2_gather_herbs?.pressed, "the team choice");
       await shot("4_plan");
+    }
+    if (day === 2) {
+      // The World tab: the rivals and the Chronicle, and one gift.
+      await click("tab_world");
+      await waitFor((s) => s.items.trade_iron_frog, "the world");
+      await shot("5_world");
+      const items = (await ui()).items;
+      const gift = Object.keys(items).find((id) => id.startsWith("gift_") && !items[id].disabled);
+      if (gift) {
+        await click(gift);
+        await waitFor((s) => s.items[gift]?.disabled, "the gift");
+        counts.gifts++;
+      }
+      await click("tab_today");
     }
     await click("done_planning");
     await waitFor((s) => s.screen === "free_time", "free time");
@@ -201,7 +264,9 @@ async function play(browser, size) {
       console.log(
         `${ok ? "ok  " : "FAIL"} ${size.name}: played to day ${result.reachedDay}` +
           ` (${c.events} events, ${c.recruited} recruited, ${c.declined} sent home,` +
-          ` ${c.breakthroughs} breakthroughs tried)` +
+          ` ${c.breakthroughs} breakthroughs tried, ${c.tournaments} tournaments,` +
+          ` ${c.battles} battles, ${c.travels} travellers, ${c.letters} letter mornings,` +
+          ` ${c.gifts} gifts)` +
           (result.errors.length
             ? `, page errors: ${result.errors.join(" / ")}`
             : ", no page errors"),

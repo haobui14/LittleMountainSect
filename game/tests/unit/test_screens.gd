@@ -211,3 +211,113 @@ func test_the_hud_floats_gains_and_the_action_bar_follows_the_step() -> void:
 	await _press(screen, "tab_mountain")
 	assert_true(_probes(screen).has("done_planning"), "the day goes on from any tab")
 	Settings.reduce_motion = saved_motion
+
+
+# The world (M6) -------------------------------------------------------------------
+
+func _world_screen(tab: String = "today") -> GameScreen:
+	GameState.sect = Showcase.world_sect()
+	GameState.picks = {}
+	var screen := await _screen()
+	if tab != "today":
+		await _press(screen, "tab_" + tab)
+	return screen
+
+
+func test_the_morning_waits_for_the_tournament_and_the_traveller() -> void:
+	var screen := await _world_screen()
+	var sect := GameState.sect
+	var probes := _probes(screen)
+	assert_true(probes["plan_day"].disabled, "the day waits for the world's news")
+	assert_true(_has_text(screen, "Tournament day!"))
+	assert_true(_has_text(screen, "Likely:"))
+	assert_true(_has_text(screen, "will attack on day 62"), "the war on its way")
+	assert_true(_has_text(screen, "A letter from"))
+	assert_true(_has_text(screen, "noodle"), "a written letter without the server")
+	var champions := probes.keys().filter(func(id: String) -> bool: return id.begins_with("champion_"))
+	assert_eq(champions.size(), Tournament.eligible(sect).size())
+	assert_false(probes.has("champion_" + sect.disciples[0].id), "Elders don't fight")
+	await _press(screen, "tournament_enter")
+	assert_false(Tournament.pending(sect))
+	assert_true(_has_text(screen, "The sect came"))
+	await _press(screen, "travel_go")
+	assert_eq(sect.disciples[1].status, "travel")
+	assert_false(_probes(screen)["plan_day"].disabled)
+
+
+func test_the_world_tab_shows_rivals_land_and_the_chronicle() -> void:
+	var screen := await _world_screen("world")
+	var sect := GameState.sect
+	var probes := _probes(screen)
+	for rival in RivalCatalog.ids():
+		assert_true(_has_text(screen, ReportText.rival_name(rival)), rival)
+		assert_true(probes.has("trade_" + rival), rival)
+	assert_true(probes.has("end_moonlit_tea"), "an ally can be left")
+	assert_true(probes["ally_perfect_hair"].disabled, "not warm enough yet")
+	assert_true(probes["trade_iron_frog"].disabled, "no trade during a war")
+	assert_true(_has_text(screen, "Hills held: 2"))
+	assert_true(_has_text(screen, "The Sect Chronicle"))
+	assert_true(_has_text(screen, "Spring, year 1"), "grouped by season")
+	assert_true(_has_text(screen, "came second"))
+	var stones := int(sect.resources["stones"])
+	await _press(screen, "gift_perfect_hair_stones")
+	assert_eq(int(sect.resources["stones"]), stones - Balance.GIFT_COST["stones"])
+	assert_true(_probes(screen)["gift_perfect_hair_herbs"].disabled, "one gift per rival every few days")
+	await _press(screen, "war_peace")
+	assert_true(sect.war.is_empty())
+
+
+func test_the_disciples_tab_shows_elders_first_and_offers_promotion() -> void:
+	var sect := Showcase.world_sect()
+	var senior := sect.disciples[3]
+	senior.realm = "golden_core"
+	senior.loyalty = 90
+	senior.joined_day = sect.day - Balance.ELDER_DAYS
+	sect.buildings["main_hall"] = 3
+	GameState.sect = sect
+	var screen := await _screen()
+	await _press(screen, "tab_disciples")
+	assert_true(_has_text(screen, "Elder"))
+	assert_true(_has_text(screen, "Teaches instead of taking tasks"))
+	assert_true(_has_text(screen, "Travelling at"))
+	await _press(screen, "promote_" + senior.id)
+	assert_true(senior.is_elder())
+	assert_eq(sect.elder_count(), 2)
+
+
+func test_the_plan_offers_ascension_to_a_nascent_soul() -> void:
+	var sect := GameState.sect
+	var d := sect.disciples[0]
+	d.realm = "nascent_soul"
+	d.progress = Balance.PROGRESS_MAX
+	sect.event = {}
+	GameState.start_planning()
+	var screen := await _screen()
+	var button: Button = _probes(screen).get("choose_%s_ascend" % d.id)
+	assert_not_null(button)
+	assert_true(button.text.begins_with("Ascend ("))
+	assert_eq(button.theme_type_variation, "GoldButton")
+
+
+func test_after_the_tournament_the_day_can_be_planned_on_a_wide_screen() -> void:
+	var sect := Showcase.world_sect()
+	sect.travel_request = {}
+	sect.letter = {}
+	sect.war = {}
+	sect.next_candidate_day = sect.day
+	Recruiting.roll(sect)
+	GameState.sect = sect
+	GameState.picks = {}
+	var screen := GameScreen.new()
+	screen.size = Vector2(1280, 720)
+	add_child_autofree(screen)
+	await wait_process_frames(2)
+	await _press(screen, "tournament_enter")
+	if not sect.candidate.is_empty():
+		await _press(screen, "recruit_decline")
+	await _press(screen, "plan_day")
+	assert_eq(GameState.step, "plan")
+	var probes := _probes(screen)
+	assert_true(probes.has("done_planning"), "the plan screen is built")
+	for id: String in sect.tournament["champions"]:
+		assert_false(probes.keys().any(func(p: String) -> bool: return p.begins_with("choose_%s_" % id)), "champion %s is away" % id)

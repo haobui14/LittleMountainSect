@@ -121,6 +121,76 @@ UI_NOT_SAVING,Progress isn't being saved on this device.,Tiến trình không đ
 UI_TAB_TODAY,Today,Hôm nay
 UI_TAB_MOUNTAIN,Mountain,Ngọn núi
 UI_TAB_DISCIPLES,Disciples,Đệ tử
+UI_TAB_WORLD,World,Thế giới
+UI_DAY_SEASON,"Day {day} · {season}, year {year}","Ngày {day} · mùa {season}, năm {year}"
+UI_DECIDE_FIRST,Decide this morning's news first.,Hãy quyết định các việc sáng nay trước.
+UI_WORLD_HEADING,Beyond the mountain,Ngoài núi
+UI_SEASON_LINE,"{season}, year {year}. The tournament is in {days} days.","Mùa {season}, năm {year}. Còn {days} ngày nữa đến đại hội tỷ võ."
+UI_SEASON_TODAY,"{season}, year {year}. The tournament is today!","Mùa {season}, năm {year}. Hôm nay là đại hội tỷ võ!"
+UI_LAND,Hills held: {land} (+{food} Food and +{herbs} Herbs a day),Số đồi: {land} (+{food} Lương thực và +{herbs} Thảo dược mỗi ngày)
+RIVAL_IRON_FROG_ABOUT,"Proud, loud, and always challenging someone. Loves Food.","Kiêu ngạo, ồn ào, lúc nào cũng thách đấu. Thích Lương thực."
+RIVAL_MOONLIT_TEA_ABOUT,"Rich, polite, and secretly planning something. Loves Herbs.","Giàu có, lễ phép, và ngấm ngầm tính toán. Thích Thảo dược."
+RIVAL_PERFECT_HAIR_ABOUT,"Strong, but mainly worried about looking good. Loves Spirit Stones.","Mạnh, nhưng chủ yếu lo giữ vẻ ngoài. Thích Linh thạch."
+ATT_HOSTILE,Hostile,Thù địch
+ATT_COLD,Cold,Lạnh nhạt
+ATT_WARY,Wary,Dè chừng
+ATT_NEUTRAL,Neutral,Trung lập
+ATT_FRIENDLY,Friendly,Thân thiện
+ATT_WARM,Warm,Nồng ấm
+ATT_ALLIED,Allied,Đồng minh
+UI_ATTITUDE,Attitude: {word} ({value}),Thái độ: {word} ({value})
+UI_TRUST,Trust: {value},Tín nhiệm: {value}
+UI_ALLY_CHIP,Ally,Đồng minh
+UI_AT_WAR_CHIP,At war,Đang giao chiến
+UI_GIFT,Gift {cost},Tặng {cost}
+UI_GIFT_WAIT,Next gift: day {day},Lần tặng quà tiếp theo: ngày {day}
+UI_TRADE,"Trade: give {give}, get {get}","Giao thương: đưa {give}, nhận {get}"
+UI_TRADE_DONE,Traded already. Next deal: day {day},Đã giao thương. Giao dịch tiếp theo: ngày {day}
+UI_TRADE_COLD,Too cold toward the sect to trade.,Quá lạnh nhạt để giao thương.
+UI_TRADE_WAR,No trade during a war.,Không giao thương khi đang có chiến tranh.
+UI_ALLY,Propose an alliance,Đề nghị Liên minh
+UI_ALLY_NEEDS,An alliance needs Attitude {attitude} and Trust {trust}.,Liên minh cần Thái độ {attitude} và Tín nhiệm {trust}.
+UI_END_ALLIANCE,End the alliance,Chấm dứt Liên minh
+UI_WAR_BANNER,The {rival} will attack on day {day}!,{rival} sẽ tấn công vào ngày {day}!
+UI_WAR_HINT,Gifts that warm them up may call the war off.,Quà cáp làm họ dịu lại có thể khiến họ hủy chiến tranh.
+UI_MAKE_PEACE,Make peace ({cost} Spirit Stones),Giảng hòa ({cost} Linh thạch)
+UI_CHRONICLE,The Sect Chronicle,Biên niên sử tông môn
+UI_CHRONICLE_EMPTY,Nothing written yet. The sect's big moments will go here.,Chưa có gì. Những khoảnh khắc lớn của tông môn sẽ được ghi ở đây.
+UI_CHRONICLE_SEASON,"{season}, year {year}","Mùa {season}, năm {year}"
+UI_SHOW_OLDER,Show older,Xem cũ hơn
+UI_ALUMNI,Ascended to the heavens: {names},Đã phi thăng: {names}
+UI_TOURNAMENT,Tournament day!,Đại hội tỷ võ!
+UI_TOURNAMENT_PICK,Pick up to 3 champions. They spend the day at the tournament.,Chọn tối đa 3 người đại diện. Họ sẽ ở đại hội cả ngày.
+UI_LIKELY_PLACE,Likely: {place},Dự đoán: {place}
+UI_ENTER_TOURNAMENT,Enter the tournament,Tham gia đại hội
+UI_SIT_OUT,Sit it out (−2 Reputation),Bỏ qua (−2 Danh tiếng)
+UI_NO_CHAMPIONS,Nobody is free to fight today.,Hôm nay không ai rảnh để thi đấu.
+UI_PLACE_RESULT,The sect came {place}!,Tông môn đạt {place}!
+UI_SAT_OUT,The sect sat this one out.,Tông môn đã bỏ qua lần này.
+UI_BATTLE,The {rival} attacks!,{rival} tấn công!
+UI_BATTLE_PICK,Pick up to 4 defenders. Allies fight beside them.,Chọn tối đa 4 người phòng thủ. Đồng minh sẽ chiến đấu cùng.
+UI_WIN_CHANCE,Chance to win: {percent}%,Cơ hội thắng: {percent}%
+UI_DEFEND,Defend the sect,Bảo vệ tông môn
+UI_BATTLE_WON,Victory! Hills held: {land}.,Chiến thắng! Số đồi: {land}.
+UI_BATTLE_LOST,Defeat. Hills held: {land}. Nobody was badly hurt.,Thất bại. Số đồi: {land}. Không ai bị thương nặng.
+UI_TRAVEL_ASK,{name} asks to travel to {place} for about {days} days.,{name} xin đi du ngoạn ở {place} khoảng {days} ngày.
+UI_TRAVEL_NOTE,"Away, they write home with small gifts, and come back stronger.","Khi đi xa, họ sẽ gửi thư kèm quà nhỏ, và trở về mạnh hơn."
+UI_TRAVEL_GO,Let them go,Cho đi
+UI_TRAVEL_STAY,Ask them to stay (−2 Mood),Giữ lại (−2 Tâm trạng)
+UI_LETTER,A letter from {name},Thư của {name}
+UI_LETTER_WRITING,The letter is still on its way…,Lá thư vẫn đang trên đường tới…
+UI_LETTER_GIFT,Enclosed: {gift},Kèm theo: {gift}
+UI_ELDER_CHIP,Elder,Trưởng lão
+UI_PROMOTE,Promote to Elder,Thăng làm Trưởng lão
+UI_ELDER_TEACHES,Teaches instead of taking tasks: +10% training and +3 study for everyone.,Dạy dỗ thay vì nhận việc: +10% tu luyện và +3 nghiên cứu cho mọi người.
+UI_TRAVELLING,"Travelling at {place}, back around day {day}","Đang du ngoạn ở {place}, về vào khoảng ngày {day}"
+UI_ASCENDED,Ascended to the heavens today,Đã phi thăng hôm nay
+TASK_ASCEND_CHANCE,Ascend ({percent}%),Phi thăng ({percent}%)
+UI_TOURNAMENT_WON,Champions!,Vô địch!
+UI_TOURNAMENT_PLACED,Tournament day,Đại hội tỷ võ
+UI_WAR_WON,Victory!,Chiến thắng!
+UI_WAR_LOST,Defeat,Thất bại
+UI_ASCENSION,Ascension!,Phi thăng!
 UI_PLAN_DAY,Plan the day,Lên kế hoạch
 UI_PLAN_HINT,Choose what each disciple does today. Disciples who pick the same mission go as one team.,Chọn việc cho từng đệ tử hôm nay. Các đệ tử chọn cùng một nhiệm vụ sẽ đi chung một đội.
 UI_AWAY,"Away on {mission}, back by the evening of day {day}.","Đang đi {mission}, về vào tối ngày {day}."

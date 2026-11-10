@@ -1,13 +1,13 @@
 class_name GameScreen
 extends Control
-## The game in play: a resource bar, tabs (Today, Mountain, Disciples) and the
-## current view. On a narrow screen the tabs sit at the bottom, within reach
+## The game in play: a resource bar, tabs (Today, Mountain, Disciples,
+## World) and the current view. On a narrow screen the tabs sit at the bottom, within reach
 ## of a thumb; on a wide one they sit at the top. Everything is rebuilt from
 ## GameState whenever it changes, which keeps these placeholder screens simple.
 
 signal navigate(target: String)
 
-const TABS: Array[String] = ["today", "mountain", "disciples"]
+const TABS: Array[String] = ["today", "mountain", "disciples", "world"]
 
 var _tab := "today"
 var _rebuild_queued := false
@@ -33,8 +33,13 @@ var _resource_labels := {}
 var _selected_building := ""
 var _shown_building := ""
 var _celebrate := ""
-## Whether the morning's event still waited for a choice at the last look.
+## Whether the morning's event, tournament and battle still waited for a
+## choice at the last look (their results are revealed once chosen).
 var _event_was_pending := false
+var _tournament_was_pending := false
+var _battle_was_pending := false
+## How many Sect Chronicle entries the World tab shows.
+var _chronicle_shown := WorldView.CHRONICLE_PAGE
 ## The evening's breakthrough lines (shown as banners, not again as lines),
 ## and the day whose banners already sparkled.
 var _banner_texts: Array[String] = []
@@ -121,6 +126,10 @@ func _rebuild() -> void:
 			_mountain(body, narrow)
 		"disciples":
 			_disciples(body, narrow)
+		"world":
+			WorldView.build(body, GameState.sect, _locale(), UiKit.columns(self, 340.0, 3), _chronicle_shown, func() -> void:
+				_chronicle_shown += WorldView.CHRONICLE_PAGE
+				_queue_rebuild())
 		_:
 			_today(body)
 	if narrow:
@@ -155,11 +164,24 @@ func _hud(narrow: bool) -> Control:
 	var top := UiKit.hbox()
 	# The evening belongs to the day that just ended.
 	var day := GameState.report.day if GameState.step == "results" and GameState.report else GameState.sect.day
-	var title := UiKit.label(tr("UI_DAY").format({"day": day}), UiKit.FONT_SIZE + 2, UiKit.JADE)
+	# Phones: "Day 12 · Spring, year 1" on one line; wide screens keep the
+	# HUD to one row with the season in small text under the day.
+	var season := ReportText.season_name(Seasons.season(day))
+	var day_text := tr("UI_DAY_SEASON") if narrow else tr("UI_DAY")
+	var title := UiKit.label(day_text.format({"day": day, "season": season, "year": Seasons.year(day)}), UiKit.FONT_SIZE + 2, UiKit.JADE)
 	title.add_theme_font_override("font", load("res://assets/fonts/nunito_title.tres"))
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL if narrow else Control.SIZE_SHRINK_BEGIN
 	title.autowrap_mode = TextServer.AUTOWRAP_OFF
-	top.add_child(title)
+	if narrow:
+		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		top.add_child(title)
+	else:
+		var heading := UiKit.vbox(0)
+		heading.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		heading.add_child(title)
+		var when := UiKit.label(tr("UI_CHRONICLE_SEASON").format({"season": season, "year": Seasons.year(day)}), UiKit.SMALL_SIZE, UiKit.SOFT_INK)
+		when.autowrap_mode = TextServer.AUTOWRAP_OFF
+		heading.add_child(when)
+		top.add_child(heading)
 	var resources := UiKit.flow(12)
 	if narrow:
 		box.add_child(top)
@@ -266,7 +288,7 @@ func _action_button() -> Button:
 	match GameState.step:
 		"morning":
 			action = UiKit.primary(tr("UI_PLAN_DAY"), "plan_day", GameState.start_planning, "today")
-			action.disabled = EventRules.pending(GameState.sect)
+			action.disabled = not World.pending(GameState.sect).is_empty()
 		"plan":
 			action = UiKit.primary(tr("UI_DONE_PLANNING"), "done_planning", GameState.finish_planning)
 			action.disabled = not GameState.plan_errors().is_empty()
@@ -282,8 +304,11 @@ func _action_notes() -> Array[Label]:
 	var notes: Array[Label] = []
 	match GameState.step:
 		"morning":
-			if EventRules.pending(GameState.sect):
+			var open := World.pending(GameState.sect)
+			if open.size() == 1 and open[0] == "event":
 				notes.append(UiKit.label(tr("UI_EVENT_FIRST"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
+			elif not open.is_empty():
+				notes.append(UiKit.label(tr("UI_DECIDE_FIRST"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 		"plan":
 			for error in GameState.plan_errors():
 				var key := "ERR_TEAM_SIZE" if error.begins_with("team_size") else "ERR_PLAN"
@@ -320,18 +345,36 @@ func _today(body: VBoxContainer) -> void:
 			_results(body)
 
 
-## The morning report, then today's surprise event and any hopeful at the
-## gate. The day can't be planned until the event's choice is made.
+## The morning report, then today's news: a letter, a battle or a war on
+## its way, the tournament, a surprise event, a traveller's request and a
+## hopeful at the gate. The day can't be planned until each decision is made.
 func _morning(body: VBoxContainer) -> void:
 	var sect := GameState.sect
 	for line in ReportText.morning(sect, _locale()):
 		body.add_child(UiKit.label(line))
+	if not sect.letter.is_empty() and int(sect.letter["day"]) == sect.day:
+		body.add_child(MorningCards.letter_card(sect, _locale(), GameState.letter_waiting))
+	if not sect.war.is_empty():
+		if int(sect.war["battle_day"]) == sect.day:
+			var pending := Wars.pending(sect)
+			var reveal := _battle_was_pending and not pending
+			_battle_was_pending = pending
+			body.add_child(MorningCards.battle_card(sect, _locale(), reveal))
+		elif Wars.active(sect):
+			body.add_child(MorningCards.war_banner(sect))
+	if not sect.tournament.is_empty() and int(sect.tournament["day"]) == sect.day:
+		var pending := Tournament.pending(sect)
+		var reveal := _tournament_was_pending and not pending
+		_tournament_was_pending = pending
+		body.add_child(MorningCards.tournament_card(sect, _locale(), reveal))
 	if not sect.event.is_empty() and int(sect.event["day"]) == sect.day:
 		# Reveal the result when the choice was made since the last look.
 		var pending := EventRules.pending(sect)
 		var reveal := _event_was_pending and not pending
 		_event_was_pending = pending
 		body.add_child(MorningCards.event_card(sect, _locale(), GameState.event_waiting, reveal))
+	if Generations.travel_pending(sect):
+		body.add_child(MorningCards.travel_card(sect, _locale()))
 	if not sect.candidate.is_empty():
 		body.add_child(MorningCards.candidate_card(sect, _locale()))
 
@@ -350,6 +393,14 @@ func _status_label(d: Disciple) -> Label:
 			return UiKit.label(tr("UI_LOST"), UiKit.SMALL_SIZE, UiKit.WARN)
 		"left":
 			return UiKit.label(tr("UI_LEFT"), UiKit.SMALL_SIZE, UiKit.WARN)
+		"travel":
+			return UiKit.label(tr("UI_TRAVELLING").format({
+				"place": ReportText.travel_place_name(String(d.travel.get("place", ""))), "day": d.return_day,
+			}), UiKit.SMALL_SIZE, UiKit.SOFT_INK)
+		"ascended":
+			return UiKit.label(tr("UI_ASCENDED"), UiKit.SMALL_SIZE, UiKit.JADE)
+	if d.is_elder():
+		return UiKit.label(tr("UI_ELDER_TEACHES"), UiKit.SMALL_SIZE, UiKit.SOFT_INK)
 	if d.is_injured():
 		return UiKit.label(tr("UI_INJURED").format({"days": d.injury_days()}), UiKit.SMALL_SIZE, UiKit.WARN)
 	return null
@@ -379,7 +430,7 @@ func _pill_for(d: Disciple) -> String:
 	for other in sect.disciples:
 		if other == d:
 			break
-		if GameState.plan.task_of(other.id) == "breakthrough":
+		if GameState.plan.task_of(other.id) in ["breakthrough", "ascend"]:
 			for pill: String in stock:
 				if stock[pill] > 0:
 					stock[pill] -= 1
@@ -400,6 +451,8 @@ func _choice_text(d: Disciple, choice: String) -> String:
 			return tr("TASK_BREAKTHROUGH_PILL").format({"percent": percent, "pill": ReportText.pill_name(pill)})
 		"study":
 			return tr("TASK_STUDY_PROGRESS").format({"study": d.study, "max": Balance.STUDY_MAX})
+		"ascend":
+			return tr("TASK_ASCEND_CHANCE").format({"percent": roundi(100 * Generations.ascend_chance(GameState.sect, d, _pill_for(d)))})
 	if choice in Balance.HOME_TASKS:
 		return tr("TASK_" + choice.to_upper())
 	return ReportText.mission_name(choice)
@@ -422,7 +475,7 @@ func _plan(body: VBoxContainer) -> void:
 			_side_effect_labels(box, d)
 			if Alchemy.can_heal(sect, d):
 				box.add_child(UiKit.button(tr("UI_HEAL").format({"count": sect.item("healing_pill")}), "heal_" + d.id, GameState.heal.bind(d.id), false, "heal"))
-		if not sect.is_away(d.id) and not d.is_injured():
+		if not sect.is_away(d.id) and not d.is_injured() and not d.is_elder():
 			var decision := Decisions.for_today(sect, d.id)
 			if not decision.is_empty():
 				var note := tr("UI_DECIDED").format({"action": tr("ACTION_" + String(decision["action"]).to_upper())})
@@ -436,7 +489,7 @@ func _plan(body: VBoxContainer) -> void:
 			var missions := UiKit.flow()
 			for choice in GameState.choices_for(d.id):
 				var b := UiKit.choice(_choice_text(d, choice), "choose_%s_%s" % [d.id, choice], current == choice, GameState.choose.bind(d.id, choice), Icons.task_kind(choice))
-				if choice == "breakthrough":
+				if choice in ["breakthrough", "ascend"]:
 					b.theme_type_variation = "GoldButton"
 				(home if choice in Balance.HOME_TASKS else missions).add_child(b)
 			box.add_child(UiKit.label(tr("UI_AT_HOME"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
@@ -617,14 +670,21 @@ func _results(body: VBoxContainer) -> void:
 		body.add_child(UiKit.label(tr("UI_CHANGES").format({"changes": changes}) if changes != "" else tr("UI_NO_CHANGES"), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 
 
-## A banner for each breakthrough tonight: a glowing face on success; on a
-## failure, the face shows its new side effect.
+## A banner for each big moment tonight: breakthroughs (a glowing face on
+## success; on a failure, the face shows its new side effect), an ascension,
+## the tournament (a medal) and a battle.
 func _breakthrough_banners(report: DayReport) -> Array[Control]:
 	var sect := GameState.sect
 	var banners: Array[Control] = []
 	_banner_texts = []
 	for fact in report.facts:
 		var type := String(fact["type"])
+		if type in ["tournament", "war_result"]:
+			banners.append(_world_banner(fact))
+			continue
+		if type == "ascended":
+			banners.append(_face_banner(fact, true, "UI_ASCENSION"))
+			continue
 		if not type.begins_with("breakthrough"):
 			continue
 		var d := sect.disciple(String(fact["disciple"]))
@@ -649,6 +709,53 @@ func _breakthrough_banners(report: DayReport) -> Array[Control]:
 		card.set_meta("won", won)
 		banners.append(card)
 	return banners
+
+
+## A banner for the tournament or a battle: the medal or the rival's emblem.
+func _world_banner(fact: Dictionary) -> Control:
+	var tournament := String(fact["type"]) == "tournament"
+	var won := int(fact.get("place", 4)) <= 3 if tournament else bool(fact["won"])
+	var card := UiKit.card(UiKit.GOLD if won else UiKit.LINE)
+	var row := UiKit.hbox(12)
+	card.add_child(row)
+	row.add_child(Icons.rect("medal" if tournament else String(fact["rival"]), 64.0))
+	var words := UiKit.vbox(4)
+	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var title := "UI_TOURNAMENT_WON" if tournament and int(fact["place"]) == 1 else ("UI_TOURNAMENT_PLACED" if tournament else ("UI_WAR_WON" if won else "UI_WAR_LOST"))
+	words.add_child(UiKit.heading(tr(title)))
+	var text := ReportText.describe(fact, GameState.sect, _locale())
+	_banner_texts.append(text)
+	words.add_child(UiKit.label(text, UiKit.SMALL_SIZE))
+	row.add_child(words)
+	card.set_meta("won", won)
+	return card
+
+
+## A banner with a disciple's face, for an ascension.
+func _face_banner(fact: Dictionary, won: bool, title: String) -> Control:
+	var d := GameState.sect.disciple(String(fact["disciple"]))
+	var card := UiKit.card(UiKit.GOLD)
+	var row := UiKit.hbox(12)
+	card.add_child(row)
+	if d:
+		var portrait := Portrait.of(d)
+		portrait.custom_minimum_size = Vector2(72, 72)
+		portrait.glowing = true
+		portrait.expression = "proud"
+		row.add_child(portrait)
+	else:
+		row.add_child(Icons.rect("breakthrough", 64.0))
+	var words := UiKit.vbox(4)
+	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.add_child(UiKit.heading(tr(title)))
+	var text := ReportText.describe(fact, GameState.sect, _locale())
+	_banner_texts.append(text)
+	words.add_child(UiKit.label(text, UiKit.SMALL_SIZE))
+	row.add_child(words)
+	card.set_meta("won", won)
+	return card
 
 
 func _celebrate_banners(banners: Array[Control]) -> void:
@@ -845,9 +952,19 @@ func _disciples(body: VBoxContainer, _narrow: bool) -> void:
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 8)
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for d in GameState.sect.disciples:
+	# Elders first, then everyone else in joining order.
+	var ordered: Array[Disciple] = []
+	ordered.assign(GameState.sect.disciples.filter(func(d: Disciple) -> bool: return d.is_elder()))
+	ordered.append_array(GameState.sect.disciples.filter(func(d: Disciple) -> bool: return not d.is_elder()))
+	for d in ordered:
 		grid.add_child(_disciple_card(d))
 	body.add_child(grid)
+	var sect := GameState.sect
+	if not sect.alumni.is_empty():
+		var names: Array[String] = []
+		for alum in sect.alumni:
+			names.append(sect.name_of(String(alum["id"]), _locale()))
+		body.add_child(UiKit.label(tr("UI_ALUMNI").format({"names": ", ".join(names)}), UiKit.SMALL_SIZE, UiKit.SOFT_INK))
 	if _memories_day != GameState.sect.day:
 		_memories_day = GameState.sect.day
 		_fetch_memories()
@@ -920,6 +1037,8 @@ func _disciple_card(d: Disciple) -> Control:
 	name.add_theme_font_override("font", load("res://assets/fonts/nunito_title.tres"))
 	who.add_child(name)
 	var tags := UiKit.flow(4)
+	if d.is_elder():
+		tags.add_child(UiKit.chip(tr("UI_ELDER_CHIP"), UiKit.PLUM, "elder"))
 	tags.add_child(UiKit.chip(tr("ROOT_" + d.spirit_root.to_upper()), root_color))
 	tags.add_child(UiKit.chip(tr("REALM_" + d.realm.to_upper()), UiKit.JADE_LIGHT, "breakthrough" if CultivationRules.can_break_through(d) else ""))
 	who.add_child(tags)
@@ -943,6 +1062,8 @@ func _disciple_card(d: Disciple) -> Control:
 	var status := _status_label(d)
 	if status:
 		box.add_child(status)
+	if Generations.can_promote(sect, d)["ok"]:
+		box.add_child(UiKit.button(tr("UI_PROMOTE"), "promote_" + d.id, func() -> void: GameState.promote(d.id), true, "elder"))
 	_side_effect_labels(box, d)
 	for other in sect.disciples:
 		var score := Relationships.score(sect, d.id, other.id)

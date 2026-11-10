@@ -113,6 +113,16 @@ func test_a_senior_disciple_asks_to_travel_while_enough_others_stay() -> void:
 	assert_true(small.travel_request.is_empty(), "three would be too few at home")
 
 
+func test_a_champion_can_still_be_let_go_after_the_tournament() -> void:
+	var sect := _traveller_sect()
+	sect.day = Balance.SEASON_DAYS * 2
+	Tournament.night(sect)
+	Tournament.enter(sect, ["a"])
+	sect.travel_request = {"disciple": "a", "place": "eastern_sea", "days": 20, "day": sect.day}
+	assert_true(Generations.let_go(sect))
+	assert_eq(sect.disciple("a").status, "travel")
+
+
 func test_asking_to_stay_costs_mood() -> void:
 	var sect := _traveller_sect()
 	sect.travel_request = {"disciple": "a", "place": "eastern_sea", "days": 20, "day": sect.day}

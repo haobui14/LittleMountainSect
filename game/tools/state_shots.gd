@@ -3,7 +3,10 @@ extends SceneTree
 ## reaches, from Showcase.sect(): the surprise event before and after a
 ## choice with a hopeful at the gate, the day plan with a breakthrough and a
 ## Healing Pill, the Mountain with all 8 buildings and the Alchemy Room, and
-## the Disciples tab; and a sheet of portraits (each hair style with the 6
+## the Disciples tab; from Showcase.world_sect() (M6): the morning with the
+## tournament, a letter, a war on its way and a traveller's request, the
+## tournament's result, a battle morning, the World tab and an evening with
+## a tournament and a battle; and a sheet of portraits (each hair style with the 6
 ## faces, the Elder and the side effects that show). For reviewing the
 ## layout and the art style by eye; it checks nothing.
 ## Needs a display, so run it under Xvfb, from the repo root, once per window
@@ -17,7 +20,10 @@ extends SceneTree
 ## Files are named <width>x<height>_<state>.png. Nothing is saved and nothing
 ## goes to the server.
 
-const STATES: Array[String] = ["title", "event", "event_done", "plan", "free_time", "chat", "evening", "mountain", "disciples", "portraits"]
+const STATES: Array[String] = [
+	"title", "event", "event_done", "plan", "free_time", "chat", "evening", "mountain", "disciples",
+	"world_morning", "tournament_done", "battle", "world", "world_disciples", "world_evening", "portraits",
+]
 const SAVE_PATH := "user://state_shots_save.json"
 ## Loaded when used: a main-loop script is compiled before the autoloads
 ## exist, and the game screen uses them.
@@ -68,7 +74,8 @@ func _show(state: String) -> Control:
 	if state == "portraits":
 		return _portraits()
 	var game_state := root.get_node("GameState")
-	game_state.sect = Showcase.sect()
+	game_state.sect = Showcase.world_sect() if state.begins_with("world") or state in ["tournament_done", "battle"] else Showcase.sect()
+	game_state.picks = {}
 	game_state.step = "morning"
 	game_state.plan = null
 	game_state.chats = {}
@@ -116,6 +123,24 @@ func _show(state: String) -> Control:
 			report.add("worked", {"disciples": [sect.disciples[2].id], "food": 3, "herbs": 1})
 			report.add("ate", {"food": 4})
 			report.resource_changes = {"food": -1, "herbs": 1}
+			game_state.report = report
+			game_state.evening_state = "done"
+		"tournament_done":
+			game_state.enter_tournament()
+		"battle":
+			Tournament.skip(sect)
+			sect.day = int(sect.war["battle_day"])
+			sect.tournament = {}
+			sect.letter = {}
+		"world", "world_disciples":
+			tab = "world" if state == "world" else "disciples"
+		"world_evening":
+			game_state.step = "results"
+			var report := DayReport.new(sect.day)
+			report.add("tournament", {"place": 1, "champions": [sect.disciples[1].id, sect.disciples[3].id], "matches": [{"rival": "perfect_hair", "won": true}, {"rival": "iron_frog", "won": true}], "rewards": {"reputation": 15, "stones": 40}})
+			report.add("war_result", {"rival": "iron_frog", "won": false, "defenders": [sect.disciples[3].id], "land": 1})
+			report.add("letter", {"disciple": sect.disciples[2].id, "place": "noodle_town", "gift": {"food": 7}, "item": "none"})
+			report.resource_changes = {"stones": 40, "reputation": 15}
 			game_state.report = report
 			game_state.evening_state = "done"
 

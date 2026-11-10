@@ -43,6 +43,10 @@ func _process(delta: float) -> void:
 		"evening": GameState.evening_state,
 		"event": in_game and EventRules.pending(GameState.sect),
 		"candidate": in_game and not GameState.sect.candidate.is_empty(),
+		"tournament": in_game and Tournament.pending(GameState.sect),
+		"battle": in_game and Wars.pending(GameState.sect),
+		"travel": in_game and Generations.travel_pending(GameState.sect),
+		"letter": in_game and not GameState.sect.letter.is_empty(),
 	})
 	JavaScriptBridge.eval("""
 		(function () {

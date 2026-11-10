@@ -161,13 +161,14 @@ static func roll_travel(sect: Sect) -> void:
 	}
 
 
-## Lets the disciple go. Returns false when there is no request or they
-## can't leave right now (a mission, an injury).
+## Lets the disciple go (a champion or defender leaves after today's
+## contest). Returns false when there is no request, or they are no longer
+## at the sect to leave from (an Elder now, or away).
 static func let_go(sect: Sect) -> bool:
 	if not travel_pending(sect):
 		return false
 	var d := sect.disciple(String(sect.travel_request["disciple"]))
-	if d == null or not can_travel(sect, d):
+	if d == null or d.is_elder() or d.status != "home" or sect.mission_of(d.id) != null:
 		sect.travel_request = {}
 		return false
 	var place := String(sect.travel_request["place"])

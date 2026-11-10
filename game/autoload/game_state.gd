@@ -116,6 +116,8 @@ func choices() -> Array[String]:
 func choices_for(id: String) -> Array[String]:
 	var d := sect.disciple(id)
 	var out: Array[String] = []
+	if d == null or d.is_elder():
+		return out
 	for task in Balance.HOME_TASKS:
 		if d and DayPlan.task_allowed(sect, d, task):
 			out.append(task)
