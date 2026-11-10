@@ -318,6 +318,39 @@ FACT_SOUVENIR,Souvenir: a {pill}.,Quà lưu niệm: một viên {pill}.
 FACT_LETTER,"A letter arrived from {name}, away at {place}.",Có thư của {name} gửi về từ {place}.
 FACT_LETTER_GIFT,Enclosed: {gift}.,Kèm theo: {gift}.
 MORNING_TRAVELLING,"{name} is travelling at {place}, back around day {day}.","{name} đang du ngoạn ở {place}, về vào khoảng ngày {day}."
+LETTER_EASTERN_SEA_1,"Dear Master, the fishermen here sing to the waves, and yesterday the waves sang back. I think. It may have been a seal. I miss the sect's rice. Yours, {name}","Kính gửi sư phụ, ngư dân ở đây hát cho sóng nghe, và hôm qua sóng hát lại. Chắc vậy. Cũng có thể là một con hải cẩu. Đệ tử nhớ cơm tông môn lắm. Đệ tử {name}"
+LETTER_EASTERN_SEA_2,"Dear Master, I meditated on a rock by the sea and the tide came in. I am now very calm and very wet. Back soon, {name}","Kính gửi sư phụ, đệ tử ngồi thiền trên một tảng đá cạnh biển thì thủy triều lên. Giờ đệ tử rất bình tâm và ướt sũng. Sắp về rồi ạ, {name}"
+LETTER_NOODLE_TOWN_1,"Dear Master, the noodles in Longtang are so long that I have been eating the same one since Tuesday. Please don't worry. Yours, {name}","Kính gửi sư phụ, mì ở Long Đường dài đến nỗi đệ tử ăn một sợi từ thứ Ba tới giờ vẫn chưa hết. Sư phụ đừng lo. Đệ tử {name}"
+LETTER_NOODLE_TOWN_2,"Dear Master, a noodle master let me pull dough with him. I tied it in a knot, then tied myself in one. He says I have talent, just not for noodles. Yours, {name}","Kính gửi sư phụ, một bậc thầy làm mì cho đệ tử kéo bột cùng. Đệ tử thắt bột thành nút, rồi thắt luôn cả mình. Ông ấy bảo đệ tử có tài, chỉ là không phải tài làm mì. Đệ tử {name}"
+LETTER_SINGING_SANDS_1,"Dear Master, the dunes here hum at dusk. I hummed back and a camel joined in. We are now a choir. Yours, {name}","Kính gửi sư phụ, cồn cát ở đây ngân nga lúc hoàng hôn. Đệ tử ngân nga theo, rồi một con lạc đà cũng hát cùng. Giờ bọn đệ tử là một dàn đồng ca. Đệ tử {name}"
+LETTER_SINGING_SANDS_2,"Dear Master, I found the oasis everyone talks about. It was smaller than the sect's teapot, but very nice. Back soon, {name}","Kính gửi sư phụ, đệ tử đã tìm thấy ốc đảo ai cũng nhắc tới. Nó nhỏ hơn cả ấm trà của tông môn, nhưng đẹp lắm. Sắp về rồi ạ, {name}"
+LETTER_SNOW_PEAKS_1,"Dear Master, an old hermit taught me to sit still in the snow for a whole day. My eyebrows froze, but my mind is very clear. Yours, {name}","Kính gửi sư phụ, một ẩn sĩ già dạy đệ tử ngồi yên trong tuyết suốt một ngày. Lông mày đệ tử đóng băng, nhưng đầu óc thì rất sáng suốt. Đệ tử {name}"
+LETTER_SNOW_PEAKS_2,"Dear Master, I made a snow statue of you. The hermits bowed to it. I did not tell them. Yours, {name}","Kính gửi sư phụ, đệ tử đắp một bức tượng tuyết giống sư phụ. Các ẩn sĩ cúi chào nó. Đệ tử không nói gì cả. Đệ tử {name}"
+LETTER_CAPITAL_MARKET_1,"Dear Master, the night market is full of lanterns, fortune tellers and very fast pickpockets. I still have my sandals. Most of them. Yours, {name}","Kính gửi sư phụ, chợ đêm đầy đèn lồng, thầy bói và những tên móc túi rất nhanh tay. Đệ tử vẫn còn đôi dép. Gần đủ cả đôi. Đệ tử {name}"
+LETTER_CAPITAL_MARKET_2,"Dear Master, a fortune teller said I will become famous. She also said it to the man after me, and to his goat. Yours, {name}","Kính gửi sư phụ, một bà thầy bói nói đệ tử sẽ nổi tiếng. Bà ấy cũng nói vậy với người đứng sau đệ tử, và với con dê của ông ta. Đệ tử {name}"
+LETTER_BAMBOO_SEA_1,"Dear Master, the bamboo here grows so fast I can hear it. I tried to train faster than it. The bamboo is winning. Yours, {name}","Kính gửi sư phụ, tre ở đây mọc nhanh đến mức nghe được tiếng. Đệ tử cố tu luyện nhanh hơn nó. Tre đang thắng. Đệ tử {name}"
+LETTER_BAMBOO_SEA_2,"Dear Master, a panda has followed me for three days. I think it wants to join the sect. Is there room? Yours, {name}","Kính gửi sư phụ, một con gấu trúc đã đi theo đệ tử ba ngày rồi. Chắc nó muốn gia nhập tông môn. Còn chỗ không ạ? Đệ tử {name}"
+LETTER_CLOUD_TEMPLE_1,"Dear Master, I climbed the ten thousand steps. Then I found out there was a basket on a rope. I am stronger, at least. Yours, {name}","Kính gửi sư phụ, đệ tử đã leo hết vạn bậc thang. Rồi mới biết là có cái giỏ kéo bằng dây. Ít ra đệ tử cũng khỏe hơn. Đệ tử {name}"
+LETTER_CLOUD_TEMPLE_2,"Dear Master, the monks here eat one grain of rice a day. I ate their week's supply by accident. They forgave me. Yours, {name}","Kính gửi sư phụ, các nhà sư ở đây mỗi ngày ăn một hạt cơm. Đệ tử lỡ ăn hết phần cả tuần của họ. Họ đã tha thứ cho đệ tử. Đệ tử {name}"
+LETTER_FROG_SWAMP_1,"Dear Master, I got lost and ended up next to the Iron Frog Sect. They are even louder at home than at our gate. I learned three new croaks. Yours, {name}","Kính gửi sư phụ, đệ tử bị lạc và đến cạnh Thiết Oa Tông. Ở nhà họ còn ồn hơn lúc đứng trước cổng ta. Đệ tử học được ba kiểu kêu ộp ộp mới. Đệ tử {name}"
+LETTER_FROG_SWAMP_2,"Dear Master, a frog here challenged me to a staring contest. I lost. To a frog. Please tell no one. Yours, {name}","Kính gửi sư phụ, một con ếch ở đây thách đệ tử thi nhìn chằm chằm. Đệ tử thua. Thua một con ếch. Xin sư phụ đừng kể với ai. Đệ tử {name}"
+CHRON_BREAKTHROUGH,{name} broke through to {realm}.,{name} đột phá lên {realm}.
+CHRON_RANK_UP,The sect became a {rank}.,Tông môn trở thành {rank}.
+CHRON_RECRUITED,{name} joined the sect.,{name} gia nhập tông môn.
+CHRON_LEFT,{name} left the sect for a while.,{name} tạm rời tông môn.
+CHRON_RETURNED,{name} came home.,{name} đã trở về.
+CHRON_TOURNAMENT,The {season} tournament of year {year}: the sect came {place}.,Đại hội tỷ võ mùa {season} năm {year}: tông môn đạt {place}.
+CHRON_ALLIANCE,An alliance with the {rival}.,Kết Liên minh với {rival}.
+CHRON_ALLIANCE_ENDED,The alliance with the {rival} ended.,Liên minh với {rival} chấm dứt.
+CHRON_BETRAYAL,The {rival} betrayed the sect.,{rival} phản bội tông môn.
+CHRON_WAR_DECLARED,The {rival} declared war.,{rival} tuyên chiến.
+CHRON_WAR_WON,The sect won a battle against the {rival}.,Tông môn thắng trận trước {rival}.
+CHRON_WAR_LOST,The sect lost a battle against the {rival}.,Tông môn thua trận trước {rival}.
+CHRON_PEACE,Peace with the {rival}.,Giảng hòa với {rival}.
+CHRON_PROMOTED,{name} became an Elder.,{name} trở thành Trưởng lão.
+CHRON_ASCENDED,{name} ascended to the heavens.,{name} phi thăng lên tiên giới.
+CHRON_TRAVEL_LEFT,{name} set off for {place}.,{name} lên đường đến {place}.
+CHRON_TRAVEL_RETURNED,{name} came home from {place}.,{name} trở về từ {place}.
 EVENT_RESULT_WIN,It worked out!,Mọi chuyện suôn sẻ!
 EVENT_RESULT_LOSE,It didn't go to plan.,Không như dự tính.
 MORNING_LOST,{name} is lost on the mountain.,{name} đang bị lạc trên núi.

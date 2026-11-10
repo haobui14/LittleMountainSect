@@ -8,17 +8,21 @@ import {
   PILLS,
   QUIRK_IDS,
   REALMS,
+  RIVALS,
+  SEASONS,
   SIDE_EFFECTS,
   SPIRIT_ROOTS,
   STATUSES,
   TECHNIQUES,
 } from "../_shared/cast.ts";
+import { TRAVEL_PLACE_IDS } from "../_shared/travel.ts";
 import { choiceIds, PLACE_IDS, PROBLEM_IDS } from "../_shared/events.ts";
 import {
   DiscipleCardSchema,
   EveningRequestSchema,
   EventRequestSchema,
   GatewayRequestSchema,
+  LetterRequestSchema,
 } from "../_shared/schemas.ts";
 
 const GAME = new URL("../../../../game/sim/", import.meta.url);
@@ -86,4 +90,31 @@ Deno.test("the server accepts the requests the game sends", async () => {
   assertEquals([event.kind, event.problem], ["event", "frog_duel"]);
   assertEquals(event.disciples[0].effects, ["green_hair"]);
   assertEquals(event.disciples[1].status, "mission");
+});
+
+Deno.test("the game's M6 ids match the server's: rivals, seasons, travel places", async () => {
+  const catalog = await fixture("world_catalog.json") as Record<string, string[]>;
+  assertEquals(catalog.rivals, [...RIVALS]);
+  assertEquals(catalog.seasons, [...SEASONS]);
+  assertEquals(catalog.travel_places, [...TRAVEL_PLACE_IDS]);
+  // The catalog fixture is written by the game, and also checked against its source.
+  assertEquals(stringArray(await gdscript("data/travel.gd"), "PLACES"), [...TRAVEL_PLACE_IDS]);
+  assertEquals(stringArray(await gdscript("balance.gd"), "SEASONS"), [...SEASONS]);
+});
+
+Deno.test("the server accepts the world's requests: an evening full of M6 facts and a letter", async () => {
+  const evening = EveningRequestSchema.parse(await fixture("world_evening_request.json"));
+  const types = evening.facts.map((f) => f.type);
+  for (const type of ["tournament", "war_result", "gift", "trade", "promoted", "travel_left"]) {
+    assertEquals(types.includes(type as typeof types[number]), true, type);
+  }
+  assertEquals(evening.disciples.some((d) => d.card.role === "elder"), true);
+  assertEquals(evening.disciples.some((d) => d.card.status === "travel"), true);
+  const letter = LetterRequestSchema.parse(await fixture("letter_request.json"));
+  assertEquals([letter.kind, letter.place, letter.disciple.status], [
+    "letter",
+    "noodle_town",
+    "travel",
+  ]);
+  assertEquals(GatewayRequestSchema.parse(letter).kind, "letter");
 });

@@ -4,7 +4,8 @@ extends Node
 ## methods; the rules live in game/sim.
 ##
 ## A day goes: morning (report, a surprise event, a hopeful at the gate,
-## pills) -> plan (tasks, missions, upgrades) -> free_time (chat) -> results
+## pills, and the world's decisions: a tournament, a battle, a traveller, a
+## letter) -> plan (tasks, missions, upgrades) -> free_time (chat) -> results
 ## (what happened, the evening story) -> morning.
 ##
 ## AI is never required: when the server can't help (no Spirit Energy, the
@@ -39,6 +40,11 @@ var waiting: Dictionary = {}
 var evening_state: String = "idle"
 ## True while Claude writes the words of tomorrow's surprise event.
 var event_waiting: bool = false
+## True while Claude writes tomorrow's letter home.
+var letter_waiting: bool = false
+## Who is picked for the morning's "tournament" or "battle": kind -> [ids].
+## Not saved; each starts as the strongest who can go.
+var picks: Dictionary = {}
 
 var _syncing := false
 var _sync_again := false
@@ -86,10 +92,11 @@ func load_game() -> bool:
 	return true
 
 
-## Opens the day plan. Returns false while the morning's surprise event
-## waits for the Sect Master's choice.
+## Opens the day plan. Returns false while a morning decision (a surprise
+## event, the tournament, a battle or a traveller's request) waits for the
+## Sect Master.
 func start_planning() -> bool:
-	if EventRules.pending(sect):
+	if not World.pending(sect).is_empty():
 		return false
 	plan = DayPlan.defaults(sect)
 	_go("plan")
@@ -128,6 +135,95 @@ func choose_event(choice: String) -> Dictionary:
 		_save()
 		Events.state_changed.emit()
 	return applied
+
+
+# The world (M6): tournaments, wars, travel, rivals and Elders ------------------------
+
+## The ids picked for the morning's "tournament" or "battle", among those who
+## can still go.
+func picks_for(kind: String) -> Array[String]:
+	var free := Tournament.eligible(sect)
+	var most := Balance.CHAMPIONS_MAX if kind == "tournament" else Balance.DEFENDERS_MAX
+	if not picks.has(kind):
+		picks[kind] = Tournament.strongest(free, most)
+	var ids := free.map(func(d: Disciple) -> String: return d.id)
+	var out: Array[String] = []
+	out.assign(picks[kind].filter(func(id: String) -> bool: return id in ids))
+	picks[kind] = out
+	return out
+
+
+## Adds or removes a disciple from the morning's picks (at most 3 champions
+## or 4 defenders).
+func toggle_pick(kind: String, id: String) -> void:
+	var current := picks_for(kind)
+	var most := Balance.CHAMPIONS_MAX if kind == "tournament" else Balance.DEFENDERS_MAX
+	if id in current:
+		current.erase(id)
+	elif current.size() < most:
+		current.append(id)
+	picks[kind] = current
+	Events.state_changed.emit()
+
+
+## Plays the tournament with the picked champions. Returns the result, or {}.
+func enter_tournament() -> Dictionary:
+	var result := Tournament.enter(sect, picks_for("tournament"))
+	if not result.is_empty():
+		_world_changed()
+	return result
+
+
+func skip_tournament() -> bool:
+	return _world_done(Tournament.skip(sect))
+
+
+## Fights today's battle with the picked defenders. Returns the war, or {}.
+func defend() -> Dictionary:
+	var result := Wars.defend(sect, picks_for("battle"))
+	if not result.is_empty():
+		_world_changed()
+	return result
+
+
+func make_peace() -> bool:
+	return _world_done(Wars.make_peace(sect))
+
+
+## Lets the disciple who asked go travelling, or asks them to stay.
+func answer_travel(go: bool) -> bool:
+	return _world_done(Generations.let_go(sect) if go else Generations.ask_to_stay(sect))
+
+
+func gift(rival: String, resource: String) -> bool:
+	return _world_done(Rivals.gift(sect, rival, resource) >= 0)
+
+
+func trade(rival: String) -> bool:
+	return _world_done(Rivals.trade(sect, rival))
+
+
+func ally(rival: String) -> bool:
+	return _world_done(Rivals.ally(sect, rival))
+
+
+func end_alliance(rival: String) -> bool:
+	return _world_done(Rivals.end_alliance(sect, rival))
+
+
+func promote(id: String) -> bool:
+	return _world_done(Generations.promote(sect, id))
+
+
+func _world_done(done: bool) -> bool:
+	if done:
+		_world_changed()
+	return done
+
+
+func _world_changed() -> void:
+	_save()
+	Events.state_changed.emit()
 
 
 ## Takes in (or sends away) the hopeful at the gate.
@@ -307,7 +403,8 @@ func _fetch_evening(day_report: DayReport) -> void:
 	evening_state = "done"
 	Events.state_changed.emit()
 	evening_finished.emit()
-	_fetch_event()
+	await _fetch_event()
+	_fetch_letter()
 
 
 ## Asks Claude for the words of tomorrow's surprise event (2 Spirit Energy).
@@ -338,9 +435,34 @@ func _fetch_event() -> void:
 	Events.state_changed.emit()
 
 
+## Asks Claude to write the letter that arrives tomorrow (1 Spirit Energy).
+## Without it, the letter is one of the written ones in strings.csv.
+func _fetch_letter() -> void:
+	if backend == null or sect == null or sect.letter.is_empty() or String(sect.letter.get("words", "")) != "":
+		return
+	var day := int(sect.letter["day"])
+	letter_waiting = true
+	Events.state_changed.emit()
+	var reply := {}
+	var result: Dictionary = await backend.letter(Generations.letter_request(sect, Settings.locale))
+	var data: Variant = result.get("data")
+	if result.get("ok", false) and data is Dictionary and data.get("source") == "ai":
+		reply = data
+	elif result.get("error", "") in ["timeout", "http_504"]:
+		var stored: Dictionary = await backend.stored_letter(day)
+		if stored.get("ok", false) and stored["data"] is Dictionary:
+			reply = stored["data"]
+	letter_waiting = false
+	if not sect.letter.is_empty() and int(sect.letter["day"]) == day and reply.get("letter") is String:
+		sect.letter["words"] = String(reply["letter"]).strip_edges()
+		_save()
+	Events.state_changed.emit()
+
+
 func next_morning() -> void:
 	if backend:
 		backend.refresh_energy()
+	picks = {}
 	_go("morning")
 
 
@@ -400,8 +522,10 @@ func _open(loaded: Sect) -> void:
 	plan = null
 	chats = {}
 	evening_state = "done" if not sect.evening.is_empty() else "idle"
+	picks = {}
 	_go("morning")
-	_fetch_event()
+	await _fetch_event()
+	_fetch_letter()
 
 
 func _go(next_step: String) -> void:

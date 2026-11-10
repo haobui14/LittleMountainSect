@@ -43,6 +43,16 @@ static func champion_power(d: Disciple) -> float:
 	return maxf(0.0, power * d.effect_factor("mission"))
 
 
+## The strongest of [param pool] in a contest, as ids: up to [param count].
+static func strongest(pool: Array[Disciple], count: int) -> Array[String]:
+	var sorted := pool.duplicate()
+	sorted.sort_custom(func(a: Disciple, b: Disciple) -> bool: return champion_power(a) > champion_power(b))
+	var out: Array[String] = []
+	for d: Disciple in sorted.slice(0, count):
+		out.append(d.id)
+	return out
+
+
 static func power(sect: Sect, ids: Array) -> float:
 	var total := 0.0
 	for id: String in ids:

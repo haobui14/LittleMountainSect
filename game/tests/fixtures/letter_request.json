@@ -1,0 +1,25 @@
+{
+  "days_away": 7,
+  "disciple": {
+    "id": "d4",
+    "loyalty": 50,
+    "mood": 2,
+    "name": "Quách Ninh",
+    "pronouns": "she",
+    "quirks": [
+      "secret_poet",
+      "grudge_keeper"
+    ],
+    "realm": "foundation_building",
+    "spirit_root": "earth",
+    "status": "travel"
+  },
+  "game_day": 91,
+  "gift": {
+    "food": 6
+  },
+  "item": "none",
+  "kind": "letter",
+  "locale": "vi",
+  "place": "noodle_town"
+}

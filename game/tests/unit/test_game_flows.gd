@@ -268,3 +268,104 @@ func test_recruiting_brewing_and_healing_save_the_game() -> void:
 	assert_false(sect.disciples[0].is_injured())
 	assert_false(GameState.heal(sect.disciples[0].id), "no pills left")
 	assert_eq(GameState.choices_for(sect.disciples[1].id).has("escort_merchant"), false, "no Mission Hall yet")
+
+
+# The world (M6): letters, tournaments, battles and travel ------------------------------
+
+func _traveller_letter() -> Disciple:
+	var sect := GameState.sect
+	var d := sect.disciples[0]
+	d.status = "travel"
+	d.return_day = sect.day + 10
+	d.travel = {"place": "noodle_town", "left_day": sect.day - 7, "next_letter_day": sect.day + 6}
+	sect.letter = {"day": sect.day, "disciple": d.id, "place": "noodle_town", "days_away": 7, "gift": {"food": 6}, "item": "none", "words": ""}
+	return d
+
+
+func test_claude_writes_tomorrows_letter_for_one_spirit_energy() -> void:
+	GameState.new_game(5)
+	var d := _traveller_letter()
+	await GameState._fetch_letter()
+	var sent: Dictionary = _gateway_bodies().back()
+	assert_eq([sent["kind"], sent["place"], sent["disciple"]["id"], sent["disciple"]["status"]], ["letter", "noodle_town", d.id, "travel"])
+	assert_eq(int(sent["gift"]["food"]), 6)
+	assert_eq(ReportText.letter_text(GameState.sect, GameState.sect.letter, "en"), "Dear Master, the noodles are long. Yours, Claude's traveller")
+	assert_false(GameState.letter_waiting)
+	var calls := _gateway_bodies().size()
+	await GameState._fetch_letter()
+	assert_eq(_gateway_bodies().size(), calls, "a letter with words isn't asked for again")
+
+
+func test_without_the_server_a_letter_is_a_written_one() -> void:
+	fake.handler = func(_r: Dictionary) -> Dictionary: return {"code": 0, "error": "network"}
+	GameState.new_game(5)
+	var d := _traveller_letter()
+	await GameState._fetch_letter()
+	assert_eq(GameState.sect.letter["words"], "")
+	var text := ReportText.letter_text(GameState.sect, GameState.sect.letter, "en")
+	assert_string_contains(text, d.display_name("en"))
+	assert_string_contains(text, "noodle")
+
+
+func test_a_timed_out_letter_is_picked_up_from_the_server() -> void:
+	fake.handler = FakeTransport.happy_server({
+		"/functions/v1/ai-gateway": func(_r: Dictionary) -> Dictionary: return {"code": 0, "error": "timeout"},
+		"/rest/v1/letter_stories": func(_r: Dictionary) -> Dictionary:
+			return {"code": 200, "body": [{"reply": {"letter": "A late letter."}}]},
+	})
+	GameState.new_game(5)
+	_traveller_letter()
+	await GameState._fetch_letter()
+	assert_eq(GameState.sect.letter["words"], "A late letter.")
+
+
+func test_planning_waits_for_the_tournament_and_the_strongest_are_picked() -> void:
+	GameState.new_game(5)
+	var sect := GameState.sect
+	sect.day = Balance.SEASON_DAYS
+	Tournament.night(sect)
+	assert_false(GameState.start_planning(), "the tournament comes first")
+	var picked := GameState.picks_for("tournament")
+	assert_eq(picked, Tournament.strongest(Tournament.eligible(sect), Balance.CHAMPIONS_MAX))
+	GameState.toggle_pick("tournament", picked[0])
+	assert_eq(GameState.picks_for("tournament").size(), picked.size() - 1)
+	var revision := sect.revision
+	var result := GameState.enter_tournament()
+	assert_true(result["resolved"])
+	assert_gt(sect.revision, revision, "saved")
+	assert_true(GameState.start_planning())
+	assert_false(GameState.plan.tasks.has(picked[1]), "champions are at the tournament")
+
+
+func test_a_battle_can_be_fought_or_bought_off_and_a_traveller_answered() -> void:
+	GameState.new_game(5)
+	var sect := GameState.sect
+	sect.resources["stones"] = 200
+	sect.war = {"rival": "iron_frog", "declared_day": sect.day - 3, "battle_day": sect.day, "resolved": false, "defenders": [], "won": false}
+	assert_eq(World.pending(sect), ["battle"] as Array[String])
+	assert_true(GameState.make_peace())
+	assert_true(sect.war.is_empty())
+	sect.war = {"rival": "iron_frog", "declared_day": sect.day - 3, "battle_day": sect.day, "resolved": false, "defenders": [], "won": false}
+	var defenders := GameState.picks_for("battle")
+	assert_eq(defenders.size(), mini(Balance.DEFENDERS_MAX, sect.available_disciples().size()))
+	assert_false(GameState.defend().is_empty())
+	assert_eq(sect.war["defenders"], Array(defenders))
+	sect.travel_request = {"disciple": sect.disciples[2].id, "place": "eastern_sea", "days": 15, "day": sect.day}
+	assert_true(GameState.answer_travel(false))
+	assert_true(GameState.start_planning())
+
+
+func test_gifts_trades_alliances_and_elders_save_the_game() -> void:
+	GameState.new_game(5)
+	var sect := GameState.sect
+	sect.resources = {"stones": 300, "food": 80, "herbs": 80, "reputation": 10}
+	var revision := sect.revision
+	assert_true(GameState.gift("moonlit_tea", "herbs"))
+	assert_false(GameState.gift("moonlit_tea", "herbs"), "one gift per rival every few days")
+	assert_true(GameState.trade("iron_frog"))
+	sect.rival("perfect_hair")["attitude"] = 60
+	sect.rival("perfect_hair")["trust"] = 60
+	assert_true(GameState.ally("perfect_hair"))
+	assert_true(GameState.end_alliance("perfect_hair"))
+	assert_false(GameState.promote(sect.disciples[0].id), "not senior enough")
+	assert_eq(sect.revision, revision + 4)

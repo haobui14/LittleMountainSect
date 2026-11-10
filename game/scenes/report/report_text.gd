@@ -430,6 +430,43 @@ static func fact_icon(fact: Dictionary) -> String:
 	return "sparkle"
 
 
+## This morning's letter: Claude's words when it wrote them, otherwise one
+## of the place's written letters.
+static func letter_text(sect: Sect, letter: Dictionary, locale: String) -> String:
+	var words := String(letter.get("words", ""))
+	if words != "":
+		return words
+	var place := String(letter.get("place", TravelCatalog.PLACES[0]))
+	var n := int(letter.get("day", 0)) % TravelCatalog.LETTERS_PER_PLACE + 1
+	return t("LETTER_%s_%d" % [place.to_upper(), n]).format({"name": name_of(sect, String(letter.get("disciple", "")), locale)})
+
+
+## One Chronicle entry as a line, or "" for a kind it doesn't show.
+static func chronicle_line(entry: Dictionary, sect: Sect, locale: String) -> String:
+	var who := name_of(sect, String(entry.get("disciple", "")), locale)
+	var rival := rival_name(String(entry.get("rival", "")))
+	match String(entry["type"]):
+		"breakthrough":
+			return t("CHRON_BREAKTHROUGH").format({"name": who, "realm": realm_name(entry["realm"])})
+		"rank_up":
+			return t("CHRON_RANK_UP").format({"rank": t("RANK_" + String(entry["rank"]).to_upper())})
+		"recruited", "left", "promoted", "ascended":
+			return t("CHRON_" + String(entry["type"]).to_upper()).format({"name": who})
+		"returned":
+			return t("CHRON_RETURNED").format({"name": who})
+		"tournament":
+			return t("CHRON_TOURNAMENT").format({
+				"season": season_name(entry["season"]), "year": entry["year"], "place": t("PLACE_WORD_%d" % int(entry["place"])),
+			})
+		"alliance", "alliance_ended", "betrayal", "war_declared", "peace":
+			return t("CHRON_" + String(entry["type"]).to_upper()).format({"rival": rival})
+		"war_result":
+			return t("CHRON_WAR_WON" if entry["won"] else "CHRON_WAR_LOST").format({"rival": rival})
+		"travel_left", "travel_returned":
+			return t("CHRON_" + String(entry["type"]).to_upper()).format({"name": who, "place": travel_place_name(entry["place"])})
+	return ""
+
+
 ## The morning report for the sect's current day.
 static func morning(sect: Sect, locale: String) -> Array[String]:
 	var lines: Array[String] = [t("MORNING_DAY").format({"day": sect.day})]

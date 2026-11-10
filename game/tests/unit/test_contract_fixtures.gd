@@ -64,3 +64,52 @@ func test_the_event_request_fixture_is_what_the_game_sends() -> void:
 	a.technique = 1
 	sect.event = EventRules._start(sect, "frog_duel", "main_gate", [a.id, sect.disciples[0].id] as Array[String])
 	_check("event_request.json", EventRules.request(sect, "vi"))
+
+
+## A sect deep into its first year (M6), with every kind of world fact in
+## one day's report.
+func _world_sect() -> Dictionary:
+	var sect := NewGame.create(4242)
+	for i in 3:
+		sect.disciples.append(DiscipleGenerator.generate(sect))
+	sect.resources = {"stones": 300, "food": 80, "herbs": 60, "reputation": 40}
+	sect.day = Balance.SEASON_DAYS * 3
+	var d := sect.disciples
+	d[2].realm = "golden_core"
+	d[2].loyalty = 80
+	d[3].realm = "foundation_building"
+	Tournament.night(sect)
+	Tournament.enter(sect, [d[0].id])
+	sect.war = {"rival": "iron_frog", "declared_day": sect.day - 3, "battle_day": sect.day, "resolved": false, "defenders": [], "won": false}
+	Wars.defend(sect, [d[1].id])
+	Rivals.gift(sect, "perfect_hair", "stones")
+	Rivals.trade(sect, "moonlit_tea")
+	Generations.promote(sect, d[2].id)
+	sect.travel_request = {"disciple": d[3].id, "place": "noodle_town", "days": 20, "day": sect.day}
+	Generations.let_go(sect)
+	var report := DayResolver.resolve(sect, DayPlan.defaults(sect))
+	return {"sect": sect, "report": report}
+
+
+func test_the_world_evening_fixture_is_what_the_game_sends() -> void:
+	var world := _world_sect()
+	var request := EveningRules.request(world["sect"], world["report"], "en")
+	var types: Array = request["facts"].map(func(f: Dictionary) -> String: return f["type"])
+	for type in ["tournament", "war_result", "gift", "trade", "promoted", "travel_left"]:
+		assert_true(type in types, type)
+	_check("world_evening_request.json", request)
+
+
+func test_the_letter_request_fixture_is_what_the_game_sends() -> void:
+	var sect: Sect = _world_sect()["sect"]
+	var traveller := Generations.travellers(sect)[0]
+	sect.letter = {"day": sect.day, "disciple": traveller.id, "place": "noodle_town", "days_away": 7, "gift": {"food": 6}, "item": "none", "words": ""}
+	_check("letter_request.json", Generations.letter_request(sect, "vi"))
+
+
+func test_the_world_catalog_fixture_has_the_games_ids() -> void:
+	_check("world_catalog.json", {
+		"rivals": RivalCatalog.ids(),
+		"seasons": Balance.SEASONS,
+		"travel_places": TravelCatalog.PLACES,
+	})

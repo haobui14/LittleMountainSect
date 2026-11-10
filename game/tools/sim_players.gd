@@ -145,13 +145,13 @@ static func _sensible_morning(sect: Sect) -> void:
 ## its surplus.
 static func _sensible_world(sect: Sect) -> void:
 	if Tournament.pending(sect):
-		var best := _strongest(Tournament.eligible(sect), Balance.CHAMPIONS_MAX)
+		var best := Tournament.strongest(Tournament.eligible(sect), Balance.CHAMPIONS_MAX)
 		if best.is_empty():
 			Tournament.skip(sect)
 		else:
 			Tournament.enter(sect, best)
 	if Wars.active(sect):
-		var defenders := _strongest(Wars.eligible(sect), Balance.DEFENDERS_MAX)
+		var defenders := Tournament.strongest(Wars.eligible(sect), Balance.DEFENDERS_MAX)
 		if Wars.win_chance(sect, defenders) < PEACE_BELOW and Wars.can_make_peace(sect):
 			Wars.make_peace(sect)
 		elif Wars.pending(sect):
@@ -192,16 +192,6 @@ static func _sensible_world(sect: Sect) -> void:
 			if Rivals.can_gift(sect, rival, resource)["ok"] and _spare(sect, resource, int(Balance.GIFT_COST[resource])):
 				Rivals.gift(sect, rival, resource)
 				return
-
-
-## The strongest of [param pool] in a contest, as ids: up to [param count].
-static func _strongest(pool: Array[Disciple], count: int) -> Array[String]:
-	var sorted := pool.duplicate()
-	sorted.sort_custom(func(a: Disciple, b: Disciple) -> bool: return Tournament.champion_power(a) > Tournament.champion_power(b))
-	var out: Array[String] = []
-	for d: Disciple in sorted.slice(0, count):
-		out.append(d.id)
-	return out
 
 
 ## Whether the sensible player can spare [param amount] of a resource.

@@ -1,0 +1,211 @@
+{
+  "disciples": [
+    {
+      "allowed_actions": [
+        "train",
+        "rest",
+        "meditate",
+        "cook",
+        "tend_field",
+        "hide"
+      ],
+      "card": {
+        "id": "d1",
+        "loyalty": 50,
+        "mood": 1,
+        "name": "Chu Ning",
+        "pronouns": "he",
+        "quirks": [
+          "competitive",
+          "secret_poet"
+        ],
+        "realm": "qi_refining",
+        "spirit_root": "water"
+      }
+    },
+    {
+      "allowed_actions": [
+        "rest",
+        "hide"
+      ],
+      "card": {
+        "effects": [
+          "injured"
+        ],
+        "id": "d2",
+        "loyalty": 50,
+        "mood": 2,
+        "name": "Mei Baoping",
+        "pronouns": "she",
+        "quirks": [
+          "cloud_watcher",
+          "overly_polite"
+        ],
+        "realm": "qi_refining",
+        "spirit_root": "water"
+      }
+    },
+    {
+      "allowed_actions": [],
+      "card": {
+        "id": "d3",
+        "loyalty": 80,
+        "mood": 2,
+        "name": "Ma Huwen",
+        "pronouns": "he",
+        "quirks": [
+          "secret_poet",
+          "clumsy_alchemist"
+        ],
+        "realm": "golden_core",
+        "role": "elder",
+        "spirit_root": "fire"
+      }
+    },
+    {
+      "allowed_actions": [],
+      "card": {
+        "id": "d4",
+        "loyalty": 50,
+        "mood": 2,
+        "name": "Guo Ning",
+        "pronouns": "she",
+        "quirks": [
+          "secret_poet",
+          "grudge_keeper"
+        ],
+        "realm": "foundation_building",
+        "spirit_root": "earth",
+        "status": "travel"
+      }
+    },
+    {
+      "allowed_actions": [
+        "train",
+        "rest",
+        "meditate",
+        "cook",
+        "tend_field",
+        "hide"
+      ],
+      "card": {
+        "id": "d5",
+        "loyalty": 51,
+        "mood": 3,
+        "name": "Liu Shan",
+        "pronouns": "he",
+        "quirks": [
+          "gossip",
+          "early_riser"
+        ],
+        "realm": "qi_refining",
+        "spirit_root": "fire"
+      }
+    },
+    {
+      "allowed_actions": [
+        "train",
+        "rest",
+        "meditate",
+        "cook",
+        "tend_field",
+        "hide"
+      ],
+      "card": {
+        "id": "d6",
+        "loyalty": 51,
+        "mood": 3,
+        "name": "Zhao Chun",
+        "pronouns": "he",
+        "quirks": [
+          "clumsy_alchemist",
+          "dramatic"
+        ],
+        "realm": "qi_refining",
+        "spirit_root": "fire"
+      }
+    }
+  ],
+  "facts": [
+    {
+      "champions": [
+        "d1"
+      ],
+      "matches": [
+        {
+          "rival": "iron_frog",
+          "won": false
+        },
+        {
+          "rival": "perfect_hair",
+          "won": false
+        }
+      ],
+      "place": 4,
+      "rewards": {},
+      "type": "tournament"
+    },
+    {
+      "defenders": [
+        "d2"
+      ],
+      "land": 1,
+      "rival": "iron_frog",
+      "type": "war_result",
+      "won": false
+    },
+    {
+      "amount": 20,
+      "resource": "stones",
+      "rival": "perfect_hair",
+      "type": "gift"
+    },
+    {
+      "gave": {
+        "herbs": 15
+      },
+      "got": {
+        "stones": 30
+      },
+      "rival": "moonlit_tea",
+      "type": "trade"
+    },
+    {
+      "disciple": "d3",
+      "type": "promoted"
+    },
+    {
+      "disciple": "d4",
+      "place": "noodle_town",
+      "return_day": 110,
+      "type": "travel_left"
+    },
+    {
+      "disciple": "d5",
+      "mood": 2,
+      "type": "rested"
+    },
+    {
+      "disciple": "d6",
+      "mood": 2,
+      "type": "rested"
+    },
+    {
+      "food": 3,
+      "type": "ate"
+    }
+  ],
+  "game_day": 90,
+  "kind": "evening",
+  "locale": "en",
+  "relationships": [],
+  "sect": {
+    "rank": "unknown_mountain",
+    "resources": {
+      "food": 78,
+      "herbs": 46,
+      "reputation": 32,
+      "stones": 250
+    }
+  }
+}

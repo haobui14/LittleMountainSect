@@ -63,6 +63,11 @@ static func happy_server(overrides: Dictionary = {}) -> Callable:
 					"source": "ai", "stored": false, "spirit_energy_left": 44,
 					"title": "A Surprise!", "story": "Something happened.", "choices": choices,
 				}}
+			if r["body"]["kind"] == "letter":
+				return {"code": 200, "body": {
+					"source": "ai", "stored": false, "spirit_energy_left": 47,
+					"letter": "Dear Master, the noodles are long. Yours, Claude's traveller",
+				}}
 			if r["body"]["kind"] == "evening":
 				return {"code": 200, "body": {
 					"source": "ai", "stored": false, "spirit_energy_left": 46,
@@ -74,7 +79,7 @@ static func happy_server(overrides: Dictionary = {}) -> Callable:
 				"mood_change": 1, "memory": null, "wants_action": "rest", "spirit_energy_left": 49,
 			}}
 		if path.begins_with("/rest/v1/rpc/spirit_energy_status"):
-			return {"code": 200, "body": {"left": 50, "per_day": 50, "enabled": true, "costs": {"chat": 1, "elder": 1, "event": 2, "evening": 3}}}
+			return {"code": 200, "body": {"left": 50, "per_day": 50, "enabled": true, "costs": {"chat": 1, "elder": 1, "event": 2, "evening": 3, "letter": 1}}}
 		if path.begins_with("/rest/v1/saves"):
 			if r["method"] == HTTPClient.METHOD_GET:
 				return {"code": 200, "body": [] if state["save"] == null else [state["save"]]}

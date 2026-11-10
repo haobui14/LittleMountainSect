@@ -32,7 +32,7 @@ Both players pass 100 × 120. They also pass 300 seeds × 240 days (8 seasons) e
 What the world looks like for the sensible player:
 
 - **Tournaments get better with time:** in the first season the sect comes 1st 23% of the time and 2nd to 4th the rest; from the second season it wins 52–62% of the time. Rivals grow 4.5 a season, so a sect that stops growing falls back: in the 8th season of the long run it wins 32%.
-- **Diplomacy works when you keep at it:** about 21 gifts and 8 trades per seed, three in four seeds form an alliance by day 120, and no ally betrays a sect that keeps its Trust up.
+- **Diplomacy works when you keep at it:** about 21 gifts and 8 trades per seed, about 0.7 alliances form per seed by day 120, and no ally betrays a sect that keeps its Trust up.
 - **Wars are rare:** 4 in 100 seeds (2 battles, both won, and 2 peaces). They come to a sect that rises in rank and wins tournaments, which makes the proud Iron Frog Sect (home Attitude −20) envious. The random player never rises enough to provoke one, so the war rules lean on their GUT tests; the 300 × 240 run sees 24 wars.
 - **Generations:** about 3 travels and 6 letters per seed, 1.9 Elders promoted (2 by day 120), and no ascension within 120 days. In 240 days, about 3 disciples per seed ascend.
 - **The hills' harvest** (2 Food and 2 Herbs a day) is spent: Herbs hold at 40–50 from day 20, as gifts and trades use them.

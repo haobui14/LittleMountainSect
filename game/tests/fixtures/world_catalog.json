@@ -1,0 +1,23 @@
+{
+  "rivals": [
+    "iron_frog",
+    "moonlit_tea",
+    "perfect_hair"
+  ],
+  "seasons": [
+    "spring",
+    "summer",
+    "autumn",
+    "winter"
+  ],
+  "travel_places": [
+    "eastern_sea",
+    "noodle_town",
+    "singing_sands",
+    "snow_peaks",
+    "capital_market",
+    "bamboo_sea",
+    "cloud_temple",
+    "frog_swamp"
+  ]
+}
