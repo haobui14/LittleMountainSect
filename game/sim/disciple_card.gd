@@ -31,4 +31,6 @@ static func build(d: Disciple, locale: String, sect: Sect = null) -> Dictionary:
 		card["effects"] = effects
 	if d.technique > 0:
 		card["technique"] = d.technique
+	if d.is_elder():
+		card["role"] = "elder"
 	return card

@@ -217,12 +217,17 @@ export function factSentence(fact: Fact, name: (id: string) => string): string {
       return `WAR: ${
         rivalName(fact.rival, true)
       } declared war on the sect. The battle comes on day ${fact.battle_day}.`;
-    case "war_result":
+    case "war_result": {
+      const hills = `The sect now holds ${fact.land} ${fact.land === 1 ? "hill" : "hills"}.`;
+      if (fact.defenders.length === 0) {
+        return `THE BATTLE: nobody was home to defend the sect against ${rivalName(fact.rival)}, ${
+          fact.won ? "but its allies won the day" : "and it lost (nobody was hurt)"
+        }. ${hills}`;
+      }
       return `THE BATTLE: ${joinNames(fact.defenders.map(name))} defended the sect against ${
         rivalName(fact.rival)
-      } and ${fact.won ? "won" : "lost (nobody was hurt badly)"}. The sect now holds ${fact.land} ${
-        fact.land === 1 ? "hill" : "hills"
-      }.`;
+      } and ${fact.won ? "won" : "lost (nobody was hurt badly)"}. ${hills}`;
+    }
     case "peace":
       return fact.paid > 0
         ? `The sect made peace with ${rivalName(fact.rival)} for ${fact.paid} Spirit Stones.`

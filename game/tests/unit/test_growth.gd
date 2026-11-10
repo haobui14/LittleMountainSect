@@ -140,7 +140,7 @@ func test_a_version_2_save_migrates_to_version_3() -> void:
 	assert_true(loaded.event.is_empty())
 	assert_eq(loaded.disciples[0].status, "home")
 	assert_eq(loaded.disciples[0].technique, 0)
-	assert_eq(loaded.to_dict()["version"], 3)
+	assert_eq(loaded.to_dict()["version"], Sect.SAVE_VERSION)
 
 
 func test_a_good_secret_realm_trip_brings_back_a_pill() -> void:

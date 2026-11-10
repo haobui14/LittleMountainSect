@@ -35,6 +35,16 @@ var return_day: int = 0
 ## study toward the next level (0 to Balance.STUDY_MAX).
 var technique: int = 0
 var study: int = 0
+## "disciple" or "elder" (M6): Elders teach instead of taking tasks.
+var role: String = "disciple"
+## The day they joined the sect (M6; promotion and travel need time in it).
+var joined_day: int = 1
+## While travelling (status "travel"): {place, left_day, next_letter_day}.
+var travel: Dictionary = {}
+
+
+func is_elder() -> bool:
+	return role == "elder"
 
 
 ## The disciple's name in the given language ("en" or "vi").
@@ -132,6 +142,9 @@ func to_dict() -> Dictionary:
 		"return_day": return_day,
 		"technique": technique,
 		"study": study,
+		"role": role,
+		"joined_day": joined_day,
+		"travel": travel.duplicate(),
 	}
 
 
@@ -159,4 +172,7 @@ static func from_dict(data: Dictionary) -> Disciple:
 	d.return_day = int(data["return_day"])
 	d.technique = int(data["technique"])
 	d.study = int(data["study"])
+	d.role = String(data["role"])
+	d.joined_day = int(data["joined_day"])
+	d.travel = DayReport._whole_numbers(data["travel"])
 	return d

@@ -85,10 +85,10 @@ static func can_study(sect: Sect, d: Disciple) -> bool:
 	return sect.level("library") >= 1 and d.technique < mini(sect.level("library"), Balance.TECHNIQUE_MAX)
 
 
-## A day of study. At Balance.STUDY_MAX the disciple learns the next level of
-## their root's technique.
+## A day of study (Elders help). At Balance.STUDY_MAX the disciple learns
+## the next level of their root's technique.
 static func study(sect: Sect, d: Disciple, report: DayReport) -> void:
-	var gain := mini(Balance.STUDY_BASE + d.stat("wit"), Balance.STUDY_MAX - d.study)
+	var gain := mini(Balance.STUDY_BASE + d.stat("wit") + Generations.study_bonus(sect), Balance.STUDY_MAX - d.study)
 	d.study += gain
 	report.add("studied", {"disciple": d.id, "gain": gain})
 	if d.study >= Balance.STUDY_MAX and can_study(sect, d):

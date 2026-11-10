@@ -31,9 +31,12 @@ func test_work_grows_food_and_herbs_by_spirit_field_level() -> void:
 	var report := DayResolver.resolve(sect, SimFixtures.plan_all(sect, "work"))
 	var worked := report.of_type("worked")[0]
 	assert_eq([worked["food"], worked["herbs"]], [12, 3])
-	assert_eq(sect.resources["food"], 100 + 12 - 3)
-	assert_eq(sect.resources["herbs"], 3)
-	assert_eq(report.resource_changes["food"], 9)
+	# The sect's hills (M6) add their own Food and Herbs every day.
+	var hills_food := Balance.LAND_FOOD * sect.land
+	var hills_herbs := Balance.LAND_HERBS * sect.land
+	assert_eq(sect.resources["food"], 100 + 12 + hills_food - 3)
+	assert_eq(sect.resources["herbs"], 3 + hills_herbs)
+	assert_eq(report.resource_changes["food"], 9 + hills_food)
 
 
 func test_rest_raises_mood_and_heals_injuries() -> void:
@@ -67,7 +70,8 @@ func test_good_huts_heal_two_days_per_day() -> void:
 
 func test_everyone_eats_and_food_never_goes_negative() -> void:
 	var sect := SimFixtures.sect()
-	sect.resources["food"] = 1
+	sect.land = Balance.LAND_MIN
+	sect.resources["food"] = 1 - Balance.LAND_FOOD * sect.land  # 1 Food after the hills' harvest
 	var report := DayResolver.resolve(sect, SimFixtures.plan_all(sect, "train"))
 	assert_eq(sect.resources["food"], 0)
 	assert_eq(report.of_type("ate")[0]["food"], 1)

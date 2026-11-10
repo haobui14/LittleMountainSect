@@ -16,22 +16,22 @@ var missions: Array[Dictionary] = []
 static func defaults(sect: Sect) -> DayPlan:
 	var plan := DayPlan.new()
 	for d in sect.disciples:
-		if sect.is_away(d.id):
+		if sect.is_away(d.id) or d.is_elder():
 			continue
 		var task := Decisions.task_for_today(sect, d.id)
 		if task == "":
 			task = String(sect.last_tasks.get(d.id, "rest"))
-		if task == "breakthrough" and not task_allowed(sect, d, task):
+		if task in ["breakthrough", "ascend"] and not task_allowed(sect, d, task):
 			task = "train"
 		plan.tasks[d.id] = task if task_allowed(sect, d, task) else "rest"
 	return plan
 
 
-## Whether [param d] can do a home task today: an injured disciple only
-## rests, studying needs something left to learn in the Library, and a
-## breakthrough needs full progress.
+## Whether [param d] can do a home task today: Elders take none, an injured
+## disciple only rests, studying needs something left to learn in the
+## Library, and a breakthrough or ascension needs full progress.
 static func task_allowed(sect: Sect, d: Disciple, task: String) -> bool:
-	if not task in Balance.HOME_TASKS or sect.is_away(d.id):
+	if not task in Balance.HOME_TASKS or sect.is_away(d.id) or d.is_elder():
 		return false
 	if d.is_injured():
 		return task == "rest"
@@ -40,6 +40,8 @@ static func task_allowed(sect: Sect, d: Disciple, task: String) -> bool:
 			return CultivationRules.can_study(sect, d)
 		"breakthrough":
 			return CultivationRules.can_break_through(d)
+		"ascend":
+			return Generations.can_ascend(d)
 	return true
 
 
@@ -82,7 +84,7 @@ func remove_from_missions(id: String) -> void:
 
 
 ## Error codes, empty when the plan is valid. Each is "code" or "code:detail":
-## unknown_disciple, away, injured_must_rest, bad_task, not_allowed,
+## unknown_disciple, away, elder, injured_must_rest, bad_task, not_allowed,
 ## unknown_mission, locked_mission, team_size, double_booked.
 func validate(sect: Sect) -> Array[String]:
 	var errors: Array[String] = []
@@ -94,7 +96,9 @@ func validate(sect: Sect) -> Array[String]:
 			continue
 		if sect.is_away(id):
 			errors.append("away:" + id)
-		if not String(tasks[id]) in Balance.HOME_TASKS:
+		if d.is_elder():
+			errors.append("elder:" + id)
+		elif not String(tasks[id]) in Balance.HOME_TASKS:
 			errors.append("bad_task:" + id)
 		elif d.is_injured() and tasks[id] != "rest":
 			errors.append("injured_must_rest:" + id)
@@ -120,6 +124,8 @@ func validate(sect: Sect) -> Array[String]:
 			booked[id] = true
 			if sect.is_away(id):
 				errors.append("away:" + id)
+			if d.is_elder():
+				errors.append("elder:" + id)
 			if d.is_injured():
 				errors.append("injured_must_rest:" + id)
 	return errors

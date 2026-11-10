@@ -56,13 +56,14 @@ static func upgrade(sect: Sect, building: String) -> bool:
 
 
 ## Progress from a day of training: stats, the Training Yard, the realm (higher
-## realms are slower), technique, Mood and side effects.
+## realms are slower), technique, the sect's Elders, Mood and side effects.
 static func training_gain(sect: Sect, d: Disciple) -> int:
 	@warning_ignore("integer_division")
 	var base := Balance.TRAIN_BASE + d.stat("talent") + d.stat("spirit") / 2
 	var gain := float(base) * (1.0 + Balance.TRAIN_YARD_BONUS * sect.level("training_yard"))
 	gain *= Balance.REALM_TRAIN[clampi(d.realm_index(), 0, Balance.REALM_TRAIN.size() - 1)]
 	gain *= 1.0 + Balance.TECHNIQUE_TRAIN * d.technique
+	gain *= 1.0 + Generations.training_bonus(sect)
 	gain *= d.effect_factor("train")
 	if d.mood < 0:
 		gain *= Balance.TRAIN_LOW_MOOD_FACTOR

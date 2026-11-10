@@ -227,7 +227,8 @@ export const FactSchema = z.discriminatedUnion("type", [
     type: z.literal("war_result"),
     rival: RivalSchema,
     won: z.boolean(),
-    defenders: DiscipleIdsSchema,
+    /** Empty when nobody was home to defend; allies may still win it. */
+    defenders: z.array(DiscipleIdSchema).max(12),
     land: z.int().min(1).max(5),
   }),
   z.strictObject({ type: z.literal("peace"), rival: RivalSchema, paid: Amount }),

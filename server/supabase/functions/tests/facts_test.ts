@@ -180,6 +180,11 @@ Deno.test("the world's facts (M6) read as sentences, and the big ones start in c
       "badly). The sect now holds 1 hill.",
     ],
     [
+      { type: "war_result", rival: "perfect_hair", won: true, defenders: [], land: 4 },
+      "THE BATTLE: nobody was home to defend the sect against the Perfect Hair Pavilion, but " +
+      "its allies won the day. The sect now holds 4 hills.",
+    ],
+    [
       { type: "peace", rival: "iron_frog", paid: 50 },
       "The sect made peace with the Iron Frog Sect for 50 Spirit Stones.",
     ],

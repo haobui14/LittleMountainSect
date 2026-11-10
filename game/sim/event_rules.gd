@@ -9,7 +9,8 @@ extends RefCounted
 ##
 ## sect.event is {} or:
 ##   {day, problem, place, disciples: [ids], resolved, choice, result,
-##    applied: {res, mood, rel, progress, effect, injure, item, return_day},
+##    applied: {res, mood, rel, progress, effect, injure, item, return_day,
+##              attitude: {rival: change}},
 ##    words: {title, story, choices: {id: text}} (Claude's, when it wrote them)}
 
 
@@ -118,6 +119,12 @@ static func choose(sect: Sect, choice_id: String) -> Dictionary:
 		result = "win" if win else "lose"
 		outcome = choice["win"] if win else choice["lose"]
 	_apply(sect, outcome, ids, applied)
+	# A rival's problem changes how that sect feels about this one (M6).
+	var rival := String(EventCatalog.PROBLEMS[event["problem"]].get("rival", ""))
+	if rival != "" and outcome.has("attitude"):
+		var moved := Rivals.change_attitude(sect, rival, int(outcome["attitude"]))
+		if moved != 0:
+			applied["attitude"] = {rival: moved}
 
 	event["resolved"] = true
 	event["choice"] = choice_id
@@ -131,6 +138,7 @@ static func choose(sect: Sect, choice_id: String) -> Dictionary:
 		"result": result,
 		"disciples": ids.duplicate(),
 	})
+	Wars.check_call_off(sect)
 	return applied
 
 

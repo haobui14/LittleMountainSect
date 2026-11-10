@@ -129,10 +129,11 @@ static func _disaster(sect: Sect, m: ActiveMission, report: DayReport) -> void:
 		report.add("lost_cultivation", {"disciple": victim.id, "amount": amount, "mission": m.mission})
 
 
-## Lost and left disciples come home on their return day.
+## Lost and left disciples come home on their return day (travellers come
+## home through Generations).
 static func bring_home(sect: Sect, report: DayReport) -> void:
 	for d in sect.disciples:
-		if d.status == "home" or d.return_day == 0 or d.return_day > sect.day:
+		if not d.status in ["lost", "left"] or d.return_day == 0 or d.return_day > sect.day:
 			continue
 		var was := d.status
 		d.status = "home"

@@ -2,10 +2,12 @@ class_name DayResolver
 extends RefCounted
 ## Runs one day of the rules, in a fixed order:
 ##   1. the morning's facts, then departures   2. training   3. breakthroughs
-##   4. study   5. work   6. rest and injuries   7. missions return
-##   8. food (and the Kitchen's meals)   9. drift: Mood, Loyalty, side effects,
-##   homecomings   10. limits, then the day number goes up, and tomorrow's
-##   gate candidate and surprise event are rolled.
+##   and ascensions   4. study   5. work, and the hills' harvest   6. rest and
+##   injuries   7. missions return   8. food (and the Kitchen's meals)
+##   9. drift: Mood, Loyalty, side effects, homecomings and travellers
+##   10. limits, then the day number goes up, and tomorrow's gate candidate,
+##   surprise event and the world's night (World.night) are rolled.
+## Elders take no tasks. Disciples who ascended yesterday leave first.
 ## The same sect and plan always give the same result.
 
 
@@ -17,6 +19,10 @@ static func resolve(sect: Sect, plan: DayPlan) -> DayReport:
 		push_error("Invalid day plan: %s" % [errors])
 		return null
 
+	# Yesterday's ascended disciples join the alumni; an undecided tournament
+	# or battle is settled (the game itself waits for the player).
+	Generations.settle_ascended(sect)
+	World.settle_undecided(sect)
 	var before := sect.resources.duplicate()
 	var report := DayReport.new(sect.day)
 	# 1. What happened this morning (an event, a recruit, pills) comes first.
@@ -28,9 +34,9 @@ static func resolve(sect: Sect, plan: DayPlan) -> DayReport:
 	for entry in plan.missions:
 		MissionResolver.depart(sect, String(entry["mission"]), entry["team"], report)
 
-	var by_task := {"train": [], "work": [], "rest": [], "study": [], "breakthrough": []}
+	var by_task := {"train": [], "work": [], "rest": [], "study": [], "breakthrough": [], "ascend": []}
 	for d in sect.disciples:
-		if sect.is_away(d.id):
+		if sect.is_away(d.id) or d.is_elder():
 			continue
 		var task := "rest" if d.is_injured() else String(plan.tasks.get(d.id, "rest"))
 		if not d.is_injured():
@@ -47,6 +53,8 @@ static func resolve(sect: Sect, plan: DayPlan) -> DayReport:
 	# 3. Breakthroughs.
 	for d: Disciple in by_task["breakthrough"]:
 		CultivationRules.attempt(sect, d, report)
+	for d: Disciple in by_task["ascend"]:
+		Generations.attempt_ascension(sect, d, report)
 
 	# 4. Study in the Library.
 	for d: Disciple in by_task["study"]:
@@ -64,6 +72,9 @@ static func resolve(sect: Sect, plan: DayPlan) -> DayReport:
 		food = sect.add_resource("food", food)
 		herbs = sect.add_resource("herbs", herbs)
 		report.add("worked", {"disciples": workers.map(func(d: Disciple) -> String: return d.id), "food": food, "herbs": herbs})
+	# The hills the sect holds give a little every day.
+	sect.add_resource("food", Balance.LAND_FOOD * sect.land)
+	sect.add_resource("herbs", Balance.LAND_HERBS * sect.land)
 
 	# 6. Rest, and injuries heal.
 	for d: Disciple in by_task["rest"]:
@@ -130,6 +141,7 @@ static func resolve(sect: Sect, plan: DayPlan) -> DayReport:
 		if d.wants_day < sect.day:
 			d.wants = ""
 	MissionResolver.bring_home(sect, report)
+	Generations.bring_home(sect, report)
 
 	# 10. Limits, then tomorrow.
 	for d in sect.disciples:
@@ -142,4 +154,5 @@ static func resolve(sect: Sect, plan: DayPlan) -> DayReport:
 	Decisions.expire(sect)
 	Recruiting.roll(sect)
 	EventRules.roll(sect)
+	World.night(sect)
 	return report

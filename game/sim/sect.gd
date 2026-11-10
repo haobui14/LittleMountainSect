@@ -4,7 +4,7 @@ extends RefCounted
 ## and the random generator. [method to_dict] is the save; it carries a
 ## version number so older saves can be upgraded (see SaveMigration).
 
-const SAVE_VERSION := 3
+const SAVE_VERSION := 4
 
 var day: int = 1
 var resources: Dictionary = {"stones": 0, "food": 0, "herbs": 0, "reputation": 0}
@@ -49,12 +49,44 @@ var pending_facts: Array[Dictionary] = []
 ## Big moments for the Sect Chronicle (M6): [{day, type, ...}], newest last.
 var chronicle: Array[Dictionary] = []
 
+# The world beyond the mountain (M6) -------------------------------------------
+## Each rival sect (RivalCatalog id) -> {attitude, trust, ally, gift_day,
+## trade_period}: the last day it got a gift and the last trading period it
+## traded in.
+var rivals: Dictionary = {}
+## How many hills the sect holds (Balance.LAND_MIN to LAND_MAX).
+var land: int = Balance.LAND_START
+## The current war (Wars), or {}: {rival, declared_day, battle_day,
+## resolved, defenders, won}.
+var war: Dictionary = {}
+var last_war_day: int = -Balance.WAR_COOLDOWN
+## Today's tournament (Tournament), or {}: {day, resolved, skipped,
+## champions, place, matches, rewards}.
+var tournament: Dictionary = {}
+## A disciple asking to travel (Generations), or {}: {disciple, place, days, day}.
+var travel_request: Dictionary = {}
+var next_travel_day: int = 0
+## This morning's letter from a traveller, or {}: {day, disciple, place,
+## days_away, gift, item, words}.
+var letter: Dictionary = {}
+## Disciples who ascended, so the Chronicle can still name them:
+## [{id, name_en, name_vi, realm, day}].
+var alumni: Array[Dictionary] = []
+
 
 func _init() -> void:
 	for id in Balance.BUILDINGS:
 		buildings[id] = 0
 	for pill in Balance.PILLS:
 		items[pill] = 0
+	for rival in RivalCatalog.ids():
+		rivals[rival] = {
+			"attitude": int(RivalCatalog.RIVALS[rival]["attitude"]),
+			"trust": Balance.START_TRUST,
+			"ally": false,
+			"gift_day": -Balance.GIFT_EVERY,
+			"trade_period": -1,
+		}
 
 
 func level(building: String) -> int:
@@ -76,15 +108,23 @@ func mission_of(id: String) -> ActiveMission:
 	return null
 
 
-## On a mission, lost or left: not at home today.
+## On a mission, lost, left, travelling or ascended, or busy at today's
+## tournament or battle: not at home for the day's tasks.
 func is_away(id: String) -> bool:
-	if mission_of(id) != null:
+	if mission_of(id) != null or busy_today(id):
 		return true
 	var d := disciple(id)
 	return d != null and d.status != "home"
 
 
-## "home", "mission", "lost" or "left" (Balance.STATUSES).
+## A champion at today's tournament or a defender in today's battle.
+func busy_today(id: String) -> bool:
+	if not tournament.is_empty() and int(tournament["day"]) == day and id in tournament["champions"]:
+		return true
+	return not war.is_empty() and int(war["battle_day"]) == day and id in war["defenders"]
+
+
+## "home", "mission", "lost", "left", "travel" or "ascended" (Balance.STATUSES).
 func status_of(id: String) -> String:
 	if mission_of(id) != null:
 		return "mission"
@@ -113,11 +153,38 @@ func chronicle_add(type: String, fields: Dictionary = {}) -> void:
 		chronicle = chronicle.slice(chronicle.size() - Balance.CHRONICLE_MAX)
 
 
-## Disciples at home and not injured: the ones the player can plan for freely.
+## Disciples at home and not injured: the ones the player can plan for
+## freely. Elders teach instead of taking tasks.
 func available_disciples() -> Array[Disciple]:
 	var out: Array[Disciple] = []
-	out.assign(disciples.filter(func(d: Disciple) -> bool: return not is_away(d.id) and not d.is_injured()))
+	out.assign(disciples.filter(func(d: Disciple) -> bool: return not is_away(d.id) and not d.is_injured() and not d.is_elder()))
 	return out
+
+
+## Disciples who count toward the Main Hall's limit: everyone but Elders and
+## those who ascended today.
+func member_count() -> int:
+	return disciples.filter(func(d: Disciple) -> bool: return not d.is_elder() and d.status != "ascended").size()
+
+
+func elder_count() -> int:
+	return disciples.filter(func(d: Disciple) -> bool: return d.is_elder()).size()
+
+
+## A rival's state (see [member rivals]).
+func rival(id: String) -> Dictionary:
+	return rivals[id]
+
+
+## A display name for a disciple id, including those who ascended.
+func name_of(id: String, locale: String) -> String:
+	var d := disciple(id)
+	if d:
+		return d.display_name(locale)
+	for alum in alumni:
+		if alum["id"] == id:
+			return String(alum["name_vi"] if locale == "vi" else alum["name_en"])
+	return id
 
 
 func rank() -> String:
@@ -168,6 +235,15 @@ func to_dict() -> Dictionary:
 		"next_candidate_day": next_candidate_day,
 		"pending_facts": pending_facts.duplicate(true),
 		"chronicle": chronicle.duplicate(true),
+		"rivals": rivals.duplicate(true),
+		"land": land,
+		"war": war.duplicate(true),
+		"last_war_day": last_war_day,
+		"tournament": tournament.duplicate(true),
+		"travel_request": travel_request.duplicate(true),
+		"next_travel_day": next_travel_day,
+		"letter": letter.duplicate(true),
+		"alumni": alumni.duplicate(true),
 	}
 
 
@@ -216,4 +292,17 @@ static func from_dict(data: Dictionary) -> Sect:
 		s.pending_facts.append(DayReport._whole_numbers(fact))
 	for entry: Dictionary in data["chronicle"]:
 		s.chronicle.append(DayReport._whole_numbers(entry))
+	for rival in RivalCatalog.ids():
+		var state: Dictionary = data["rivals"].get(rival, {})
+		for key: String in state:
+			s.rivals[rival][key] = bool(state[key]) if key == "ally" else int(state[key])
+	s.land = int(data["land"])
+	s.war = DayReport._whole_numbers(data["war"])
+	s.last_war_day = int(data["last_war_day"])
+	s.tournament = DayReport._whole_numbers(data["tournament"])
+	s.travel_request = DayReport._whole_numbers(data["travel_request"])
+	s.next_travel_day = int(data["next_travel_day"])
+	s.letter = DayReport._whole_numbers(data["letter"])
+	for alum: Dictionary in data["alumni"]:
+		s.alumni.append(DayReport._whole_numbers(alum))
 	return s

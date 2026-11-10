@@ -19,7 +19,7 @@ static func roll(sect: Sect) -> void:
 		return
 	if sect.day < maxi(Balance.RECRUIT_FIRST_DAY, sect.next_candidate_day):
 		return
-	if sect.disciples.size() >= sect.disciple_limit():
+	if sect.member_count() >= sect.disciple_limit():
 		return
 	var d := DiscipleGenerator.generate(sect)
 	var bonus: int = Balance.RANK_TALENT[clampi(sect.level("main_hall"), 0, Balance.MAX_LEVEL)]
@@ -40,7 +40,7 @@ static func candidate(sect: Sect) -> Disciple:
 static func can_accept(sect: Sect) -> Dictionary:
 	if sect.candidate.is_empty():
 		return {"ok": false, "reason": "none"}
-	if sect.disciples.size() >= sect.disciple_limit():
+	if sect.member_count() >= sect.disciple_limit():
 		return {"ok": false, "reason": "full"}
 	if int(sect.resources["stones"]) < cost(sect):
 		return {"ok": false, "reason": "not_enough_stones"}
@@ -51,6 +51,7 @@ static func accept(sect: Sect) -> bool:
 	if not can_accept(sect)["ok"]:
 		return false
 	var d := candidate(sect)
+	d.joined_day = sect.day
 	sect.add_resource("stones", -cost(sect))
 	sect.disciples.append(d)
 	sect.candidate = {}

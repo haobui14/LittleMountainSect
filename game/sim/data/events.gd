@@ -20,6 +20,9 @@ extends RefCounted
 ##   injure    {"a" | "b": days}
 ##   item      a pill id, or "random_pill"
 ##   return_in [min, max] days until a lost disciple is home (rescue only)
+##   attitude  change in how the problem's rival sect feels (M6)
+## A problem may name a "rival" (a RivalCatalog id): its outcomes' attitude
+## goes to that sect.
 
 ## Places, and the building each needs to exist ("" means none).
 const PLACES := {
@@ -60,10 +63,11 @@ const PROBLEMS := {
 	"frog_duel": {
 		"places": ["main_gate", "training_yard", "village_market"],
 		"pair": 2,
+		"rival": "iron_frog",
 		"choices": [
-			{"id": "accept", "chance": 0.5, "win": {"res": {"reputation": [3, 5]}, "mood": {"a": 2}}, "lose": {"res": {"reputation": -1}, "injure": {"a": 2}}},
-			{"id": "send_b", "chance": 0.5, "win": {"res": {"reputation": [2, 4]}, "mood": {"b": 2}, "rel": 1}, "lose": {"mood": {"b": -1}, "rel": -1}},
-			{"id": "decline", "outcome": {"mood": {"a": -1}}},
+			{"id": "accept", "chance": 0.5, "win": {"res": {"reputation": [3, 5]}, "mood": {"a": 2}, "attitude": -2}, "lose": {"res": {"reputation": -1}, "injure": {"a": 2}, "attitude": 1}},
+			{"id": "send_b", "chance": 0.5, "win": {"res": {"reputation": [2, 4]}, "mood": {"b": 2}, "rel": 1, "attitude": -2}, "lose": {"mood": {"b": -1}, "rel": -1, "attitude": 1}},
+			{"id": "decline", "outcome": {"mood": {"a": -1}, "attitude": -1}},
 		],
 	},
 	"lost_merchant": {
@@ -132,10 +136,11 @@ const PROBLEMS := {
 	"rival_prank": {
 		"places": ["main_gate", "training_yard", "library"],
 		"pair": 2,
+		"rival": "iron_frog",
 		"choices": [
 			{"id": "clean", "outcome": {"mood": {"a": -1, "b": -1}, "rel": 1}},
-			{"id": "paint_bigger", "chance": 0.5, "win": {"res": {"reputation": 1}, "mood": {"a": 2, "b": 2}}, "lose": {"res": {"reputation": -1}}},
-			{"id": "laugh", "outcome": {"mood": {"a": 1}}},
+			{"id": "paint_bigger", "chance": 0.5, "win": {"res": {"reputation": 1}, "mood": {"a": 2, "b": 2}, "attitude": -3}, "lose": {"res": {"reputation": -1}, "attitude": -1}},
+			{"id": "laugh", "outcome": {"mood": {"a": 1}, "attitude": 2}},
 		],
 	},
 	"sudden_storm": {
@@ -204,46 +209,51 @@ const PROBLEMS := {
 	"tea_invitation": {
 		"places": ["village_market", "hot_spring"],
 		"pair": 2,
+		"rival": "moonlit_tea",
 		"choices": [
-			{"id": "attend", "chance": 0.6, "win": {"res": {"reputation": [2, 3]}}, "lose": {"res": {"stones": -6}}},
-			{"id": "send_gift", "cost": {"herbs": 5}, "outcome": {"res": {"reputation": [2, 4]}}},
-			{"id": "decline", "outcome": {}},
+			{"id": "attend", "chance": 0.6, "win": {"res": {"reputation": [2, 3]}, "attitude": 3}, "lose": {"res": {"stones": -6}}},
+			{"id": "send_gift", "cost": {"herbs": 5}, "outcome": {"res": {"reputation": [2, 4]}, "attitude": 4}},
+			{"id": "decline", "outcome": {"attitude": -1}},
 		],
 	},
 	"free_haircut": {
 		"places": ["village_market", "main_gate"],
 		"pair": 2,
+		"rival": "perfect_hair",
 		"choices": [
-			{"id": "accept", "chance": 0.6, "win": {"mood": {"a": 2}}, "lose": {"effect": {"a": "green_hair"}}},
-			{"id": "send_b", "chance": 0.6, "win": {"mood": {"b": 2}, "rel": 1}, "lose": {"effect": {"b": "green_hair"}, "rel": -1}},
-			{"id": "decline", "outcome": {}},
+			{"id": "accept", "chance": 0.6, "win": {"mood": {"a": 2}, "attitude": 2}, "lose": {"effect": {"a": "green_hair"}}},
+			{"id": "send_b", "chance": 0.6, "win": {"mood": {"b": 2}, "rel": 1, "attitude": 2}, "lose": {"effect": {"b": "green_hair"}, "rel": -1}},
+			{"id": "decline", "outcome": {"attitude": -1}},
 		],
 	},
 	"hair_contest": {
 		"places": ["village_market", "main_gate", "hot_spring"],
 		"pair": 2,
+		"rival": "perfect_hair",
 		"choices": [
-			{"id": "enter", "chance": 0.5, "win": {"res": {"reputation": [2, 4]}, "mood": {"a": 2}}, "lose": {"mood": {"a": -1}}},
-			{"id": "style_b", "outcome": {"mood": {"a": 1, "b": 1}, "rel": 1}},
-			{"id": "decline", "outcome": {}},
+			{"id": "enter", "chance": 0.5, "win": {"res": {"reputation": [2, 4]}, "mood": {"a": 2}, "attitude": 3}, "lose": {"mood": {"a": -1}}},
+			{"id": "style_b", "outcome": {"mood": {"a": 1, "b": 1}, "rel": 1, "attitude": 2}},
+			{"id": "decline", "outcome": {"attitude": -2}},
 		],
 	},
 	"tea_spy": {
 		"places": ["library", "main_gate", "training_yard"],
 		"pair": 2,
+		"rival": "moonlit_tea",
 		"choices": [
-			{"id": "confront", "chance": 0.5, "win": {"res": {"stones": [8, 14]}}, "lose": {"res": {"reputation": -1}}},
-			{"id": "invite_tea", "cost": {"food": 4}, "outcome": {"res": {"reputation": 1}, "mood": {"a": 1}}},
+			{"id": "confront", "chance": 0.5, "win": {"res": {"stones": [8, 14]}, "attitude": -2}, "lose": {"res": {"reputation": -1}, "attitude": -4}},
+			{"id": "invite_tea", "cost": {"food": 4}, "outcome": {"res": {"reputation": 1}, "mood": {"a": 1}, "attitude": 5}},
 			{"id": "ignore", "outcome": {"mood": {"b": -1}}},
 		],
 	},
 	"frog_choir": {
 		"places": ["misty_pond", "bamboo_grove", "spirit_field"],
 		"pair": 2,
+		"rival": "iron_frog",
 		"choices": [
-			{"id": "join", "chance": 0.5, "win": {"mood": {"a": 2, "b": 2}, "rel": 1}, "lose": {"mood": {"a": -1, "b": -1}}},
+			{"id": "join", "chance": 0.5, "win": {"mood": {"a": 2, "b": 2}, "rel": 1, "attitude": 4}, "lose": {"mood": {"a": -1, "b": -1}, "attitude": -3}},
 			{"id": "earplugs", "cost": {"food": 2}, "outcome": {"mood": {"all": 1}}},
-			{"id": "complain", "outcome": {"mood": {"b": -1}}},
+			{"id": "complain", "outcome": {"mood": {"b": -1}, "attitude": -2}},
 		],
 	},
 	"rescue": {

@@ -7,11 +7,12 @@ const MAX_FACTS := 40
 
 
 ## What a disciple may decide to do tomorrow: nothing when away (on a
-## mission, lost or left), resting actions when injured, and otherwise every
-## action whose task the day plan allows (study only with the Library).
+## mission, lost, left or travelling) or an Elder, resting actions when
+## injured, and otherwise every action whose task the day plan allows (study
+## only with the Library).
 static func allowed_actions(sect: Sect, d: Disciple) -> Array[String]:
 	var out: Array[String] = []
-	if sect.is_away(d.id):
+	if sect.is_away(d.id) or d.is_elder():
 		return out
 	for action in Balance.ACTIONS:
 		if not Balance.ACTION_TASK.has(action):
