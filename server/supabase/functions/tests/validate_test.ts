@@ -3,6 +3,7 @@ import {
   cleanChatReply,
   cleanEveningReply,
   cleanEventReply,
+  cleanLetterReply,
   shorten,
 } from "../_shared/validate.ts";
 import {
@@ -263,4 +264,14 @@ Deno.test("an event request must name as many disciples as its problem needs", (
       .success,
     false,
   );
+});
+
+Deno.test("a letter is trimmed and shortened, and an empty one is rejected", () => {
+  assertEquals(cleanLetterReply({ letter: "  Dear Master.  " }), {
+    ok: true,
+    value: { letter: "Dear Master." },
+  });
+  assertEquals(cleanLetterReply({ letter: " \n " }).ok, false);
+  const long = cleanLetterReply({ letter: "Noodles! ".repeat(200) });
+  assert(long.ok && [...long.value.letter].length <= 700);
 });

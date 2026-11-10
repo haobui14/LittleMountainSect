@@ -131,6 +131,80 @@ Deno.test("every fact type becomes a sentence with the right names and numbers",
   for (const [fact, sentence] of cases) assertEquals(factSentence(fact, name), sentence);
 });
 
+Deno.test("the world's facts (M6) read as sentences, and the big ones start in capitals", () => {
+  const cases: Array<[Fact, string]> = [
+    [{ type: "season", season: "summer", year: 1 }, "A new season begins: Summer of year 1."],
+    [
+      {
+        type: "tournament",
+        place: 2,
+        champions: ["a", "b"],
+        matches: [{ rival: "moonlit_tea", won: true }, { rival: "iron_frog", won: false }],
+        rewards: { reputation: 8, stones: 20 },
+      },
+      "TOURNAMENT DAY: the sect's champions Lin and Bao beat the Moonlit Tea Society, then lost " +
+      "to the Iron Frog Sect, and the sect came second in the tournament. Prize: 8 Reputation, " +
+      "20 Spirit Stones.",
+    ],
+    [
+      {
+        type: "tournament",
+        place: 4,
+        champions: ["c"],
+        matches: [{ rival: "perfect_hair", won: false }],
+        rewards: {},
+      },
+      "TOURNAMENT DAY: the sect's champion Mei lost to the Perfect Hair Pavilion, and the sect " +
+      "came last in the tournament.",
+    ],
+    [
+      { type: "trade", rival: "moonlit_tea", gave: { herbs: 15 }, got: { stones: 30 } },
+      "The sect traded with the Moonlit Tea Society: gave 15 Herbs, got 30 Spirit Stones.",
+    ],
+    [
+      { type: "alliance_ended", rival: "perfect_hair", by: "rival" },
+      "The Perfect Hair Pavilion ended its alliance with the sect.",
+    ],
+    [
+      { type: "betrayal", rival: "iron_frog", stones: 0, item: "healing_pill" },
+      "BETRAYAL: The Iron Frog Sect, the sect's ally, broke the alliance and made off with a " +
+      "Healing Pill.",
+    ],
+    [
+      { type: "war_declared", rival: "iron_frog", battle_day: 33 },
+      "WAR: The Iron Frog Sect declared war on the sect. The battle comes on day 33.",
+    ],
+    [
+      { type: "war_result", rival: "iron_frog", won: false, defenders: ["a"], land: 1 },
+      "THE BATTLE: Lin defended the sect against the Iron Frog Sect and lost (nobody was hurt " +
+      "badly). The sect now holds 1 hill.",
+    ],
+    [
+      { type: "peace", rival: "iron_frog", paid: 50 },
+      "The sect made peace with the Iron Frog Sect for 50 Spirit Stones.",
+    ],
+    [
+      { type: "promoted", disciple: "c" },
+      "Mei was promoted to Elder of the sect, and will teach from now on.",
+    ],
+    [
+      { type: "ascension_failed", disciple: "a", effect: "green_hair", days: 3, lost: 40 },
+      "Lin tried to ascend to the heavens and fell back, losing 40 progress. Side effect for 3 " +
+      "days: Lin has bright green hair.",
+    ],
+    [
+      { type: "travel_returned", disciple: "b", place: "snow_peaks", souvenir: "none" },
+      "Bao came home from the Snowy Peaks, where old hermits meditate in caves.",
+    ],
+    [
+      { type: "letter", disciple: "b", place: "eastern_sea", gift: { herbs: 6 }, item: "none" },
+      "A letter arrived from Bao, away at the Eastern Sea, where fishermen sing to the waves, " +
+      "with 6 Herbs.",
+    ],
+  ];
+  for (const [fact, sentence] of cases) assertEquals(factSentence(fact, name), sentence);
+});
+
 Deno.test("resources and relationships read as words", () => {
   assertEquals(
     resourceList({ stones: 30, food: 0, reputation: 2 }),

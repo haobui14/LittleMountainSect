@@ -219,6 +219,33 @@ const PROBLEMS := {
 			{"id": "decline", "outcome": {}},
 		],
 	},
+	"hair_contest": {
+		"places": ["village_market", "main_gate", "hot_spring"],
+		"pair": 2,
+		"choices": [
+			{"id": "enter", "chance": 0.5, "win": {"res": {"reputation": [2, 4]}, "mood": {"a": 2}}, "lose": {"mood": {"a": -1}}},
+			{"id": "style_b", "outcome": {"mood": {"a": 1, "b": 1}, "rel": 1}},
+			{"id": "decline", "outcome": {}},
+		],
+	},
+	"tea_spy": {
+		"places": ["library", "main_gate", "training_yard"],
+		"pair": 2,
+		"choices": [
+			{"id": "confront", "chance": 0.5, "win": {"res": {"stones": [8, 14]}}, "lose": {"res": {"reputation": -1}}},
+			{"id": "invite_tea", "cost": {"food": 4}, "outcome": {"res": {"reputation": 1}, "mood": {"a": 1}}},
+			{"id": "ignore", "outcome": {"mood": {"b": -1}}},
+		],
+	},
+	"frog_choir": {
+		"places": ["misty_pond", "bamboo_grove", "spirit_field"],
+		"pair": 2,
+		"choices": [
+			{"id": "join", "chance": 0.5, "win": {"mood": {"a": 2, "b": 2}, "rel": 1}, "lose": {"mood": {"a": -1, "b": -1}}},
+			{"id": "earplugs", "cost": {"food": 2}, "outcome": {"mood": {"all": 1}}},
+			{"id": "complain", "outcome": {"mood": {"b": -1}}},
+		],
+	},
 	"rescue": {
 		"places": ["mountain_path"],
 		"pair": 1,

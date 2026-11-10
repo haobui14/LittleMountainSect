@@ -7,6 +7,7 @@ import type {
   DiscipleCard,
   EveningRequest,
   EventRequest,
+  LetterRequest,
   Safety,
 } from "../../server/supabase/functions/_shared/schemas.ts";
 
@@ -428,8 +429,63 @@ function evenings(locale: Locale): EveningScenario[] {
       }),
       memories: { mei: ["My pill exploded and took the Alchemy Room door with it."] },
     },
+    {
+      // M6: the last day of a season, with the tournament, a promotion and a war.
+      request: request({
+        game_day: 30,
+        sect: {
+          rank: "rising_sect",
+          resources: { stones: 180, food: 22, herbs: 40, reputation: 31 },
+        },
+        disciples: [
+          { card: d.lin, allowed_actions: ["train", "rest", "meditate"] },
+          { card: d.bao, allowed_actions: ["train", "rest", "hide"] },
+          { card: { ...d.mei, role: "elder" }, allowed_actions: [] },
+        ],
+        relationships: [{ a: "lin", b: "bao", score: 8 }],
+        facts: [
+          {
+            type: "tournament",
+            place: 2,
+            champions: ["lin", "bao"],
+            matches: [{ rival: "moonlit_tea", won: true }, { rival: "iron_frog", won: false }],
+            rewards: { reputation: 8, stones: 20 },
+          },
+          { type: "promoted", disciple: "mei" },
+          { type: "war_declared", rival: "perfect_hair", battle_day: 33 },
+          { type: "ate", food: 3 },
+        ],
+      }),
+      memories: { bao: ["Master said I might be the chosen one. Probably."] },
+    },
+  ];
+}
+
+// Letters home (M6): one call each.
+function letters(locale: Locale): LetterRequest[] {
+  const d = DISCIPLES[locale];
+  const letter = (
+    disciple: DiscipleCard,
+    place: LetterRequest["place"],
+    days_away: number,
+    gift: LetterRequest["gift"],
+    item: LetterRequest["item"],
+  ): LetterRequest => ({
+    kind: "letter",
+    locale,
+    game_day: 40,
+    disciple: { ...disciple, status: "travel" },
+    place,
+    days_away,
+    gift,
+    item,
+  });
+  return [
+    letter(d.bao, "noodle_town", 7, { food: 6 }, "none"),
+    letter(d.mei, "frog_swamp", 14, {}, "foundation_pill"),
   ];
 }
 
 export const EVENT_INPUTS: EventRequest[] = [...events("en"), ...events("vi")];
 export const EVENING_INPUTS: EveningScenario[] = [...evenings("en"), ...evenings("vi")];
+export const LETTER_INPUTS: LetterRequest[] = [...letters("en"), ...letters("vi")];

@@ -1,8 +1,8 @@
 // End-to-end smoke test of the deployed AI gateway. Signs in anonymously,
 // then checks sign-in, validation, a chat line, an Elder question, an evening
-// story and a surprise event. The story and the event are each asked twice:
-// the second answer is the stored one, for free.
-// Each run creates one anonymous player and spends 7 Spirit Energy.
+// story, a surprise event and a letter home. The story, the event and the
+// letter are each asked twice: the second answer is the stored one, for free.
+// Each run creates one anonymous player and spends 8 Spirit Energy.
 //
 //   deno run --allow-read=game/config --allow-net=<project host> tools/smoke/gateway_smoke.ts
 
@@ -248,6 +248,40 @@ check(
   `status ${surpriseAgain.status}, stored ${surpriseAgain.json.stored}`,
 );
 
+// Letter home (1 Spirit Energy) -----------------------------------------------------
+
+const letter = {
+  kind: "letter",
+  locale: "en",
+  game_day: 2,
+  disciple: { ...evening.disciples[1].card, status: "travel" },
+  place: "noodle_town",
+  days_away: 7,
+  gift: { food: 6 },
+  item: "none",
+};
+const mail = await callGateway(letter, token);
+check("the letter arrives", mail.status === 200, `status ${mail.status}, ${mail.ms} ms`);
+check(
+  "the letter comes from Claude, is new and has words",
+  mail.json.source === "ai" && mail.json.stored === false &&
+    typeof mail.json.letter === "string" && mail.json.letter.length > 0,
+  `source ${mail.json.source}, stored ${mail.json.stored}`,
+);
+check(
+  "a letter costs 1 Spirit Energy",
+  mail.json.spirit_energy_left === 42,
+  `left ${mail.json.spirit_energy_left}`,
+);
+console.log(`     Letter: ${String(mail.json.letter).slice(0, 160)}…`);
+const mailAgain = await callGateway(letter, token);
+check(
+  "asking again returns the stored letter",
+  mailAgain.status === 200 && mailAgain.json.stored === true &&
+    mailAgain.json.letter === mail.json.letter,
+  `status ${mailAgain.status}, stored ${mailAgain.json.stored}`,
+);
+
 const energy = await fetch(`${backend.supabase_url}/rest/v1/rpc/spirit_energy_status`, {
   method: "POST",
   headers: {
@@ -259,13 +293,13 @@ const energy = await fetch(`${backend.supabase_url}/rest/v1/rpc/spirit_energy_st
 });
 const status = await energy.json();
 check(
-  "the stored story and event were free",
-  energy.ok && status.left === 43,
+  "the stored story, event and letter were free",
+  energy.ok && status.left === 42,
   `status ${energy.status}, left ${status.left}`,
 );
 check(
-  "Spirit Energy shows the evening's price",
-  status.costs?.evening === 3,
+  "Spirit Energy shows the evening's and the letter's prices",
+  status.costs?.evening === 3 && status.costs?.letter === 1,
   `costs ${JSON.stringify(status.costs)}`,
 );
 

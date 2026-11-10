@@ -19,7 +19,7 @@ export const DEFAULT_THINKING: Thinking = "disabled";
 export type CacheTtl = "5m" | "1h";
 export const DEFAULT_CACHE_TTL: CacheTtl = "5m";
 
-export type RequestKind = "chat" | "elder" | "event" | "evening";
+export type RequestKind = "chat" | "elder" | "event" | "evening" | "letter";
 
 /**
  * Output budget per request kind. Thinking counts toward max_tokens, so each
@@ -30,6 +30,7 @@ export const MAX_TOKENS: Record<RequestKind, number> = {
   elder: 1024,
   event: 2048,
   evening: 4096,
+  letter: 1024,
 };
 
 export const REQUEST_TIMEOUT_MS = 15_000;
@@ -39,6 +40,7 @@ export const TIMEOUT_MS: Record<RequestKind, number> = {
   elder: REQUEST_TIMEOUT_MS,
   event: 30_000,
   evening: 40_000,
+  letter: 20_000,
 };
 
 /** Size limits for everything a client sends or Claude returns. */
@@ -59,6 +61,8 @@ export const LIMITS = {
   eventTitleChars: 60,
   eventStoryChars: 900,
   choiceChars: 120,
+  /** Letters home (M6): 40-90 words. */
+  letterChars: 700,
 } as const;
 
 /**

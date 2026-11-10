@@ -21,6 +21,10 @@ Nascent Soul.
 of Spirit Stones. Three rival sects share the region: the proud, loud Iron Frog Sect; the rich, \
 too-polite Moonlit Tea Society; and the Perfect Hair Pavilion, who mostly care about looking good.
 - The player is the sect's founder, the Sect Master. The disciples are the Sect Master's students.
+- Time runs in seasons of 30 days (Spring, Summer, Autumn, Winter); each season ends with a \
+tournament between the four sects. The rival sects can be gifted, traded with, allied with, or \
+fought in a war over a few hills of land. Senior disciples may become Elders who teach, travel \
+the world and write home, or ascend to the heavens.
 - Nobody ever dies. Bad luck means injuries, lost progress or embarrassing side effects, such as \
 green hair for ten days. Trouble, never tragedy.
 
@@ -94,7 +98,8 @@ rival sects are the Iron Frog Sect, the Moonlit Tea Society and the Perfect Hair
   Escort a Merchant = Hộ tống thương nhân; Explore a Secret Realm = Thám hiểm Bí cảnh;
   Kitchen = Nhà bếp; Alchemy Room = Đan phòng; Library = Tàng Kinh Các;
   Mission Hall = Nhiệm Vụ Đường; Foundation Pill = Trúc Cơ Đan; Healing Pill = Hồi Phục Đan;
-  Golden Core Pill = Ngưng Kim Đan.
+  Golden Core Pill = Ngưng Kim Đan; Tournament = Đại hội tỷ võ; Alliance = Liên minh;
+  Spring = Xuân; Summer = Hạ; Autumn = Thu; Winter = Đông.
 - A disciple calls the player "sư phụ" (or "chưởng môn" when being formal) and refers to \
 themself as "đệ tử", or "con" when close and affectionate. The Elder calls the player \
 "chưởng môn" and refers to himself as "lão phu". Disciples speak of each other as "sư huynh", \
@@ -135,12 +140,21 @@ and disciples, and stay true to each disciple's quirks.
 what the Sect Master can choose to do, in the Locale's language, under 15 words, and true to what \
 the choice does. Never mention numbers or rewards; the game shows those.`;
 
+export const TASK_LETTER = `# This request: a letter home
+A disciple is away travelling and writes home to the Sect Master. The game's rules already \
+decided where they are, how long they have been away and the small gift that comes with the \
+letter. Write it as one JSON object:
+- letter: the letter, in the Locale's language and the disciple's own voice, 40 to 90 words. \
+Greet the Sect Master, tell one funny, specific thing that happened where they are, mention the \
+enclosed gift without any numbers, and sign off with their name. Stay true to their quirks.`;
+
 export const TASK_EVENING = `# This request: the evening story
 The day is over. The game's rules already decided everything that happened; the facts are \
 below. Write it up as one JSON object, in the Locale's language:
 - story: a short, warm, funny story of the day, 100 to 180 words, built only from the given \
 facts. Small invented details are welcome; new results, rewards or numbers are not. Let each \
-disciple's quirks and memories color what they do.
+disciple's quirks and memories color what they do. When a fact starts in capitals (TOURNAMENT \
+DAY, THE BATTLE, WAR, BETRAYAL), make it the heart of the story.
 - morning_report: two or three sentences the Sect Master will read tomorrow morning, teasing \
 what might happen next without promising any result.
 - decisions: for one or two of the given disciples, what they choose to do tomorrow, picked \

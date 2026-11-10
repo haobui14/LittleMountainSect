@@ -25,6 +25,7 @@ import {
   buildChat,
   buildEvening,
   buildEvent,
+  buildLetter,
 } from "../../server/supabase/functions/_shared/prompts.ts";
 import {
   type ChatRequest,
@@ -32,6 +33,8 @@ import {
   type EventRequest,
   EventRequestSchema,
   GatewayRequestSchema,
+  type LetterRequest,
+  LetterRequestSchema,
   type Turn,
 } from "../../server/supabase/functions/_shared/schemas.ts";
 import { cleanChatReply } from "../../server/supabase/functions/_shared/validate.ts";
@@ -90,6 +93,7 @@ const TIMEOUT_MS: Record<RequestKind, number> = {
   elder: 15_000,
   event: 30_000,
   evening: 60_000,
+  letter: 20_000,
 };
 
 export interface Check {
@@ -103,7 +107,7 @@ export interface CallRecord {
   kind: RequestKind;
   scenario: string;
   locale: Locale;
-  tag: Tag | "event" | "evening";
+  tag: Tag | "event" | "evening" | "letter";
   turn: number;
   /** The player's line (chat only). */
   player: string | null;
@@ -294,6 +298,53 @@ export async function runEvent(
   };
 }
 
+export async function runLetter(
+  client: MessagesClient,
+  input: LetterRequest,
+  config: EvalConfig,
+  options: RunOptions,
+): Promise<CallRecord> {
+  const result = await callStructured(
+    client,
+    buildLetter(input, { cacheTtl: options.cacheTtl }),
+    settings(config, "letter", options),
+  );
+  const checks: Check[] = [{
+    name: "valid reply",
+    pass: result.ok,
+    note: result.ok ? undefined : result.detail,
+  }];
+  if (result.ok) {
+    const letter = result.value.letter;
+    checks.push({
+      name: "signed with the disciple's name",
+      pass: letter.includes(input.disciple.name),
+    });
+    checks.push({
+      name: "no numbers",
+      pass: !/\d/.test(letter),
+      note: /\d/.test(letter) ? letter.match(/.{0,20}\d.{0,20}/)?.[0] : undefined,
+    });
+  }
+  return {
+    config: config.name,
+    kind: "letter",
+    scenario: `letter_${input.place}_${input.locale}`,
+    locale: input.locale,
+    tag: "letter",
+    turn: 0,
+    player: null,
+    ok: result.ok && checks.every((c) => c.pass),
+    reason: result.ok ? null : result.reason,
+    detail: result.ok ? null : result.detail,
+    output: result.ok ? result.value : null,
+    tokens: result.usage ? tokenBreakdown(result.usage) : null,
+    costUsd: result.usage ? costUsd(result.usage) : 0,
+    latencyMs: result.latencyMs,
+    checks,
+  };
+}
+
 export async function runEvening(
   client: MessagesClient,
   scenario: EveningScenario,
@@ -365,6 +416,7 @@ export interface Selection {
   chats: ChatScenario[];
   events: EventRequest[];
   evenings: EveningScenario[];
+  letters: LetterRequest[];
 }
 
 export async function runConfig(
@@ -379,6 +431,7 @@ export async function runConfig(
     ...selection.evenings.map(
       (e) => async () => [await runEvening(client, e, config, options)],
     ),
+    ...selection.letters.map((l) => async () => [await runLetter(client, l, config, options)]),
   ];
   return (await pool(options.concurrency, tasks)).flat();
 }
@@ -410,6 +463,11 @@ export function dryRun(selection: Selection, cacheTtl: CacheTtl): string[] {
     if (!parsed.success) {
       problems.push(`evening day ${scenario.request.game_day}: ${parsed.error.message}`);
     } else buildEvening(parsed.data, scenario.memories, { cacheTtl });
+  }
+  for (const input of selection.letters) {
+    const parsed = LetterRequestSchema.safeParse(input);
+    if (!parsed.success) problems.push(`letter ${input.place}: ${parsed.error.message}`);
+    else buildLetter(parsed.data, { cacheTtl });
   }
   return problems;
 }

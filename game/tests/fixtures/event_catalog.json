@@ -32,9 +32,19 @@
       "send_b",
       "decline"
     ],
+    "frog_choir": [
+      "join",
+      "earplugs",
+      "complain"
+    ],
     "frog_duel": [
       "accept",
       "send_b",
+      "decline"
+    ],
+    "hair_contest": [
+      "enter",
+      "style_b",
       "decline"
     ],
     "inspector": [
@@ -106,6 +116,11 @@
       "attend",
       "send_gift",
       "decline"
+    ],
+    "tea_spy": [
+      "confront",
+      "invite_tea",
+      "ignore"
     ],
     "village_festival": [
       "perform",

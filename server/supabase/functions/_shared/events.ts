@@ -215,6 +215,34 @@ export const PROBLEMS = {
       decline: "Decline. Nothing changes.",
     },
   },
+  // M6: the rival sects.
+  hair_contest: {
+    pair: 2,
+    setup: "The Perfect Hair Pavilion holds a hair contest at {place} and dares {a} to enter.",
+    choices: {
+      enter: "{a} enters. Win: Reputation and a pleased Pavilion. Lose: {a} sulks.",
+      style_b: "{a} styles {b}'s hair for the contest. Fun for both; the Pavilion is amused.",
+      decline: "Decline. The Pavilion sniffs at the sect's hair.",
+    },
+  },
+  tea_spy: {
+    pair: 2,
+    setup: "{a} spots a Moonlit Tea Society disciple sketching the sect's buildings at {place}.",
+    choices: {
+      confront: "{a} confronts the spy. They may apologise with a gift, or leave offended.",
+      invite_tea: "Invite the spy to tea. Costs some Food; the Society warms to the sect.",
+      ignore: "Pretend not to notice. {b} worries about it all night.",
+    },
+  },
+  frog_choir: {
+    pair: 2,
+    setup: "The Iron Frog Sect's choir practises croaking at {place} every night. {a} can't sleep.",
+    choices: {
+      join: "{a} and {b} join in, loudly. The Frogs are delighted, or insulted.",
+      earplugs: "Hand out earplugs made of rice paper. Costs a little Food; everyone sleeps.",
+      complain: "Send {b} to complain. The Frogs croak even louder.",
+    },
+  },
   rescue: {
     pair: 1,
     setup: "{a} is lost somewhere along {place} after a mission went wrong.",

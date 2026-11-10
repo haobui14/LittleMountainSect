@@ -30,10 +30,10 @@ export interface ConfigSummary {
   /** Chat and Elder replies: what Gate 1's reply-time target measures. */
   chatLatencyP50: number;
   chatLatencyP95: number;
-  /** Surprise events and evening stories, which the game can prepare ahead. */
+  /** Surprise events, evening stories and letters, which the game can prepare ahead. */
   storyLatencyP95: number;
   totalCost: number;
-  byKind: Partial<Record<"chat" | "event" | "evening", KindStats>>;
+  byKind: Partial<Record<Group, KindStats>>;
   fullUse: number | null;
   fullUseNoCache: number | null;
   failedChecks: Array<{ scenario: string; turn: number; check: string; note: string }>;
@@ -50,7 +50,9 @@ function noCacheCost(t: TokenBreakdown): number {
   return (input * PRICES_PER_MTOK.input + t.output * PRICES_PER_MTOK.output) / 1_000_000;
 }
 
-function group(kind: RequestKind): "chat" | "event" | "evening" {
+type Group = "chat" | "event" | "evening" | "letter";
+
+function group(kind: RequestKind): Group {
   return kind === "elder" ? "chat" : kind;
 }
 
@@ -79,7 +81,7 @@ export function summarize(records: CallRecord[]): ConfigSummary[] {
   return configs.map((config) => {
     const mine = records.filter((r) => r.config === config);
     const byKind: ConfigSummary["byKind"] = {};
-    for (const kind of ["chat", "event", "evening"] as const) {
+    for (const kind of ["chat", "event", "evening", "letter"] as const) {
       const ofKind = mine.filter((r) => group(r.kind) === kind);
       if (ofKind.length > 0) byKind[kind] = kindStats(ofKind);
     }
@@ -101,7 +103,7 @@ export function summarize(records: CallRecord[]): ConfigSummary[] {
       errors: mine.filter((r) => r.reason === "error" || r.reason === "timeout").length,
       chatLatencyP50: percentile(chatTimes, 50),
       chatLatencyP95: percentile(chatTimes, 95),
-      storyLatencyP95: percentile(answered(["event", "evening"]), 95),
+      storyLatencyP95: percentile(answered(["event", "evening", "letter"]), 95),
       totalCost: mine.reduce((acc, r) => acc + r.costUsd, 0),
       byKind,
       fullUse: full((s) => s.avgCost),
@@ -269,6 +271,8 @@ export function ratingsCsv(records: CallRecord[]): string {
       ? o.reply
       : r.kind === "event"
       ? `${o.title}: ${o.story}`
+      : r.kind === "letter"
+      ? o.letter
       : o.story;
     rows.push([
       r.config,

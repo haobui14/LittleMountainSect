@@ -6,6 +6,9 @@ import {
   PILLS,
   QUIRK_IDS,
   REALMS,
+  RIVALS,
+  ROLES,
+  SEASONS,
   SIDE_EFFECTS,
   SPIRIT_ROOTS,
   STATUSES,
@@ -13,6 +16,7 @@ import {
 } from "./cast.ts";
 import { LIMITS } from "./config.ts";
 import { choiceIds, PLACE_IDS, PROBLEM_IDS, PROBLEMS } from "./events.ts";
+import { TRAVEL_PLACE_IDS } from "./travel.ts";
 
 export const LocaleSchema = z.enum(["en", "vi"]);
 
@@ -37,6 +41,8 @@ export const DiscipleCardSchema = z.strictObject({
   status: z.enum(STATUSES).optional(),
   effects: z.array(z.enum(CARD_EFFECTS)).max(CARD_EFFECTS.length).optional(),
   technique: z.int().min(0).max(3).optional(),
+  // M6: an Elder teaches instead of taking tasks.
+  role: z.enum(ROLES).optional(),
 });
 export type DiscipleCard = z.infer<typeof DiscipleCardSchema>;
 
@@ -69,6 +75,8 @@ export const RANKS = ["unknown_mountain", "rising_sect", "famous_sect"] as const
 const Amount = z.int().min(0).max(1_000_000);
 const PillOrNone = z.enum([...PILLS, "none"]);
 const ChoiceIdSchema = z.string().regex(/^[a-z0-9_]{1,32}$/);
+const RivalSchema = z.enum(RIVALS);
+const Resources = z.partialRecord(z.enum(RESOURCES), Amount);
 
 export const FactSchema = z.discriminatedUnion("type", [
   z.strictObject({
@@ -176,6 +184,81 @@ export const FactSchema = z.discriminatedUnion("type", [
     result: z.enum(["win", "lose", "done"]),
     disciples: z.array(DiscipleIdSchema).min(1).max(2),
   }),
+  // M6: seasons, rivals, wars and generations ---------------------------------
+  z.strictObject({
+    type: z.literal("season"),
+    season: z.enum(SEASONS),
+    year: z.int().min(1).max(10_000),
+  }),
+  z.strictObject({
+    type: z.literal("tournament"),
+    place: z.int().min(1).max(4),
+    champions: z.array(DiscipleIdSchema).min(1).max(3),
+    matches: z.array(z.strictObject({ rival: RivalSchema, won: z.boolean() })).min(1).max(2),
+    rewards: Resources,
+  }),
+  z.strictObject({ type: z.literal("tournament_skipped") }),
+  z.strictObject({
+    type: z.literal("gift"),
+    rival: RivalSchema,
+    resource: z.enum(RESOURCES),
+    amount: Amount,
+  }),
+  z.strictObject({ type: z.literal("trade"), rival: RivalSchema, gave: Resources, got: Resources }),
+  z.strictObject({ type: z.literal("alliance"), rival: RivalSchema }),
+  z.strictObject({
+    type: z.literal("alliance_ended"),
+    rival: RivalSchema,
+    by: z.enum(["player", "rival"]),
+  }),
+  z.strictObject({
+    type: z.literal("betrayal"),
+    rival: RivalSchema,
+    stones: Amount,
+    item: PillOrNone,
+  }),
+  z.strictObject({ type: z.literal("ally_gift"), rival: RivalSchema, stones: Amount }),
+  z.strictObject({
+    type: z.literal("war_declared"),
+    rival: RivalSchema,
+    battle_day: z.int().min(1),
+  }),
+  z.strictObject({
+    type: z.literal("war_result"),
+    rival: RivalSchema,
+    won: z.boolean(),
+    defenders: DiscipleIdsSchema,
+    land: z.int().min(1).max(5),
+  }),
+  z.strictObject({ type: z.literal("peace"), rival: RivalSchema, paid: Amount }),
+  z.strictObject({ type: z.literal("promoted"), disciple: DiscipleIdSchema }),
+  z.strictObject({ type: z.literal("ascended"), disciple: DiscipleIdSchema }),
+  z.strictObject({
+    type: z.literal("ascension_failed"),
+    disciple: DiscipleIdSchema,
+    effect: z.enum(SIDE_EFFECTS),
+    days: z.int().min(1).max(60),
+    lost: z.int().min(0).max(100),
+  }),
+  z.strictObject({
+    type: z.literal("travel_left"),
+    disciple: DiscipleIdSchema,
+    place: z.enum(TRAVEL_PLACE_IDS),
+    return_day: z.int().min(1),
+  }),
+  z.strictObject({
+    type: z.literal("travel_returned"),
+    disciple: DiscipleIdSchema,
+    place: z.enum(TRAVEL_PLACE_IDS),
+    souvenir: PillOrNone,
+  }),
+  z.strictObject({
+    type: z.literal("letter"),
+    disciple: DiscipleIdSchema,
+    place: z.enum(TRAVEL_PLACE_IDS),
+    gift: Resources,
+    item: PillOrNone,
+  }),
 ]);
 export type Fact = z.infer<typeof FactSchema>;
 
@@ -211,6 +294,10 @@ export const EveningRequestSchema = z.strictObject({
       ? fact.disciples
       : "team" in fact
       ? fact.team
+      : "champions" in fact
+      ? fact.champions
+      : "defenders" in fact
+      ? fact.defenders
       : [];
   request.facts.forEach((fact, i) => {
     for (const id of named(fact)) {
@@ -257,6 +344,24 @@ export const EventRequestSchema = z.strictObject({
 });
 export type EventRequest = z.infer<typeof EventRequestSchema>;
 
+// Letters home (M6) ----------------------------------------------------------
+//
+// The rules decide when a travelling disciple writes, where they are and what
+// small gift comes with the letter; Claude writes the letter itself.
+
+export const LetterRequestSchema = z.strictObject({
+  kind: z.literal("letter"),
+  locale: LocaleSchema,
+  game_day: z.int().min(1).max(1_000_000),
+  disciple: DiscipleCardSchema,
+  place: z.enum(TRAVEL_PLACE_IDS),
+  days_away: z.int().min(1).max(60),
+  /** A letter's gift is always small; the rules pick it. */
+  gift: z.partialRecord(z.enum(RESOURCES), z.int().min(0).max(100)),
+  item: PillOrNone,
+});
+export type LetterRequest = z.infer<typeof LetterRequestSchema>;
+
 /** What the game sends to the AI gateway. */
 export const GatewayRequestSchema = z.discriminatedUnion("kind", [
   z.strictObject({
@@ -274,6 +379,7 @@ export const GatewayRequestSchema = z.discriminatedUnion("kind", [
   }),
   EveningRequestSchema,
   EventRequestSchema,
+  LetterRequestSchema,
 ]);
 export type GatewayRequest = z.infer<typeof GatewayRequestSchema>;
 /** A chat line with a disciple or the Elder. */
@@ -308,6 +414,9 @@ export const EventReplySchema = z.object({
   choices: z.array(z.object({ id: z.string(), text: z.string() })),
 });
 export type EventReply = z.infer<typeof EventReplySchema>;
+
+export const LetterReplySchema = z.object({ letter: z.string() });
+export type LetterReply = z.infer<typeof LetterReplySchema>;
 
 export const EveningReplySchema = z.object({
   story: z.string(),

@@ -5,11 +5,13 @@
 import {
   PILL_NAMES,
   REALM_NAMES,
+  RIVAL_NAMES,
   SIDE_EFFECT_NAMES,
   SIDE_EFFECT_TEXT,
   TECHNIQUE_NAMES,
 } from "./cast.ts";
 import { fill, PLACES, PROBLEMS } from "./events.ts";
+import { TRAVEL_PLACES } from "./travel.ts";
 import type { EveningRequest, Fact } from "./schemas.ts";
 
 const MISSION_NAMES: Record<string, string> = {
@@ -39,6 +41,26 @@ const RANK_NAMES: Record<string, string> = {
   rising_sect: "Rising Sect",
   famous_sect: "Famous Sect",
 };
+
+const SEASON_NAMES: Record<string, string> = {
+  spring: "Spring",
+  summer: "Summer",
+  autumn: "Autumn",
+  winter: "Winter",
+};
+
+const PLACE_WORDS: Record<number, string> = {
+  1: "won the tournament",
+  2: "came second in the tournament",
+  3: "came third in the tournament",
+  4: "came last in the tournament",
+};
+
+/** "The Iron Frog Sect" at the start of a sentence. */
+function rivalName(rival: keyof typeof RIVAL_NAMES, start = false): string {
+  const name = RIVAL_NAMES[rival];
+  return start ? name.charAt(0).toUpperCase() + name.slice(1) : name;
+}
 
 /** "Lin", "Lin and Bao", "Lin, Bao and Mei". */
 export function joinNames(names: string[]): string {
@@ -149,6 +171,92 @@ export function factSentence(fact: Fact, name: (id: string) => string): string {
       return `Surprise: ${fill(problem.setup, names, place)} The Sect Master's choice: ${
         fill(hint, names, place)
       }${result}`;
+    }
+    case "season":
+      return `A new season begins: ${SEASON_NAMES[fact.season]} of year ${fact.year}.`;
+    case "tournament": {
+      const matches = fact.matches.map((m) => `${m.won ? "beat" : "lost to"} ${rivalName(m.rival)}`)
+        .join(", then ");
+      const rewards = resourceList(fact.rewards);
+      return `TOURNAMENT DAY: the sect's ${
+        fact.champions.length === 1 ? "champion" : "champions"
+      } ${joinNames(fact.champions.map(name))} ${matches}, and the sect ${
+        PLACE_WORDS[fact.place]
+      }.${rewards ? ` Prize: ${rewards}.` : ""}`;
+    }
+    case "tournament_skipped":
+      return "The sect sat out the season's tournament, and the other sects noticed.";
+    case "gift":
+      return `The Sect Master sent ${rivalName(fact.rival)} a gift of ${fact.amount} ${
+        RESOURCE_NAMES[fact.resource]
+      }.`;
+    case "trade":
+      return `The sect traded with ${rivalName(fact.rival)}: gave ${
+        resourceList(fact.gave) || "nothing"
+      }, got ${resourceList(fact.got) || "nothing"}.`;
+    case "alliance":
+      return `The sect formed an alliance with ${rivalName(fact.rival)}.`;
+    case "alliance_ended":
+      return fact.by === "player"
+        ? `The Sect Master ended the alliance with ${rivalName(fact.rival)}.`
+        : `${rivalName(fact.rival, true)} ended its alliance with the sect.`;
+    case "betrayal": {
+      const taken = [
+        fact.stones > 0 ? `${fact.stones} Spirit Stones` : "",
+        fact.item !== "none" ? PILL_NAMES[fact.item] : "",
+      ].filter((t) => t).join(" and ");
+      return `BETRAYAL: ${rivalName(fact.rival, true)}, the sect's ally, broke the alliance${
+        taken ? ` and made off with ${taken}` : ""
+      }.`;
+    }
+    case "ally_gift":
+      return `${
+        rivalName(fact.rival, true)
+      }, the sect's ally, sent ${fact.stones} Spirit Stones for the new season.`;
+    case "war_declared":
+      return `WAR: ${
+        rivalName(fact.rival, true)
+      } declared war on the sect. The battle comes on day ${fact.battle_day}.`;
+    case "war_result":
+      return `THE BATTLE: ${joinNames(fact.defenders.map(name))} defended the sect against ${
+        rivalName(fact.rival)
+      } and ${fact.won ? "won" : "lost (nobody was hurt badly)"}. The sect now holds ${fact.land} ${
+        fact.land === 1 ? "hill" : "hills"
+      }.`;
+    case "peace":
+      return fact.paid > 0
+        ? `The sect made peace with ${rivalName(fact.rival)} for ${fact.paid} Spirit Stones.`
+        : `${rivalName(fact.rival, true)} called off its war with the sect.`;
+    case "promoted":
+      return `${
+        name(fact.disciple)
+      } was promoted to Elder of the sect, and will teach from now on.`;
+    case "ascended":
+      return `${
+        name(fact.disciple)
+      } ascended to the heavens in a column of light, leaving the sect for good with everyone's blessing.`;
+    case "ascension_failed":
+      return `${
+        name(fact.disciple)
+      } tried to ascend to the heavens and fell back, losing ${fact.lost} progress. Side effect for ${fact.days} days: ${
+        name(fact.disciple)
+      } ${SIDE_EFFECT_TEXT[fact.effect]}.`;
+    case "travel_left":
+      return `${name(fact.disciple)} set off to travel to ${
+        TRAVEL_PLACES[fact.place]
+      }, back around day ${fact.return_day}.`;
+    case "travel_returned":
+      return `${name(fact.disciple)} came home from ${TRAVEL_PLACES[fact.place]}${
+        fact.souvenir !== "none" ? `, bringing ${PILL_NAMES[fact.souvenir]} as a souvenir` : ""
+      }.`;
+    case "letter": {
+      const gift = [
+        resourceList(fact.gift),
+        fact.item !== "none" ? PILL_NAMES[fact.item] : "",
+      ].filter((t) => t).join(" and ");
+      return `A letter arrived from ${name(fact.disciple)}, away at ${TRAVEL_PLACES[fact.place]}${
+        gift ? `, with ${gift}` : ""
+      }.`;
     }
   }
 }

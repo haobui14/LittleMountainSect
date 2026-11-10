@@ -18,7 +18,7 @@ import {
 import { Anthropic } from "../../server/supabase/functions/_shared/deps.ts";
 import { markdownReport, ratingsCsv, summarize } from "./report.ts";
 import { type CallRecord, CONFIGS, dryRun, runConfig, type Selection } from "./run.ts";
-import { CHAT_SCENARIOS, EVENING_INPUTS, EVENT_INPUTS } from "./scenarios.ts";
+import { CHAT_SCENARIOS, EVENING_INPUTS, EVENT_INPUTS, LETTER_INPUTS } from "./scenarios.ts";
 
 const args = parseArgs(Deno.args, {
   string: ["configs", "locales", "only", "kinds", "ttl", "label", "out", "model", "concurrency"],
@@ -27,7 +27,7 @@ const args = parseArgs(Deno.args, {
     configs: "low,medium,low-nothink",
     locales: "en,vi",
     only: "all",
-    kinds: "chat,event,evening",
+    kinds: "chat,event,evening,letter",
     ttl: "5m",
     label: "run",
     out: "docs/evals",
@@ -40,7 +40,7 @@ if (args.help) {
   --configs low,medium,low-nothink   which settings to compare
   --locales en,vi                    which languages
   --only all | id,id                 chat scenario ids
-  --kinds chat,event,evening         which request kinds
+  --kinds chat,event,evening,letter  which request kinds
   --ttl 5m | 1h                      cache TTL for the shared prompt blocks
   --label NAME                       names the report folder
   --model ID                         override the model (default ${DEFAULT_MODEL})
@@ -77,6 +77,7 @@ const selection: Selection = {
   evenings: kinds.has("evening")
     ? EVENING_INPUTS.filter((e) => locales.includes(e.request.locale))
     : [],
+  letters: kinds.has("letter") ? LETTER_INPUTS.filter((l) => locales.includes(l.locale)) : [],
 };
 if (only !== null) {
   const known = new Set(CHAT_SCENARIOS.map((s) => s.id));
@@ -85,10 +86,11 @@ if (only !== null) {
 }
 
 const turns = selection.chats.reduce((n, s) => n + s.turns.length, 0);
-const callsPerConfig = turns + selection.events.length + selection.evenings.length;
+const callsPerConfig = turns + selection.events.length + selection.evenings.length +
+  selection.letters.length;
 console.log(
   `Scenarios: ${selection.chats.length} chats (${turns} turns), ${selection.events.length} events, ` +
-    `${selection.evenings.length} evening stories. Configs: ${
+    `${selection.evenings.length} evening stories, ${selection.letters.length} letters. Configs: ${
       configs.map((c) => c.name).join(", ")
     }. ` +
     `Calls: ${callsPerConfig * configs.length}.`,

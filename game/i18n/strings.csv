@@ -405,6 +405,21 @@ EVENT_FREE_HAIRCUT_STORY,The Perfect Hair Pavilion offers free haircuts at {plac
 EVENT_FREE_HAIRCUT_ACCEPT,{a} gets a haircut,{a} đi cắt tóc
 EVENT_FREE_HAIRCUT_SEND_B,Send {b} instead,Cử {b} đi thay
 EVENT_FREE_HAIRCUT_DECLINE,Decline,Từ chối
+EVENT_HAIR_CONTEST_TITLE,The Great Hair Contest,Đại Hội Mái Tóc
+EVENT_HAIR_CONTEST_STORY,The Perfect Hair Pavilion holds a hair contest at {place} and dares {a} to enter. {b} offers a comb and a lot of advice.,Mỹ Phát Các tổ chức thi tóc ở {place} và thách {a} tham gia. {b} đưa ra một chiếc lược và rất nhiều lời khuyên.
+EVENT_HAIR_CONTEST_ENTER,{a} enters the contest,{a} dự thi
+EVENT_HAIR_CONTEST_STYLE_B,{a} styles {b}'s hair instead,{a} làm tóc cho {b}
+EVENT_HAIR_CONTEST_DECLINE,Our hair is fine as it is,Tóc của chúng ta vẫn ổn
+EVENT_TEA_SPY_TITLE,A Spy with a Teacup,Gián Điệp Cầm Chén Trà
+EVENT_TEA_SPY_STORY,"{a} spots a Moonlit Tea Society disciple at {place}, sketching the sect's buildings behind a teacup. {b} pretends to be a bush.","{a} phát hiện một đệ tử Nguyệt Trà Hội ở {place}, đang nấp sau chén trà vẽ lại các tòa nhà của tông môn. {b} giả làm bụi cây."
+EVENT_TEA_SPY_CONFRONT,{a} confronts the spy,{a} chất vấn gián điệp
+EVENT_TEA_SPY_INVITE_TEA,Invite the spy to tea,Mời gián điệp uống trà
+EVENT_TEA_SPY_IGNORE,Pretend not to notice,Giả vờ không thấy
+EVENT_FROG_CHOIR_TITLE,The Midnight Frog Choir,Dàn Đồng Ca Ếch Nửa Đêm
+EVENT_FROG_CHOIR_STORY,The Iron Frog Sect's choir practises croaking at {place} every night. {a} has not slept in two days. {b} has started humming along.,Dàn đồng ca Thiết Oa Tông tập kêu ộp ộp ở {place} mỗi đêm. {a} đã hai ngày không ngủ. {b} bắt đầu ngân nga theo.
+EVENT_FROG_CHOIR_JOIN,"{a} and {b} join in, loudly","{a} và {b} hát theo, thật to"
+EVENT_FROG_CHOIR_EARPLUGS,Rice-paper earplugs for everyone,Nút tai giấy gạo cho mọi người
+EVENT_FROG_CHOIR_COMPLAIN,Send {b} to complain,Cử {b} đi phàn nàn
 EVENT_RESCUE_TITLE,Lost on the Mountain,Lạc Trên Núi
 EVENT_RESCUE_STORY,"{a} hasn't come home. Somewhere along {place}, {a} is probably arguing with a signpost.","{a} vẫn chưa về. Đâu đó trên {place}, có lẽ {a} đang cãi nhau với tấm biển chỉ đường."
 EVENT_RESCUE_HIRE_GUIDE,Hire a mountain guide,Thuê người dẫn đường

@@ -95,7 +95,7 @@ func test_every_choice_in_the_catalog_can_be_applied() -> void:
 					assert_gte(int(sect.resources[resource]), 0)
 				if problem == EventCatalog.RESCUE:
 					assert_gte(int(applied["return_day"]), sect.day, choice_id)
-	assert_eq(EventCatalog.random_problems().size(), 20, "about 20 written events, plus the rescue")
+	assert_eq(EventCatalog.random_problems().size(), 23, "23 written events, plus the rescue")
 
 
 func test_every_problem_has_a_free_choice() -> void:

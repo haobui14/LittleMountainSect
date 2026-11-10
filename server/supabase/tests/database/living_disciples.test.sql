@@ -80,7 +80,7 @@ select throws_ok(
 select is(
   public.spirit_energy_status(),
   '{"left": 50, "per_day": 50, "enabled": true,
-    "costs": {"chat": 1, "elder": 1, "event": 2, "evening": 3}}'::jsonb,
+    "costs": {"chat": 1, "elder": 1, "event": 2, "evening": 3, "letter": 1}}'::jsonb,
   'a player can see their Spirit Energy and the costs'
 );
 

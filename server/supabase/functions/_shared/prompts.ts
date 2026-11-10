@@ -2,6 +2,7 @@ import type { Anthropic, z } from "./deps.ts";
 import {
   ELDER,
   type Locale,
+  PILL_NAMES,
   QUIRKS,
   REALM_NAMES,
   SIDE_EFFECT_TEXT,
@@ -13,6 +14,7 @@ import {
 } from "./cast.ts";
 import { type CacheTtl, MAX_TOKENS, type RequestKind } from "./config.ts";
 import { fill, PLACES, PROBLEMS } from "./events.ts";
+import { TRAVEL_PLACES } from "./travel.ts";
 import { factSentences, rankName, relationshipWords, resourceList } from "./facts.ts";
 import {
   type ChatReply,
@@ -25,8 +27,18 @@ import {
   type EventReply,
   EventReplySchema,
   type EventRequest,
+  type LetterReply,
+  LetterReplySchema,
+  type LetterRequest,
 } from "./schemas.ts";
-import { LANGUAGE_RULES, TASK_CHAT, TASK_EVENING, TASK_EVENT, WORLD_RULES } from "./world.ts";
+import {
+  LANGUAGE_RULES,
+  TASK_CHAT,
+  TASK_EVENING,
+  TASK_EVENT,
+  TASK_LETTER,
+  WORLD_RULES,
+} from "./world.ts";
 
 /** Everything needed for one Messages API call, minus the model settings. */
 export interface BuiltPrompt<T> {
@@ -84,6 +96,9 @@ const AWAY: Record<string, string> = {
   mission: "Away on a mission tomorrow",
   lost: "Lost on the mountain",
   left: "Has left the sect for now",
+  travel: "Away travelling",
+  ascended: "Ascended to the heavens today",
+  elder: "An Elder of the sect, who teaches instead of taking tasks",
 };
 
 /** First line of every user message: the reply language, stated plainly. */
@@ -94,7 +109,9 @@ function localeLine(locale: Locale): string {
 export function describeDisciple(card: DiscipleCard, locale: Locale): string {
   const quirks = card.quirks.map((id) => QUIRKS[id][locale]).join("; ");
   const lines = [
-    `Name: ${card.name} (${PRONOUNS[card.pronouns]}), a disciple of the sect. Id: ${card.id}.`,
+    `Name: ${card.name} (${PRONOUNS[card.pronouns]}), ${
+      card.role === "elder" ? "an Elder of the sect (once a disciple)" : "a disciple of the sect"
+    }. Id: ${card.id}.`,
     `Spirit root: ${SPIRIT_ROOT_NAMES[card.spirit_root][locale]}. ` +
     `Realm: ${REALM_NAMES[card.realm][locale]}.`,
     `Quirks: ${quirks}.`,
@@ -111,6 +128,8 @@ export function describeDisciple(card: DiscipleCard, locale: Locale): string {
   if (card.status === "lost") now.push("is lost on the mountain");
   if (card.status === "left") now.push("has left the sect for a while");
   if (card.status === "mission") now.push("is away on a mission");
+  if (card.status === "travel") now.push("is away travelling the world");
+  if (card.status === "ascended") now.push("ascended to the heavens today");
   if (now.length > 0) lines.push(`Right now: ${card.name} ${now.join("; ")}.`);
   return lines.join("\n");
 }
@@ -191,6 +210,34 @@ export function buildEvent(request: EventRequest, options: PromptOptions): Built
 }
 
 /**
+ * A letter home from a travelling disciple. The game sends the place's id and
+ * the gift; the catalog (travel.ts) says what the place is like.
+ */
+export function buildLetter(
+  request: LetterRequest,
+  options: PromptOptions,
+): BuiltPrompt<LetterReply> {
+  const gift = [
+    resourceList(request.gift),
+    request.item !== "none" ? PILL_NAMES[request.item] : "",
+  ].filter((t) => t).join(" and ");
+  return {
+    kind: "letter",
+    system: sharedBlocks(TASK_LETTER, request.locale, options),
+    messages: [{
+      role: "user",
+      content: `${localeLine(request.locale)}\nDay ${request.game_day}.\n# The letter\n` +
+        `Where they are: ${TRAVEL_PLACES[request.place]}\n` +
+        `Days away from the sect: ${request.days_away}\n` +
+        `Enclosed gift: ${gift || "nothing this time, just news"}\n\n` +
+        `# The disciple\n${describeDisciple(request.disciple, request.locale)}`,
+    }],
+    maxTokens: MAX_TOKENS.letter,
+    schema: LetterReplySchema,
+  };
+}
+
+/**
  * The evening story. [memories] maps a disciple id to their newest memories,
  * oldest first; the facts are written up by the server (facts.ts).
  */
@@ -208,7 +255,13 @@ export function buildEvening(
         : "Remembers nothing special yet.",
       allowed_actions.length > 0
         ? `Allowed actions tomorrow: ${allowed_actions.join(", ")}`
-        : `${AWAY[card.status ?? "mission"]}: no allowed actions.`,
+        : `${
+          AWAY[
+            card.role === "elder" && (card.status ?? "home") === "home"
+              ? "elder"
+              : card.status ?? "mission"
+          ]
+        }: no allowed actions.`,
     ].join("\n");
   }).join("\n\n");
   const names = new Map(request.disciples.map((d) => [d.card.id, d.card.name]));

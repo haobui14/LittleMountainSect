@@ -1,6 +1,6 @@
 import { assert, assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
 import { claudeSchema } from "../_shared/json_schema.ts";
-import { buildChat, buildEvening, buildEvent, defuse } from "../_shared/prompts.ts";
+import { buildChat, buildEvening, buildEvent, buildLetter, defuse } from "../_shared/prompts.ts";
 import {
   ChatReplySchema,
   type ChatRequest,
@@ -8,8 +8,15 @@ import {
   type EveningRequest,
   EveningRequestSchema,
   EventRequestSchema,
+  LetterRequestSchema,
 } from "../_shared/schemas.ts";
-import { LANGUAGE_RULES, TASK_CHAT, TASK_EVENING, WORLD_RULES } from "../_shared/world.ts";
+import {
+  LANGUAGE_RULES,
+  TASK_CHAT,
+  TASK_EVENING,
+  TASK_LETTER,
+  WORLD_RULES,
+} from "../_shared/world.ts";
 
 const lin: DiscipleCard = {
   id: "lin",
@@ -209,4 +216,63 @@ Deno.test("the reply schema keeps enums but drops limits the API can't enforce",
     "wants_action",
   ]);
   assert(claudeSchema(ChatReplySchema) === schema, "built once and reused");
+});
+
+Deno.test("a letter prompt names the place, the time away and the gift, without the rules", () => {
+  const letter = buildLetter(
+    LetterRequestSchema.parse({
+      kind: "letter",
+      locale: "vi",
+      game_day: 40,
+      disciple: { ...bao, status: "travel" },
+      place: "singing_sands",
+      days_away: 9,
+      gift: { herbs: 6 },
+      item: "healing_pill",
+    }),
+    { cacheTtl: "5m" },
+  );
+  assertEquals(letter.kind, "letter");
+  assertEquals(text(letter.system[0]), WORLD_RULES);
+  assertEquals(text(letter.system[1]), LANGUAGE_RULES.vi);
+  assertStringIncludes(text(letter.system.at(-1)!), TASK_LETTER);
+  const message = letter.messages[0].content as string;
+  assertStringIncludes(message, "Locale: vi");
+  assertStringIncludes(message, "Singing Sands");
+  assertStringIncludes(message, "Days away from the sect: 9");
+  assertStringIncludes(message, "Enclosed gift: 6 Herbs and a Healing Pill");
+  assertStringIncludes(message, "Name: Bảo Ngọc");
+});
+
+Deno.test("an evening names Elders and travellers, and leads with a tournament", () => {
+  const evening = buildEvening(
+    EveningRequestSchema.parse({
+      kind: "evening",
+      locale: "en",
+      game_day: 30,
+      sect: {
+        rank: "rising_sect",
+        resources: { stones: 100, food: 20, herbs: 10, reputation: 30 },
+      },
+      disciples: [
+        { card: { ...lin, role: "elder" }, allowed_actions: [] },
+        { card: { ...bao, status: "travel" }, allowed_actions: [] },
+      ],
+      relationships: [],
+      facts: [{
+        type: "tournament",
+        place: 1,
+        champions: ["lin"],
+        matches: [{ rival: "iron_frog", won: true }, { rival: "moonlit_tea", won: true }],
+        rewards: { reputation: 15, stones: 40 },
+      }],
+    }),
+    {},
+    { cacheTtl: "5m" },
+  );
+  const content = evening.messages[0].content as string;
+  assertStringIncludes(content, "An Elder of the sect, who teaches instead of taking tasks");
+  assertStringIncludes(content, "Away travelling: no allowed actions.");
+  assertStringIncludes(content, "TOURNAMENT DAY: the sect's champion Lin Xiaohe beat");
+  assertStringIncludes(text(evening.system.at(-1)!), "TOURNAMENT DAY");
 });

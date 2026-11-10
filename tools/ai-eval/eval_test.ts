@@ -3,7 +3,7 @@ import type { Anthropic } from "../../server/supabase/functions/_shared/deps.ts"
 import type { MessagesClient } from "../../server/supabase/functions/_shared/claude.ts";
 import { markdownReport, ratingsCsv, summarize } from "./report.ts";
 import { CONFIGS, dryRun, otherLanguageWord, pool, runChatScenario, runConfig } from "./run.ts";
-import { CHAT_SCENARIOS, EVENING_INPUTS, EVENT_INPUTS } from "./scenarios.ts";
+import { CHAT_SCENARIOS, EVENING_INPUTS, EVENT_INPUTS, LETTER_INPUTS } from "./scenarios.ts";
 
 const usage = {
   input_tokens: 700,
@@ -42,6 +42,12 @@ function fakeClaude(chatReply: (prompt: string) => Record<string, unknown>): Mes
             choices: ids.map((id) => ({ id, text: id })),
           })));
         }
+        if (system.includes("This request: a letter home")) {
+          const name = user.match(/^Name: ([^(]+) \(/m)?.[1] ?? "?";
+          return Promise.resolve(message(JSON.stringify({
+            letter: `Dear Master, the noodles here are enormous. I enclose a gift. ${name}`,
+          })));
+        }
         if (system.includes("This request: the evening story")) {
           return Promise.resolve(message(JSON.stringify({
             story: "A day.",
@@ -77,10 +83,16 @@ const honest = fakeClaude((user) => {
   return { reply: vi ? "Sư phụ!" : "Master!" };
 });
 const options = { cacheTtl: "5m" as const, concurrency: 3 };
+const everything = {
+  chats: CHAT_SCENARIOS,
+  events: EVENT_INPUTS,
+  evenings: EVENING_INPUTS,
+  letters: LETTER_INPUTS,
+};
 
 Deno.test("every scenario is valid and every prompt builds", () => {
   assertEquals(
-    dryRun({ chats: CHAT_SCENARIOS, events: EVENT_INPUTS, evenings: EVENING_INPUTS }, "5m"),
+    dryRun({ ...everything }, "5m"),
     [],
   );
 });
@@ -94,7 +106,8 @@ Deno.test("there are 10 chats in each language, each with an attack set", () => 
     }
   }
   assertEquals(EVENT_INPUTS.length, 8);
-  assertEquals(EVENING_INPUTS.length, 6);
+  assertEquals(EVENING_INPUTS.length, 8);
+  assertEquals(LETTER_INPUTS.length, 4);
 });
 
 Deno.test("the distress check passes on the distress turn and fails when it is missed", async () => {
@@ -159,10 +172,12 @@ Deno.test("replies become the next turn's history, and memories carry forward", 
 });
 
 Deno.test("a full run summarizes, reports and fills the ratings sheet", async () => {
-  const selection = { chats: CHAT_SCENARIOS, events: EVENT_INPUTS, evenings: EVENING_INPUTS };
-  const records = await runConfig(honest, CONFIGS.low, selection, options);
+  const records = await runConfig(honest, CONFIGS.low, everything, options);
   const turns = CHAT_SCENARIOS.reduce((n, s) => n + s.turns.length, 0);
-  assertEquals(records.length, turns + EVENT_INPUTS.length + EVENING_INPUTS.length);
+  assertEquals(
+    records.length,
+    turns + EVENT_INPUTS.length + EVENING_INPUTS.length + LETTER_INPUTS.length,
+  );
   assert(records.every((r) => r.ok), "every fake reply passes its checks");
 
   const [summary] = summarize(records);

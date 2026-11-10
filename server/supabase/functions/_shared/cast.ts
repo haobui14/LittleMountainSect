@@ -45,9 +45,30 @@ export const ACTIONS = [
 ] as const;
 export type Action = typeof ACTIONS[number];
 
-/** Where a disciple is: at home, on a mission, lost on the mountain, or left the sect. */
-export const STATUSES = ["home", "mission", "lost", "left"] as const;
+/**
+ * Where a disciple is: at home, on a mission, lost on the mountain, left the
+ * sect, travelling (M6), or ascended to the heavens today (M6; they appear in
+ * that one evening's story, then only in the Chronicle).
+ */
+export const STATUSES = ["home", "mission", "lost", "left", "travel", "ascended"] as const;
 export type Status = typeof STATUSES[number];
+
+/** A disciple, or one promoted to Elder (M6), who teaches instead of taking tasks. */
+export const ROLES = ["disciple", "elder"] as const;
+export type Role = typeof ROLES[number];
+
+/** The three rival sects (M6), in the game's order. */
+export const RIVALS = ["iron_frog", "moonlit_tea", "perfect_hair"] as const;
+export type Rival = typeof RIVALS[number];
+export const RIVAL_NAMES: Record<Rival, string> = {
+  iron_frog: "the Iron Frog Sect",
+  moonlit_tea: "the Moonlit Tea Society",
+  perfect_hair: "the Perfect Hair Pavilion",
+};
+
+/** Seasons of 30 days (M6); four make a year. */
+export const SEASONS = ["spring", "summer", "autumn", "winter"] as const;
+export type Season = typeof SEASONS[number];
 
 /** Pills from the Alchemy Room (M5). */
 export const PILLS = ["foundation_pill", "healing_pill", "golden_pill"] as const;

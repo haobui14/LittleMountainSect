@@ -37,7 +37,7 @@ const ACTION_TASK := {
 
 ## Where a disciple is (M5). "mission" is derived from the sect's missions;
 ## the save stores home, lost or left.
-const STATUSES: Array[String] = ["home", "mission", "lost", "left"]
+const STATUSES: Array[String] = ["home", "mission", "lost", "left", "travel", "ascended"]
 ## Alchemy Room pills (M5).
 const PILLS: Array[String] = ["foundation_pill", "healing_pill", "golden_pill"]
 ## Timed funny side effects of a failed breakthrough (M5).

@@ -7,6 +7,7 @@ import type {
   EveningRequest,
   EventReply,
   EventRequest,
+  LetterReply,
   Safety,
 } from "./schemas.ts";
 
@@ -206,4 +207,16 @@ export function cleanEventReply(raw: EventReply, request: EventRequest): CleanEv
       choices,
     },
   };
+}
+
+export type CleanLetterReply = { letter: string };
+export type CleanLetterResult =
+  | { ok: true; value: CleanLetterReply }
+  | { ok: false; detail: string };
+
+/** A letter home (M6): the text, trimmed and shortened; empty is a failure. */
+export function cleanLetterReply(raw: LetterReply): CleanLetterResult {
+  const letter = raw.letter.trim();
+  if (letter.length === 0) return { ok: false, detail: "empty letter" };
+  return { ok: true, value: { letter: shorten(letter, LIMITS.letterChars) } };
 }

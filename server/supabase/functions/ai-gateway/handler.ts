@@ -15,7 +15,13 @@ import type { CacheTtl } from "../_shared/config.ts";
 import { LIMITS, TIMEOUT_MS } from "../_shared/config.ts";
 import { costUsd, tokenBreakdown } from "../_shared/cost.ts";
 import { fallbackLine, type FallbackReason, type Speaker } from "../_shared/fallbacks.ts";
-import { buildChat, buildEvening, buildEvent, type BuiltPrompt } from "../_shared/prompts.ts";
+import {
+  buildChat,
+  buildEvening,
+  buildEvent,
+  buildLetter,
+  type BuiltPrompt,
+} from "../_shared/prompts.ts";
 import {
   type ChatRequest,
   type EveningReply,
@@ -23,6 +29,8 @@ import {
   type EventReply,
   type EventRequest,
   GatewayRequestSchema,
+  type LetterReply,
+  type LetterRequest,
 } from "../_shared/schemas.ts";
 import {
   type CleanChatReply,
@@ -31,6 +39,8 @@ import {
   cleanEveningReply,
   type CleanEventReply,
   cleanEventReply,
+  type CleanLetterReply,
+  cleanLetterReply,
 } from "../_shared/validate.ts";
 import type { GatewayDb, Outcome } from "./db.ts";
 
@@ -127,6 +137,7 @@ export async function handleGateway(
   const request = parsed.data;
   if (request.kind === "evening") return await handleEvening(request, playerId, deps);
   if (request.kind === "event") return await handleEvent(request, playerId, deps);
+  if (request.kind === "letter") return await handleLetter(request, playerId, deps);
   const speaker: Speaker = request.kind === "chat" ? "disciple" : "elder";
   const zeroUsage = {
     player: playerId,
@@ -221,9 +232,9 @@ type StoryBody<T> =
   | (T & { source: "ai"; stored: boolean; spirit_energy_left: number | null })
   | { source: "fallback"; reason: FallbackReason; spirit_energy_left: number };
 
-/** How one kind of stored story (an evening or a surprise event) is made. */
+/** How one kind of stored story (an evening, a surprise event or a letter) is made. */
 interface StoryKind<Raw, Clean> {
-  kind: "evening" | "event";
+  kind: "evening" | "event" | "letter";
   gameDay: number;
   get(): Promise<unknown | null>;
   store(reply: Clean): Promise<unknown>;
@@ -398,6 +409,25 @@ function handleEvent(
       store: (reply) => deps.db.storeEventStory(playerId, request.game_day, reply),
       build: () => Promise.resolve(buildEvent(request, { cacheTtl: deps.settings.cacheTtl })),
       clean: (raw) => cleanEventReply(raw, request),
+    },
+    playerId,
+    deps,
+  );
+}
+
+function handleLetter(
+  request: LetterRequest,
+  playerId: string,
+  deps: GatewayDeps,
+): Promise<Response> {
+  return handleStory<LetterReply, CleanLetterReply>(
+    {
+      kind: "letter",
+      gameDay: request.game_day,
+      get: () => deps.db.getLetterStory(playerId, request.game_day),
+      store: (reply) => deps.db.storeLetterStory(playerId, request.game_day, reply),
+      build: () => Promise.resolve(buildLetter(request, { cacheTtl: deps.settings.cacheTtl })),
+      clean: (raw) => cleanLetterReply(raw),
     },
     playerId,
     deps,
